@@ -326,6 +326,11 @@ let backgroundSpeed = 2.5; // Velocidade aumentada
 let backgroundScrolling = false;
 let parallaxOffset = 0; // Para efeito parallax
 
+// === SISTEMA DE PAINEL DE CONTROLES RECOLHÍVEL ===
+let controlsPanelVisible = true;
+let controlsPanelToggleTimer = 0;
+const CONTROLS_PANEL_TOGGLE_COOLDOWN = 30; // 30 frames = 0.5 segundos
+
 // Controles do teclado
 const keys = {};
 
@@ -425,6 +430,15 @@ document.addEventListener('keydown', e => {
         // Alternar sons
         gameAudio.enabled = !gameAudio.enabled;
         console.log('Sons:', gameAudio.enabled ? 'Ligados' : 'Desligados');
+    }
+    
+    if (e.code === 'KeyH') {
+        // Alternar visibilidade do painel de controles
+        if (controlsPanelToggleTimer === 0) {
+            controlsPanelVisible = !controlsPanelVisible;
+            controlsPanelToggleTimer = CONTROLS_PANEL_TOGGLE_COOLDOWN;
+            console.log('Painel de controles:', controlsPanelVisible ? 'Visível' : 'Oculto');
+        }
     }
     
     // === CHEAT CODES PARA TESTE ===
@@ -873,7 +887,9 @@ function createPowerup(x, y, type = 'random') {
         type: type,
         size: 15,
         bounce: 0,
-        collected: false
+        collected: false,
+        vy: 0, // Velocidade vertical
+        onGround: false // Flag para verificar se está no chão
     });
 }
 
@@ -1001,11 +1017,37 @@ function createEnemyBullet(x, y, vx, vy) {
 function updatePowerups() {
     for (let i = powerups.length - 1; i >= 0; i--) {
         const powerup = powerups[i];
+        
+        // Movimento horizontal dos power-ups (scrolling com o fundo)
+        if (backgroundScrolling) {
+            if (facingRight) {
+                powerup.x -= backgroundSpeed;
+            } else {
+                powerup.x += backgroundSpeed;
+            }
+        }
+        
+        // Animação de flutuação vertical
         powerup.bounce += 0.2;
         powerup.y += Math.sin(powerup.bounce) * 0.5;
         
+        // Aplicar gravidade aos power-ups para que caiam no chão
+        if (!powerup.onGround) {
+            if (!powerup.vy) powerup.vy = 0; // Inicializar velocidade vertical
+            powerup.vy += 0.5; // Gravidade
+            powerup.y += powerup.vy;
+            
+            // Verificar se chegou no chão
+            const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+            if (powerup.y + powerup.size >= groundLevel) {
+                powerup.y = groundLevel - powerup.size;
+                powerup.vy = 0;
+                powerup.onGround = true;
+            }
+        }
+        
         // Remove power-up se saiu da tela
-        if (powerup.x < -30) {
+        if (powerup.x < -30 || powerup.x > CANVAS_WIDTH + 30) {
             powerups.splice(i, 1);
         }
     }
@@ -1233,6 +1275,9 @@ function updateSpecialAnimations() {
     if (chainAttackCooldown > 0) chainAttackCooldown--;
     if (shootingUpTimer > 0) shootingUpTimer--;
     if (celebrationTimer > 0) celebrationTimer--;
+    
+    // Atualizar cooldown do painel de controles
+    if (controlsPanelToggleTimer > 0) controlsPanelToggleTimer--;
 }
 
 // Função avançada para desenhar o jogador
@@ -1765,6 +1810,19 @@ function drawHUD() {
 
 // Desenhar painel de controles na parte inferior da tela
 function drawControlsPanel() {
+    if (!controlsPanelVisible) {
+        // Painel oculto - apenas mostrar indicador de toggle
+        const indicatorY = CANVAS_HEIGHT - 25;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, indicatorY, CANVAS_WIDTH, 25);
+        
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Pressione H para mostrar/ocultar controles', CANVAS_WIDTH/2, indicatorY + 17);
+        return;
+    }
+    
     const panelHeight = 140; // Aumentado para mais espaço
     const panelY = CANVAS_HEIGHT - panelHeight;
     
@@ -1808,9 +1866,9 @@ function drawControlsPanel() {
         ctx.fillStyle = '#6BCF7F';
         ctx.fillText('⚙️ SISTEMA:', colWidth * 2 + 10, startY);
         ctx.fillStyle = 'white';
-        ctx.fillText('P: Pausar', colWidth * 2 + 10, startY + lineHeight);
-        ctx.fillText('R: Reiniciar (Game Over)', colWidth * 2 + 10, startY + lineHeight * 2);
-        ctx.fillText('F11: Tela Cheia', colWidth * 2 + 10, startY + lineHeight * 3);
+        ctx.fillText('H: Ocultar/Mostrar Painel', colWidth * 2 + 10, startY + lineHeight);
+        ctx.fillText('P: Pausar | F11: Tela Cheia', colWidth * 2 + 10, startY + lineHeight * 2);
+        ctx.fillText('R: Reiniciar (Game Over)', colWidth * 2 + 10, startY + lineHeight * 3);
     }
     
     // Coluna 4 - Cheats (se houver espaço)
@@ -1994,8 +2052,11 @@ function restartGame() {
     frameCounter = 0;
     posX = 100;
     
-    // Posicionar jogador no solo usando a nova função
-    positionPlayerOnGround();
+    // Posicionar jogador no solo corretamente
+    const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    posY = groundLevel - (frameHeight * scale);
+    onGround = true;
+    velocityY = 0;
     
     moving = false;
     attacking = false;
@@ -2133,7 +2194,7 @@ function resizeCanvas() {
 function positionPlayerOnGround() {
     // Recalcular o nível do chão com base na altura atual do canvas
     const newGroundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
-    posY = newGroundLevel - (frameHeight * scale);
+    posY = newGroundLevel;
     onGround = true;
     velocityY = 0;
     
