@@ -551,30 +551,102 @@ function checkPlatformCollisions() {
     }
 }
 
-// Desenhar plataformas
+// Desenhar plataformas com efeitos cyberpunk
 function drawPlatforms() {
-    ctx.fillStyle = '#8B4513'; // Cor marrom para plataformas
+    const time = Date.now() * 0.005;
     
     for (const platform of platforms) {
         const platformX = platform.x + backgroundX;
         
         // Só desenha se estiver visível na tela
         if (platformX + platform.width > -50 && platformX < CANVAS_WIDTH + 50) {
-            // Borda da plataforma
-            ctx.fillStyle = '#654321';
+            // Efeito cyberpunk piscante verde brilhante
+            const glowIntensity = Math.sin(time * 3) * 0.3 + 0.7;
+            const pulseIntensity = Math.sin(time * 5 + platform.x * 0.01) * 0.2 + 0.8;
+            
+            // Cor base da plataforma com efeito piscante
+            const baseColor = `rgba(0, ${Math.floor(255 * glowIntensity)}, 0, ${pulseIntensity})`;
+            const edgeColor = `rgba(0, ${Math.floor(255 * glowIntensity * 1.2)}, 50, ${pulseIntensity * 1.1})`;
+            
+            // Sombra/glow cyberpunk
+            ctx.save();
+            ctx.shadowColor = `rgb(0, ${Math.floor(255 * glowIntensity)}, 0)`;
+            ctx.shadowBlur = 15 * glowIntensity;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            
+            // Corpo principal da plataforma
+            ctx.fillStyle = baseColor;
             ctx.fillRect(platformX, platform.y, platform.width, platform.height);
             
-            // Superfície da plataforma
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(platformX, platform.y, platform.width, platform.height - 5);
+            // Borda superior brilhante
+            ctx.fillStyle = edgeColor;
+            ctx.fillRect(platformX, platform.y, platform.width, 3);
             
-            // Textura simples da plataforma
-            ctx.fillStyle = '#A0522D';
-            for (let i = 0; i < platform.width; i += 20) {
-                ctx.fillRect(platformX + i, platform.y + 2, 18, 3);
+            // Linhas de energia piscantes
+            for (let i = 0; i < platform.width; i += 30) {
+                const lineIntensity = Math.sin(time * 4 + i * 0.1) * 0.3 + 0.7;
+                ctx.fillStyle = `rgba(0, ${Math.floor(255 * lineIntensity)}, 100, ${lineIntensity})`;
+                ctx.fillRect(platformX + i + 2, platform.y + 2, 2, platform.height - 4);
             }
+            
+            // Partículas de energia
+            for (let i = 0; i < 3; i++) {
+                const particleX = platformX + (Math.sin(time * 2 + i) * platform.width * 0.3) + platform.width * 0.5;
+                const particleY = platform.y - 5 - (Math.abs(Math.sin(time * 3 + i)) * 8);
+                const particleSize = 2 + Math.sin(time * 4 + i) * 1;
+                
+                ctx.fillStyle = `rgba(0, 255, 0, ${glowIntensity})`;
+                ctx.beginPath();
+                ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
         }
     }
+}
+
+// Desenhar limite de solo (linha preta abaixo do jogo)
+function drawGroundLimit() {
+    const groundY = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    const time = Date.now() * 0.003;
+    
+    ctx.save();
+    
+    // Linha preta principal do solo
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(0, groundY + (frameHeight * scale));
+    ctx.lineTo(CANVAS_WIDTH, groundY + (frameHeight * scale));
+    ctx.stroke();
+    
+    // Linha adicional mais espessa para delimitar bem
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.moveTo(0, groundY + (frameHeight * scale) + 5);
+    ctx.lineTo(CANVAS_WIDTH, groundY + (frameHeight * scale) + 5);
+    ctx.stroke();
+    
+    // Efeito cyberpunk no limite - linhas piscantes verdes
+    const glowIntensity = Math.sin(time * 4) * 0.4 + 0.6;
+    ctx.shadowColor = `rgb(0, ${Math.floor(255 * glowIntensity)}, 0)`;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = `rgba(0, ${Math.floor(255 * glowIntensity)}, 0, ${glowIntensity})`;
+    ctx.lineWidth = 2;
+    
+    // Linhas de energia correndo ao longo do limite
+    for (let x = 0; x < CANVAS_WIDTH; x += 50) {
+        const offset = Math.sin(time * 3 + x * 0.01) * 3;
+        ctx.beginPath();
+        ctx.moveTo(x, groundY + (frameHeight * scale) + offset);
+        ctx.lineTo(x + 30, groundY + (frameHeight * scale) + offset);
+        ctx.stroke();
+    }
+    
+    ctx.restore();
 }
 
 // Atualizar física do jogador
@@ -1228,24 +1300,85 @@ function drawBullets() {
     }
 }
 
-// Desenhar inimigos
+// Desenhar inimigos com efeitos cyberpunk
 function drawEnemies() {
+    const time = Date.now() * 0.008;
+    
     for (const enemy of enemies) {
-        // Corpo do inimigo
-        ctx.fillStyle = enemy.color;
+        // Efeito cyberpunk piscante para os inimigos
+        const glowIntensity = Math.sin(time * 2 + enemy.x * 0.01) * 0.3 + 0.7;
+        const pulseIntensity = Math.sin(time * 4 + enemy.y * 0.01) * 0.2 + 0.8;
+        
+        ctx.save();
+        
+        // Sombra/glow cyberpunk nos inimigos
+        ctx.shadowColor = enemy.type === 'robot' ? `rgba(0, 0, 255, ${glowIntensity})` : `rgba(255, 0, 0, ${glowIntensity})`;
+        ctx.shadowBlur = 8 * glowIntensity;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Corpo do inimigo com efeito piscante
+        const baseAlpha = pulseIntensity;
+        if (enemy.type === 'robot') {
+            ctx.fillStyle = `rgba(0, 0, ${Math.floor(255 * glowIntensity)}, ${baseAlpha})`;
+        } else {
+            ctx.fillStyle = `rgba(${Math.floor(255 * glowIntensity)}, 0, 0, ${baseAlpha})`;
+        }
         ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
         
-        // Barra de vida do inimigo
-        const healthPercent = enemy.health / enemy.maxHealth;
-        ctx.fillStyle = 'red';
-        ctx.fillRect(enemy.x, enemy.y - 8, enemy.size, 4);
-        ctx.fillStyle = 'green';
-        ctx.fillRect(enemy.x, enemy.y - 8, enemy.size * healthPercent, 4);
+        // Linhas de energia nos inimigos
+        for (let i = 0; i < enemy.size; i += 8) {
+            const lineIntensity = Math.sin(time * 3 + i * 0.2) * 0.4 + 0.6;
+            if (enemy.type === 'robot') {
+                ctx.fillStyle = `rgba(0, 100, ${Math.floor(255 * lineIntensity)}, ${lineIntensity})`;
+            } else {
+                ctx.fillStyle = `rgba(${Math.floor(255 * lineIntensity)}, 100, 0, ${lineIntensity})`;
+            }
+            ctx.fillRect(enemy.x + i, enemy.y + 2, 2, enemy.size - 4);
+        }
         
-        // Olhos simples
-        ctx.fillStyle = 'white';
+        ctx.restore();
+        
+        // Barra de vida do inimigo com efeito cyberpunk
+        const healthPercent = enemy.health / enemy.maxHealth;
+        
+        // Fundo da barra de vida
+        ctx.fillStyle = 'rgba(100, 0, 0, 0.8)';
+        ctx.fillRect(enemy.x - 2, enemy.y - 10, enemy.size + 4, 6);
+        
+        // Barra de vida com efeito piscante verde
+        const healthGlow = Math.sin(time * 5) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(0, ${Math.floor(255 * healthGlow)}, 0, ${healthGlow})`;
+        ctx.fillRect(enemy.x, enemy.y - 8, (enemy.size * healthPercent), 4);
+        
+        // Olhos cyberpunk piscantes
+        const eyeGlow = Math.sin(time * 6 + enemy.x * 0.02) * 0.4 + 0.6;
+        if (enemy.type === 'robot') {
+            ctx.fillStyle = `rgba(0, 255, 255, ${eyeGlow})`;
+        } else {
+            ctx.fillStyle = `rgba(255, 255, 0, ${eyeGlow})`;
+        }
         ctx.fillRect(enemy.x + 3, enemy.y + 3, 4, 4);
         ctx.fillRect(enemy.x + enemy.size - 7, enemy.y + 3, 4, 4);
+        
+        // Partículas de energia flutuando ao redor dos inimigos
+        for (let i = 0; i < 2; i++) {
+            const particleX = enemy.x + enemy.size/2 + Math.sin(time * 2 + i) * (enemy.size * 0.6);
+            const particleY = enemy.y + enemy.size/2 + Math.cos(time * 2.5 + i) * (enemy.size * 0.4);
+            const particleSize = 1 + Math.sin(time * 3 + i) * 0.5;
+            
+            ctx.save();
+            ctx.globalAlpha = glowIntensity * 0.8;
+            if (enemy.type === 'robot') {
+                ctx.fillStyle = '#00FFFF';
+            } else {
+                ctx.fillStyle = '#FFFF00';
+            }
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
     }
 }
 
@@ -1470,6 +1603,9 @@ function gameLoop() {
     
     // Desenha plataformas
     drawPlatforms();
+    
+    // Desenha limite de solo
+    drawGroundLimit();
     
     // Atualiza física do jogador
     updatePlayerPhysics();
