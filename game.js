@@ -35,7 +35,12 @@ const playerImages = {
     corrente_duas_maos: new Image(),
     maos_para_cima: new Image(),
     arma_para_cima: new Image(),
-    arma_disparando_cima: new Image()
+    
+    // === NOVAS IMAGENS DE TIRO EM MÚLTIPLOS ÂNGULOS ===
+    arma_disparando_cima: new Image(),
+    arma_disparando_frente: new Image(),
+    arma_disparando_60_baixo: new Image(),
+    arma_disparando_90_graus: new Image()
 };
 
 // Carregar todas as imagens da Juliette
@@ -44,7 +49,12 @@ playerImages.corrente_mao_esquerda.src = 'assets/01 corrente mao esquerda.png';
 playerImages.corrente_duas_maos.src = 'assets/01 corrente nas 2 maos.png';
 playerImages.maos_para_cima.src = 'assets/01 maos para cima.png';
 playerImages.arma_para_cima.src = 'assets/02 arma para cima.png';
+
+// === CARREGAR NOVAS IMAGENS DE TIRO ===
 playerImages.arma_disparando_cima.src = 'assets/03 arma para cima disparando.png';
+playerImages.arma_disparando_frente.src = 'assets/03 arma disparando para frente.png';
+playerImages.arma_disparando_60_baixo.src = 'assets/03 arma para cima disparando 60 graus para baixo.png';
+playerImages.arma_disparando_90_graus.src = 'assets/03 arma para cima disparando 90 graus.png';
 
 // Imagens de fundo
 const backgroundImg = new Image();
@@ -118,11 +128,31 @@ const animations = {
         duration: 35,
         description: 'Arma apontada para cima' 
     },
+    
+    // === NOVAS ANIMAÇÕES DE TIRO EM MÚLTIPLOS ÂNGULOS ===
     weapon_shoot_up: { 
         type: 'sprite', 
         image: 'arma_disparando_cima', 
-        duration: 25,
+        duration: 15,
         description: 'Disparando para cima' 
+    },
+    weapon_shoot_front: { 
+        type: 'sprite', 
+        image: 'arma_disparando_frente', 
+        duration: 15,
+        description: 'Disparando para frente' 
+    },
+    weapon_shoot_diagonal_down: { 
+        type: 'sprite', 
+        image: 'arma_disparando_60_baixo', 
+        duration: 15,
+        description: 'Disparando 60° para baixo' 
+    },
+    weapon_shoot_90: { 
+        type: 'sprite', 
+        image: 'arma_disparando_90_graus', 
+        duration: 15,
+        description: 'Disparando em 90 graus' 
     }
 };
 
@@ -337,6 +367,9 @@ function shoot() {
     // Determinar direção do tiro baseado nas teclas pressionadas
     let shootDirection = getShootDirection();
     
+    // === NOVO: SISTEMA DE ANIMAÇÃO INTELIGENTE BASEADO NO ÂNGULO ===
+    triggerShootAnimation(shootDirection.angle);
+    
     switch(weaponType) {
         case 'normal':
             createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
@@ -368,39 +401,82 @@ function shoot() {
 function getShootDirection() {
     const baseSpeed = weapons[weaponType].speed;
     
-    // Direções transversais perfeitas (45°)
+    // === SISTEMA DE TIRO MULTI-DIRECIONAL AVANÇADO ===
+    
+    // Direções transversais para cima + lado direito com variação completa
     if (keys['ArrowUp'] && keys['ArrowRight']) {
-        return { angle: -45, speed: baseSpeed }; // Nordeste
+        // Múltiplos ângulos para nordeste: 15°, 22.5°, 30°, 37.5°, 45°
+        const angles = [-15, -22.5, -30, -37.5, -45];
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
     }
+    
+    // Direções transversais para cima + lado esquerdo com variação
     if (keys['ArrowUp'] && keys['ArrowLeft']) {
-        return { angle: -135, speed: baseSpeed }; // Noroeste
+        // Múltiplos ângulos para noroeste: 135°, 142.5°, 150°, 157.5°, 165°
+        const angles = [-135, -142.5, -150, -157.5, -165];
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
     }
+    
+    // Direções transversais para baixo + lado direito com variação
     if (keys['ArrowDown'] && keys['ArrowRight']) {
-        return { angle: 45, speed: baseSpeed }; // Sudeste
+        // Múltiplos ângulos para sudeste: 15°, 22.5°, 30°, 37.5°, 45°
+        const angles = [15, 22.5, 30, 37.5, 45];
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
     }
+    
+    // Direções transversais para baixo + lado esquerdo com variação
     if (keys['ArrowDown'] && keys['ArrowLeft']) {
-        return { angle: 135, speed: baseSpeed }; // Sudoeste
+        // Múltiplos ângulos para sudoeste: 135°, 142.5°, 150°, 157.5°, 165°
+        const angles = [135, 142.5, 150, 157.5, 165];
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
     }
     
-    // Direções cardeais
+    // === DIREÇÕES CARDEAIS COM VARIAÇÕES ===
+    
+    // Tiro para cima com pequenas variações
     if (keys['ArrowUp']) {
-        return { angle: -90, speed: baseSpeed }; // Norte
-    }
-    if (keys['ArrowDown']) {
-        return { angle: 90, speed: baseSpeed }; // Sul
-    }
-    if (keys['ArrowLeft']) {
-        return { angle: 180, speed: baseSpeed }; // Oeste
-    }
-    if (keys['ArrowRight']) {
-        return { angle: 0, speed: baseSpeed }; // Leste
+        const angles = [-90, -85, -95]; // Principalmente vertical com leve variação
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
     }
     
-    // Direção padrão (horizontal baseado na direção que está olhando)
-    return { 
-        angle: facingRight ? 0 : 180, 
-        speed: baseSpeed 
-    };
+    // Tiro para baixo com pequenas variações
+    if (keys['ArrowDown']) {
+        const angles = [90, 85, 95]; // Principalmente vertical com leve variação
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
+    }
+    
+    // Tiro para esquerda com variações
+    if (keys['ArrowLeft']) {
+        const angles = [180, 175, 185, 170, 190]; // Horizontal com variações
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
+    }
+    
+    // Tiro para direita com variações
+    if (keys['ArrowRight']) {
+        const angles = [0, -5, 5, -10, 10]; // Horizontal com variações
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
+    }
+    
+    // === DIREÇÃO PADRÃO COM VARIAÇÃO BASEADA NA DIREÇÃO ===
+    if (facingRight) {
+        // Tiro padrão para direita com leve variação
+        const angles = [0, -3, 3, -7, 7];
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
+    } else {
+        // Tiro padrão para esquerda com leve variação
+        const angles = [180, 177, 183, 173, 187];
+        const chosenAngle = angles[Math.floor(Math.random() * angles.length)];
+        return { angle: chosenAngle, speed: baseSpeed };
+    }
 }
 
 // Criar bala com direção específica
@@ -734,6 +810,46 @@ function drawBackground() {
 }
 
 // === NOVAS FUNÇÕES PARA ANIMAÇÕES ESPECIAIS ===
+
+// === NOVA FUNÇÃO: SISTEMA INTELIGENTE DE ANIMAÇÃO DE TIRO ===
+function triggerShootAnimation(angle) {
+    if (!hasWeapon || isInSpecialAnim) return;
+    
+    // Normalizar ângulo para range 0-360
+    let normalizedAngle = angle;
+    while (normalizedAngle < 0) normalizedAngle += 360;
+    while (normalizedAngle >= 360) normalizedAngle -= 360;
+    
+    // Selecionar animação baseada no ângulo
+    let selectedAnimation = 'weapon_shoot_front'; // padrão
+    
+    // Mapear ângulos para animações específicas
+    if ((normalizedAngle >= 315 && normalizedAngle <= 360) || (normalizedAngle >= 0 && normalizedAngle <= 45)) {
+        // Tiros horizontais (direita e diagonais próximas) - 0°, ±15°, ±30°, ±45°
+        selectedAnimation = 'weapon_shoot_front';
+    } else if (normalizedAngle >= 46 && normalizedAngle <= 134) {
+        // Tiros para baixo (45° a 135°) - usa animação de 60° para baixo
+        selectedAnimation = 'weapon_shoot_diagonal_down';
+    } else if (normalizedAngle >= 135 && normalizedAngle <= 225) {
+        // Tiros para esquerda e diagonais (135° a 225°)
+        selectedAnimation = 'weapon_shoot_front'; // Mesmo sprite, mas espelhado
+    } else if (normalizedAngle >= 226 && normalizedAngle <= 314) {
+        // Tiros para cima (226° a 314°) - usa animações para cima
+        if (normalizedAngle >= 270 - 20 && normalizedAngle <= 270 + 20) {
+            // Tiro vertical puro (90°) - usa animação específica de 90°
+            selectedAnimation = 'weapon_shoot_90';
+        } else {
+            // Tiros diagonais para cima - usa animação geral para cima
+            selectedAnimation = 'weapon_shoot_up';
+        }
+    }
+    
+    // Trigger da animação selecionada
+    startSpecialAnimation(selectedAnimation);
+    
+    // Debug: mostrar qual animação foi selecionada
+    console.log(`Ângulo: ${angle.toFixed(1)}° → Animação: ${selectedAnimation}`);
+}
 
 // Iniciar animação especial
 function startSpecialAnimation(animName) {
@@ -1468,7 +1584,7 @@ function restartGame() {
 
 // Inicia o jogo quando todas as imagens carregarem
 let imagesLoaded = 0;
-const totalImages = 9; // Total de imagens: 3 de fundo + 6 da Juliette
+const totalImages = 12; // Total de imagens: 3 de fundo + 9 da Juliette (incluindo novas de tiro)
 
 function checkImagesLoaded() {
     imagesLoaded++;
@@ -1491,7 +1607,12 @@ playerImages.corrente_mao_esquerda.onload = checkImagesLoaded;
 playerImages.corrente_duas_maos.onload = checkImagesLoaded;
 playerImages.maos_para_cima.onload = checkImagesLoaded;
 playerImages.arma_para_cima.onload = checkImagesLoaded;
+
+// Carregar novas imagens de tiro
 playerImages.arma_disparando_cima.onload = checkImagesLoaded;
+playerImages.arma_disparando_frente.onload = checkImagesLoaded;
+playerImages.arma_disparando_60_baixo.onload = checkImagesLoaded;
+playerImages.arma_disparando_90_graus.onload = checkImagesLoaded;
 
 // === SISTEMA DE TELA CHEIA ===
 let isFullscreen = false;
