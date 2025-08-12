@@ -1765,62 +1765,83 @@ function drawHUD() {
 
 // Desenhar painel de controles na parte inferior da tela
 function drawControlsPanel() {
-    const panelHeight = 120;
+    const panelHeight = 140; // Aumentado para mais espaço
     const panelY = CANVAS_HEIGHT - panelHeight;
     
     // Fundo do painel de controles
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
     ctx.fillRect(0, panelY, CANVAS_WIDTH, panelHeight);
     
     // Título
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'left';
     ctx.fillText('🎮 CONTROLES ESPECIAIS DA JULIETTE:', 10, panelY + 15);
     
-    // Controles básicos
-    ctx.fillStyle = 'white';
-    ctx.font = '12px Arial';
+    // Calcular larguras das colunas baseado na largura da tela
+    const numCols = CANVAS_WIDTH > 1400 ? 4 : (CANVAS_WIDTH > 1000 ? 3 : 2);
+    const colWidth = Math.floor((CANVAS_WIDTH - 40) / numCols); // Margem de 20px cada lado
+    const fontSize = CANVAS_WIDTH > 1200 ? '12px' : '11px';
+    const lineHeight = CANVAS_WIDTH > 1200 ? 16 : 14;
+    
+    ctx.font = fontSize + ' Arial';
     const startY = panelY + 35;
-    const colWidth = 190;
     
     // Coluna 1 - Controles básicos
-    ctx.fillText('⬅️➡️ Mover | Z: Pular | X/SPACE: Atirar', 10, startY);
-    ctx.fillText('⬆️+X: Tiro para cima | ⬇️+X: Tiro para baixo', 10, startY + 15);
-    ctx.fillText('↗️↖️↘️↙️+X: Tiros transversais 45°', 10, startY + 30);
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillText('⚡ BÁSICOS:', 10, startY);
+    ctx.fillStyle = 'white';
+    ctx.fillText('⬅️➡️ Mover | Z: Pular', 10, startY + lineHeight);
+    ctx.fillText('X/SPACE: Atirar | M: Som', 10, startY + lineHeight * 2);
+    ctx.fillText('⬆️+X: ⬇️+X: ↗️+X: ↙️+X', 10, startY + lineHeight * 3);
     
     // Coluna 2 - Ataques especiais
     ctx.fillStyle = '#FF6B6B';
-    ctx.fillText('🔥 ATAQUES ESPECIAIS:', 10, startY + 35);
+    ctx.fillText('🔥 ESPECIAIS:', colWidth + 10, startY);
     ctx.fillStyle = 'white';
-    ctx.fillText('A: Corrente (Mão Esquerda)', 10, startY + 50);
-    ctx.fillText('S: Corrente (Ambas as Mãos)', 10, startY + 65);
+    ctx.fillText('A: Corrente (1 Mão)', colWidth + 10, startY + lineHeight);
+    ctx.fillText('S: Corrente (2 Mãos)', colWidth + 10, startY + lineHeight * 2);
+    ctx.fillText('C: Celebração', colWidth + 10, startY + lineHeight * 3);
     
-    // Coluna 3 - Outros controles
-    ctx.fillStyle = '#6BCF7F';
-    ctx.fillText('✨ OUTROS:', colWidth * 2, startY + 35);
-    ctx.fillStyle = 'white';
-    ctx.fillText('C: Celebração/Mãos para cima', colWidth * 2, startY + 50);
-    ctx.fillText('P: Pausar | R: Reiniciar (Game Over)', colWidth * 2, startY + 65);
+    // Coluna 3 - Sistema (se houver espaço)
+    if (numCols >= 3) {
+        ctx.fillStyle = '#6BCF7F';
+        ctx.fillText('⚙️ SISTEMA:', colWidth * 2 + 10, startY);
+        ctx.fillStyle = 'white';
+        ctx.fillText('P: Pausar', colWidth * 2 + 10, startY + lineHeight);
+        ctx.fillText('R: Reiniciar (Game Over)', colWidth * 2 + 10, startY + lineHeight * 2);
+        ctx.fillText('F11: Tela Cheia', colWidth * 2 + 10, startY + lineHeight * 3);
+    }
     
-    // Coluna 4 - Cheats de teste
-    ctx.fillStyle = '#FFA500';
-    ctx.fillText('🛠️ CHEATS DE TESTE:', colWidth * 2 + 200, startY);
-    ctx.fillStyle = 'white';
-    ctx.fillText('1: Arma Normal', colWidth * 2 + 200, startY + 15);
-    ctx.fillText('2: Spread Gun', colWidth * 2 + 200, startY + 30);
-    ctx.fillText('3: Laser Gun', colWidth * 2 + 200, startY + 45);
-    ctx.fillText('4: Machine Gun', colWidth * 2 + 200, startY + 60);
+    // Coluna 4 - Cheats (se houver espaço)
+    if (numCols >= 4) {
+        ctx.fillStyle = '#FFA500';
+        ctx.fillText('🛠️ ARMAS:', colWidth * 3 + 10, startY);
+        ctx.fillStyle = 'white';
+        ctx.fillText('1: Normal | 2: Spread', colWidth * 3 + 10, startY + lineHeight);
+        ctx.fillText('3: Laser | 4: Machine', colWidth * 3 + 10, startY + lineHeight * 2);
+    }
     
-    // Status atual da animação
+    // Status na parte inferior
+    const statusY = startY + lineHeight * 4.5;
     ctx.fillStyle = '#87CEEB';
-    ctx.font = '11px Arial';
-    const statusText = isInSpecialAnim ? `🎭 Animação: ${animations[currentAnim].description}` : '🎭 Animação: Normal';
-    ctx.fillText(statusText, 10, startY + 80);
+    ctx.font = (CANVAS_WIDTH > 1200 ? '11px' : '10px') + ' Arial';
+    const statusText = isInSpecialAnim ? `🎭 ${animations[currentAnim].description}` : '🎭 Modo Normal';
+    ctx.fillText(statusText, 10, statusY);
     
-    // Cooldown de corrente
+    // Cooldown de corrente e outros status
     if (chainAttackCooldown > 0) {
         ctx.fillStyle = '#FF6B6B';
-        ctx.fillText(`⛓️ Cooldown Corrente: ${Math.ceil(chainAttackCooldown/60)}s`, colWidth, startY + 80);
+        ctx.fillText(`⛓️ Cooldown: ${Math.ceil(chainAttackCooldown/60)}s`, colWidth + 10, statusY);
+    }
+    
+    // Status do som
+    ctx.fillStyle = gameAudio.enabled ? '#00FF00' : '#FF4444';
+    const soundStatus = gameAudio.enabled ? '🔊 ON' : '🔇 OFF';
+    const soundX = numCols >= 3 ? colWidth * 2 + 10 : 10;
+    const soundY = chainAttackCooldown > 0 ? statusY : statusY;
+    if (numCols >= 3 || chainAttackCooldown === 0) {
+        ctx.fillText(`Som: ${soundStatus}`, soundX, soundY);
     }
 }
 
