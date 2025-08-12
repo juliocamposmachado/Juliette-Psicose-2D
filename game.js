@@ -2087,23 +2087,13 @@ function resizeCanvas() {
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     
-    // Calcular proporção adequada mantendo aspect ratio 4:3
-    const aspectRatio = 4 / 3;
-    let newWidth, newHeight;
+    // NOVO: Usar toda a área disponível do navegador
+    let newWidth = Math.floor(windowWidth * 0.98); // 98% da largura total
+    let newHeight = Math.floor(windowHeight * 0.95); // 95% da altura total (espaço para barra de endereço)
     
-    if (windowWidth / windowHeight > aspectRatio) {
-        // Janela é mais larga que a proporção desejada
-        newHeight = Math.floor(windowHeight * 0.95); // 95% da altura da janela
-        newWidth = Math.floor(newHeight * aspectRatio);
-    } else {
-        // Janela é mais alta que a proporção desejada
-        newWidth = Math.floor(windowWidth * 0.95); // 95% da largura da janela
-        newHeight = Math.floor(newWidth / aspectRatio);
-    }
-    
-    // Definir tamanhos mínimos
-    newWidth = Math.max(newWidth, 600);
-    newHeight = Math.max(newHeight, 450);
+    // Definir tamanhos mínimos para garantir jogabilidade
+    newWidth = Math.max(newWidth, 800);
+    newHeight = Math.max(newHeight, 500);
     
     // Atualizar as dimensões do canvas
     CANVAS_WIDTH = newWidth;
@@ -2115,7 +2105,7 @@ function resizeCanvas() {
     // Reposicionar elementos que dependem das dimensões
     updateGameElementsForResize();
     
-    console.log(`Canvas redimensionado para: ${CANVAS_WIDTH}x${CANVAS_HEIGHT}`);
+    console.log(`Canvas redimensionado para: ${CANVAS_WIDTH}x${CANVAS_HEIGHT} (${(newWidth/windowWidth*100).toFixed(1)}% x ${(newHeight/windowHeight*100).toFixed(1)}%)`);
 }
 
 // Função para posicionar jogador no solo
