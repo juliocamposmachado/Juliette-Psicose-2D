@@ -18,6 +18,95 @@ const gameState = {
     gameOver: false
 };
 
+// === SISTEMA DE SONS ===
+const gameAudio = {
+    enabled: true,
+    volume: 0.3,
+    sounds: {
+        // Sons básicos
+        shoot: new Audio(),
+        enemyHit: new Audio(),
+        enemyDestroy: new Audio(),
+        playerHit: new Audio(),
+        jump: new Audio(),
+        powerup: new Audio(),
+        
+        // Sons especiais
+        chainAttack: new Audio(),
+        celebration: new Audio(),
+        levelUp: new Audio(),
+        gameOver: new Audio(),
+        
+        // Sons de fundo
+        bgMusic: new Audio()
+    }
+};
+
+// Configurar sons (usando geradores de frequência como fallback)
+function initializeSounds() {
+    // Configurar caminhos dos sons (quando disponíveis)
+    gameAudio.sounds.shoot.src = 'assets/sounds/shoot.mp3';
+    gameAudio.sounds.enemyHit.src = 'assets/sounds/enemy_hit.mp3';
+    gameAudio.sounds.enemyDestroy.src = 'assets/sounds/enemy_destroy.mp3';
+    gameAudio.sounds.playerHit.src = 'assets/sounds/player_hit.mp3';
+    gameAudio.sounds.jump.src = 'assets/sounds/jump.mp3';
+    gameAudio.sounds.powerup.src = 'assets/sounds/powerup.mp3';
+    gameAudio.sounds.chainAttack.src = 'assets/sounds/chain_attack.mp3';
+    gameAudio.sounds.celebration.src = 'assets/sounds/celebration.mp3';
+    gameAudio.sounds.levelUp.src = 'assets/sounds/level_up.mp3';
+    gameAudio.sounds.gameOver.src = 'assets/sounds/game_over.mp3';
+    gameAudio.sounds.bgMusic.src = 'assets/sounds/background.mp3';
+    
+    // Configurar propriedades dos sons
+    gameAudio.sounds.bgMusic.loop = true;
+    gameAudio.sounds.bgMusic.volume = 0.1;
+    
+    // Configurar volumes individuais
+    Object.values(gameAudio.sounds).forEach(sound => {
+        if (sound !== gameAudio.sounds.bgMusic) {
+            sound.volume = gameAudio.volume;
+        }
+    });
+}
+
+// Função para tocar som com fallback para geração de frequência
+function playSound(soundName, frequency = 440, duration = 200) {
+    if (!gameAudio.enabled) return;
+    
+    const sound = gameAudio.sounds[soundName];
+    if (sound && sound.src && sound.readyState >= 2) {
+        // Som carregado, tocar normalmente
+        sound.currentTime = 0;
+        sound.play().catch(e => console.log('Erro ao tocar som:', e));
+    } else {
+        // Fallback: gerar som com Web Audio API
+        generateSound(frequency, duration);
+    }
+}
+
+// Gerador de som usando Web Audio API
+function generateSound(frequency, duration, type = 'sine') {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        
+        gainNode.gain.setValueAtTime(gameAudio.volume * 0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration / 1000);
+    } catch (e) {
+        console.log('Web Audio não suportado:', e);
+    }
+}
+
 // Arrays para gerenciar elementos do jogo
 const bullets = [];
 const enemies = [];
@@ -312,6 +401,9 @@ document.addEventListener('keydown', e => {
         if (!isInSpecialAnim) {
             startSpecialAnimation('hands_up');
             celebrationMode = true;
+            
+            // Som de celebração
+            playSound('celebration', 550, 500);
         }
     }
     
@@ -327,6 +419,12 @@ document.addEventListener('keydown', e => {
     if (e.code === 'F11') {
         e.preventDefault();
         toggleFullscreen();
+    }
+    
+    if (e.code === 'KeyM') {
+        // Alternar sons
+        gameAudio.enabled = !gameAudio.enabled;
+        console.log('Sons:', gameAudio.enabled ? 'Ligados' : 'Desligados');
     }
     
     // === CHEAT CODES PARA TESTE ===
@@ -363,6 +461,16 @@ function shoot() {
     const weapon = weapons[weaponType];
     const playerCenterX = posX + (frameWidth * scale) / 2;
     const playerCenterY = posY + (frameHeight * scale) / 2;
+    
+    // Som de tiro baseado na arma
+    let shootFreq = 440;
+    switch(weaponType) {
+        case 'normal': shootFreq = 440; break;
+        case 'spread': shootFreq = 520; break;
+        case 'laser': shootFreq = 660; break;
+        case 'machine': shootFreq = 380; break;
+    }
+    playSound('shoot', shootFreq, 150);
     
     // Determinar direção do tiro baseado nas teclas pressionadas
     let shootDirection = getShootDirection();
@@ -508,6 +616,9 @@ function jump() {
     if (onGround) {
         velocityY = jumpPower;
         onGround = false;
+        
+        // Som de pulo
+        playSound('jump', 330, 200);
     }
 }
 
@@ -703,8 +814,50 @@ function createEnemy(type = 'soldier') {
         size: enemy.size,
         type: type,
         shootChance: enemy.shootChance,
-        shootCooldown: 0
+        shootCooldown: 0,
+        
+        // === NOVO: SISTEMA DE ÁTOMOS ORBITANTES ===
+        atomOrbs: {
+            count: type === 'robot' ? 4 : 3, // Robôs têm mais átomos
+            orbs: [],
+            rotationSpeed: type === 'robot' ? 0.03 : 0.05, // Robôs giram mais devagar
+            radius: type === 'robot' ? 45 : 35,
+            initialized: false
+        }
     });
+    
+    // Inicializar átomos orbitantes
+    const newEnemy = enemies[enemies.length - 1];
+    initializeEnemyAtoms(newEnemy);
+}
+
+// === NOVA FUNÇÃO: INICIALIZAR ÁTOMOS ORBITANTES DOS INIMIGOS ===
+function initializeEnemyAtoms(enemy) {
+    enemy.atomOrbs.orbs = [];
+    
+    for (let i = 0; i < enemy.atomOrbs.count; i++) {
+        const angle = (i / enemy.atomOrbs.count) * Math.PI * 2;
+        const orb = {
+            angle: angle,
+            initialAngle: angle,
+            radius: enemy.atomOrbs.radius,
+            size: Math.random() * 3 + 2, // Tamanho variado
+            speed: enemy.atomOrbs.rotationSpeed + (Math.random() * 0.02 - 0.01), // Velocidade variada
+            color: enemy.type === 'robot' ? 
+                ['#00FFFF', '#0080FF', '#4040FF'][i % 3] : 
+                ['#FF4040', '#FF8040', '#FFFF40'][i % 3],
+            pulse: Math.random() * Math.PI * 2, // Para efeito pulsante
+            orbit: {
+                // Órbitas variadas para efeito mais realista
+                radiusVariation: Math.random() * 10 + 5,
+                tiltAngle: Math.random() * Math.PI * 0.3, // Inclinação da órbita
+                eccentricity: Math.random() * 0.3 // Excentricidade da órbita
+            }
+        };
+        enemy.atomOrbs.orbs.push(orb);
+    }
+    
+    enemy.atomOrbs.initialized = true;
 }
 
 // Criar power-up
@@ -768,10 +921,15 @@ function updateBullets() {
 
 // Atualizar inimigos
 function updateEnemies() {
+    const time = Date.now() * 0.001;
+    
     for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
         enemy.x += enemy.vx;
         enemy.y += enemy.vy;
+        
+        // === ATUALIZAR ÁTOMOS ORBITANTES ===
+        updateEnemyAtoms(enemy, time);
         
         // IA básica do inimigo
         if (enemy.shootCooldown > 0) enemy.shootCooldown--;
@@ -786,6 +944,41 @@ function updateEnemies() {
         if (enemy.x < -50) {
             enemies.splice(i, 1);
         }
+    }
+}
+
+// === NOVA FUNÇÃO: ATUALIZAR ÁTOMOS ORBITANTES ===
+function updateEnemyAtoms(enemy, time) {
+    if (!enemy.atomOrbs.initialized) return;
+    
+    const centerX = enemy.x + enemy.size / 2;
+    const centerY = enemy.y + enemy.size / 2;
+    
+    // Atualizar cada átomo orbitante
+    for (let orb of enemy.atomOrbs.orbs) {
+        // Atualizar ângulo de rotação
+        orb.angle += orb.speed;
+        
+        // Atualizar pulso para efeito piscante
+        orb.pulse += 0.1;
+        
+        // Calcular posição com órbita elíptica e inclinada
+        const baseRadius = orb.radius + Math.sin(orb.pulse) * orb.orbit.radiusVariation;
+        const eccentricRadius = baseRadius * (1 + orb.orbit.eccentricity * Math.cos(orb.angle * 2));
+        
+        // Posição da órbita com inclinação
+        const orbX = Math.cos(orb.angle) * eccentricRadius;
+        const orbY = Math.sin(orb.angle) * eccentricRadius * Math.cos(orb.orbit.tiltAngle);
+        
+        // Posição final do átomo
+        orb.x = centerX + orbX;
+        orb.y = centerY + orbY;
+        
+        // Tamanho pulsante
+        orb.currentSize = orb.size + Math.sin(orb.pulse) * 0.5;
+        
+        // Alpha pulsante para efeito de energia
+        orb.alpha = 0.6 + Math.sin(orb.pulse * 1.5) * 0.4;
     }
 }
 
@@ -944,6 +1137,9 @@ function chainAttack(handType) {
     chainWeaponType = handType;
     chainWeaponActive = true;
     chainAttackCooldown = 60;
+    
+    // Som de ataque com corrente
+    playSound('chainAttack', handType === 'both_hands' ? 280 : 320, 400);
     
     // Criar efeitos visuais de corrente
     createChainEffect(handType);
@@ -1203,14 +1399,20 @@ function checkCollisions() {
                     bullet.y < enemy.y + enemy.size &&
                     bullet.y + bullet.size > enemy.y) {
                     
-                    // Inimigo levou dano
+        // Inimigo levou dano
                     enemy.health -= bullet.damage;
                     bullets.splice(i, 1);
+                    
+                    // Som de acerto no inimigo
+                    playSound('enemyHit', 600, 100);
                     
                     if (enemy.health <= 0) {
                         // Inimigo morreu
                         createExplosion(enemy.x + enemy.size/2, enemy.y + enemy.size/2);
                         gameState.score += enemy.type === 'robot' ? 200 : 100;
+                        
+                        // Som de destruição do inimigo
+                        playSound('enemyDestroy', 300, 300);
                         
                         // Chance de dropar power-up
                         if (Math.random() < 0.3) {
@@ -1240,10 +1442,14 @@ function checkCollisions() {
                 invulnerable = true;
                 invulnerableTime = 120; // 2 segundos de invulnerabilidade
                 
+                // Som de dano no jogador
+                playSound('playerHit', 200, 400);
+                
                 if (playerHealth <= 0) {
                     gameState.lives--;
                     if (gameState.lives <= 0) {
                         gameState.gameOver = true;
+                        playSound('gameOver', 150, 1000);
                     } else {
                         playerHealth = 100;
                         weaponType = 'normal'; // Perde power-ups
@@ -1279,6 +1485,9 @@ function checkCollisions() {
             
             gameState.score += 50;
             powerups.splice(i, 1);
+            
+            // Som de coleta de power-up
+            playSound('powerup', 800, 200);
         }
     }
 }
@@ -1305,6 +1514,9 @@ function drawEnemies() {
     const time = Date.now() * 0.008;
     
     for (const enemy of enemies) {
+        // === DESENHAR ÁTOMOS ORBITANTES PRIMEIRO (ATRÁS DO INIMIGO) ===
+        drawEnemyAtoms(enemy);
+        
         // Efeito cyberpunk piscante para os inimigos
         const glowIntensity = Math.sin(time * 2 + enemy.x * 0.01) * 0.3 + 0.7;
         const pulseIntensity = Math.sin(time * 4 + enemy.y * 0.01) * 0.2 + 0.8;
@@ -1380,6 +1592,67 @@ function drawEnemies() {
             ctx.restore();
         }
     }
+}
+
+// === NOVA FUNÇÃO: DESENHAR ÁTOMOS ORBITANTES ===
+function drawEnemyAtoms(enemy) {
+    if (!enemy.atomOrbs.initialized || enemy.atomOrbs.orbs.length === 0) return;
+    
+    const time = Date.now() * 0.005;
+    
+    ctx.save();
+    
+    for (let orb of enemy.atomOrbs.orbs) {
+        // Configurar estilo do átomo
+        ctx.globalAlpha = orb.alpha;
+        ctx.fillStyle = orb.color;
+        
+        // Efeito glow nos átomos
+        ctx.shadowColor = orb.color;
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Desenhar o átomo (esfera)
+        ctx.beginPath();
+        ctx.arc(orb.x, orb.y, orb.currentSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Núcleo do átomo (mais brilhante)
+        ctx.globalAlpha = orb.alpha * 1.5;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(orb.x, orb.y, orb.currentSize * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Trilha da órbita (linha semi-transparente)
+        if (orb === enemy.atomOrbs.orbs[0]) { // Só desenha uma trilha por inimigo
+            ctx.globalAlpha = 0.1;
+            ctx.strokeStyle = enemy.type === 'robot' ? '#00FFFF' : '#FF4040';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            
+            const centerX = enemy.x + enemy.size / 2;
+            const centerY = enemy.y + enemy.size / 2;
+            
+            // Desenhar órbita elíptica
+            for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
+                const radius = orb.radius * (1 + orb.orbit.eccentricity * Math.cos(angle * 2));
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius * Math.cos(orb.orbit.tiltAngle);
+                
+                if (angle === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+    
+    ctx.restore();
 }
 
 // Desenhar power-ups
@@ -1476,6 +1749,10 @@ function drawHUD() {
     // Level
     ctx.fillText(`LEVEL: ${gameState.level}`, 600, 20);
     
+    // Status do som
+    ctx.fillStyle = gameAudio.enabled ? '#00FF00' : '#FF4444';
+    ctx.fillText(`🔊 SOM: ${gameAudio.enabled ? 'ON' : 'OFF'}`, 600, 40);
+    
     // Cooldown de tiro (só mostra se tem arma)
     if (shootCooldown > 0 && weaponType !== 'none') {
         ctx.fillStyle = 'yellow';
@@ -1567,6 +1844,10 @@ function spawnEnemies() {
     const newLevel = Math.floor(gameState.score / 1000) + 1;
     if (newLevel > gameState.level) {
         gameState.level = newLevel;
+        
+        // Som de level up
+        playSound('levelUp', 700, 600);
+        
         // Poder ser adicionar efeitos visuais de level up
     }
 }
@@ -1890,6 +2171,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fullscreenBtn) {
         fullscreenBtn.addEventListener('click', toggleFullscreen);
     }
+    
+    // Inicializar sistema de sons
+    initializeSounds();
     
     // Redimensionar canvas inicialmente
     resizeCanvas();
