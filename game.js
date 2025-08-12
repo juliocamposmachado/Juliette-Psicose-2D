@@ -542,9 +542,10 @@ function checkPlatformCollisions() {
         }
     }
     
-    // Verifica colisão com o chão
-    if (posY + playerRect.height >= groundLevel) {
-        posY = groundLevel - playerRect.height;
+    // Verifica colisão com o chão (usando valor dinâmico)
+    const currentGroundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    if (posY + playerRect.height >= currentGroundLevel) {
+        posY = currentGroundLevel - playerRect.height;
         velocityY = 0;
         onGround = true;
     }
@@ -1702,29 +1703,43 @@ function resizeCanvas() {
 
 // Função para posicionar jogador no solo
 function positionPlayerOnGround() {
-    const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
-    posY = groundLevel - (frameHeight * scale);
+    // Recalcular o nível do chão com base na altura atual do canvas
+    const newGroundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    posY = newGroundLevel - (frameHeight * scale);
     onGround = true;
     velocityY = 0;
+    
+    console.log(`Reposicionando jogador: Canvas Height: ${CANVAS_HEIGHT}, Ground Level: ${newGroundLevel}, Player Y: ${posY}`);
 }
 
 // Atualizar elementos do jogo após redimensionamento
 function updateGameElementsForResize() {
+    // Recalcular o nível do chão baseado na nova altura
+    const newGroundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    
     // Posicionar jogador no solo após redimensionamento
     positionPlayerOnGround();
     
-    // Atualizar plataformas para nova altura
-    const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    // Atualizar todas as plataformas para nova altura
     for (let platform of platforms) {
         if (platform.type === 'ground') {
-            platform.y = groundLevel + (frameHeight * scale);
+            // Plataforma do chão deve estar logo abaixo do nível do solo
+            platform.y = newGroundLevel + (frameHeight * scale);
             platform.width = CANVAS_WIDTH * 3; // Expandir plataforma principal
         } else {
-            // Manter plataformas proporcionais à nova altura
-            const heightRatio = platform.y / 600; // 600 era a altura original
-            platform.y = CANVAS_HEIGHT * heightRatio;
+            // Manter plataformas proporcionais à nova altura, mas ajustar baseado no novo chão
+            const originalHeight = 600; // Altura original de referência
+            const originalGroundLevel = originalHeight - (frameHeight * scale) - 20;
+            
+            // Calcular a distância relativa da plataforma ao chão original
+            const distanceFromOriginalGround = originalGroundLevel - platform.y;
+            
+            // Aplicar a mesma distância relativa ao novo chão
+            platform.y = newGroundLevel - distanceFromOriginalGround;
         }
     }
+    
+    console.log(`Elementos atualizados para nova altura: ${CANVAS_HEIGHT}, Novo nível do chão: ${newGroundLevel}`);
 }
 
 // Event listeners para redimensionamento
