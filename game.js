@@ -1,9 +1,9 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Configurações da tela 800x600
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+// Configurações da tela adaptável
+let CANVAS_WIDTH = 800;  // Valor inicial, será atualizado
+let CANVAS_HEIGHT = 600; // Valor inicial, será atualizado
 
 const frameWidth = 48;
 const frameHeight = 64;
@@ -132,7 +132,7 @@ let currentAnim = 'idle_noweapon';  // Começa parado SEM ARMA
 let frameIndex = 0;
 let frameCounter = 0;
 let posX = 100;
-let posY = CANVAS_HEIGHT - (frameHeight * scale) - 100;
+let posY = 0; // Será calculado dinamicamente
 let moving = false;
 let attacking = false;
 let facingRight = true;
@@ -334,39 +334,82 @@ function shoot() {
     const playerCenterX = posX + (frameWidth * scale) / 2;
     const playerCenterY = posY + (frameHeight * scale) / 2;
     
+    // Determinar direção do tiro baseado nas teclas pressionadas
+    let shootDirection = getShootDirection();
+    
     switch(weaponType) {
         case 'normal':
-            createBullet(playerCenterX, playerCenterY, facingRight ? weapon.speed : -weapon.speed, 0, weapon);
+            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
             break;
             
         case 'spread':
-            // Tiro triplo como no Contra
-            createBullet(playerCenterX, playerCenterY, facingRight ? weapon.speed : -weapon.speed, 0, weapon);
-            createBullet(playerCenterX, playerCenterY, facingRight ? weapon.speed : -weapon.speed, -2, weapon);
-            createBullet(playerCenterX, playerCenterY, facingRight ? weapon.speed : -weapon.speed, 2, weapon);
+            // Tiro triplo como no Contra, mas com direção
+            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
+            // Tiros adicionais com pequeno ângulo
+            createDirectionalBullet(playerCenterX, playerCenterY, 
+                { angle: shootDirection.angle + 15, speed: shootDirection.speed }, weapon);
+            createDirectionalBullet(playerCenterX, playerCenterY, 
+                { angle: shootDirection.angle - 15, speed: shootDirection.speed }, weapon);
             break;
             
         case 'laser':
-            createBullet(playerCenterX, playerCenterY, facingRight ? weapon.speed : -weapon.speed, 0, weapon, 'laser');
+            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'laser');
             break;
             
         case 'machine':
-            createBullet(playerCenterX, playerCenterY, facingRight ? weapon.speed : -weapon.speed, 0, weapon);
+            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
             break;
     }
     
-    // Tiro diagonal se pressionar seta para cima/baixo
-    if (keys['ArrowUp']) {
-        createBullet(playerCenterX, playerCenterY, 
-                    facingRight ? weapon.speed * 0.7 : -weapon.speed * 0.7, 
-                    -weapon.speed * 0.7, weapon);
-    } else if (keys['ArrowDown']) {
-        createBullet(playerCenterX, playerCenterY, 
-                    facingRight ? weapon.speed * 0.7 : -weapon.speed * 0.7, 
-                    weapon.speed * 0.7, weapon);
+    shootCooldown = weapon.cooldown;
+}
+
+// Função para determinar direção do tiro baseado nas teclas
+function getShootDirection() {
+    const baseSpeed = weapons[weaponType].speed;
+    
+    // Direções transversais perfeitas (45°)
+    if (keys['ArrowUp'] && keys['ArrowRight']) {
+        return { angle: -45, speed: baseSpeed }; // Nordeste
+    }
+    if (keys['ArrowUp'] && keys['ArrowLeft']) {
+        return { angle: -135, speed: baseSpeed }; // Noroeste
+    }
+    if (keys['ArrowDown'] && keys['ArrowRight']) {
+        return { angle: 45, speed: baseSpeed }; // Sudeste
+    }
+    if (keys['ArrowDown'] && keys['ArrowLeft']) {
+        return { angle: 135, speed: baseSpeed }; // Sudoeste
     }
     
-    shootCooldown = weapon.cooldown;
+    // Direções cardeais
+    if (keys['ArrowUp']) {
+        return { angle: -90, speed: baseSpeed }; // Norte
+    }
+    if (keys['ArrowDown']) {
+        return { angle: 90, speed: baseSpeed }; // Sul
+    }
+    if (keys['ArrowLeft']) {
+        return { angle: 180, speed: baseSpeed }; // Oeste
+    }
+    if (keys['ArrowRight']) {
+        return { angle: 0, speed: baseSpeed }; // Leste
+    }
+    
+    // Direção padrão (horizontal baseado na direção que está olhando)
+    return { 
+        angle: facingRight ? 0 : 180, 
+        speed: baseSpeed 
+    };
+}
+
+// Criar bala com direção específica
+function createDirectionalBullet(x, y, direction, weapon, type = 'normal') {
+    const angleRad = (direction.angle * Math.PI) / 180;
+    const vx = Math.cos(angleRad) * direction.speed;
+    const vy = Math.sin(angleRad) * direction.speed;
+    
+    createBullet(x, y, vx, vy, weapon, type);
 }
 
 // Criar bala
@@ -1215,7 +1258,8 @@ function drawControlsPanel() {
     
     // Coluna 1 - Controles básicos
     ctx.fillText('⬅️➡️ Mover | Z: Pular | X/SPACE: Atirar', 10, startY);
-    ctx.fillText('⬆️+X: Tiro para cima | ⬇️: Agachar', 10, startY + 15);
+    ctx.fillText('⬆️+X: Tiro para cima | ⬇️+X: Tiro para baixo', 10, startY + 15);
+    ctx.fillText('↗️↖️↘️↙️+X: Tiros transversais 45°', 10, startY + 30);
     
     // Coluna 2 - Ataques especiais
     ctx.fillStyle = '#FF6B6B';
@@ -1390,11 +1434,14 @@ function restartGame() {
     gameState.gameOver = false;
     
     // Resetar jogador
-    currentAnim = 'idle';
+    currentAnim = 'idle_noweapon';
     frameIndex = 0;
     frameCounter = 0;
     posX = 100;
-    posY = CANVAS_HEIGHT - (frameHeight * scale) - 100;
+    
+    // Posicionar jogador no solo usando a nova função
+    positionPlayerOnGround();
+    
     moving = false;
     attacking = false;
     facingRight = true;
@@ -1403,10 +1450,6 @@ function restartGame() {
     weaponType = 'normal';
     invulnerable = false;
     invulnerableTime = 0;
-    
-    // Resetar física
-    velocityY = 0;
-    onGround = true;
     
     // Resetar cenário
     backgroundX = 0;
@@ -1499,10 +1542,83 @@ document.addEventListener('fullscreenchange', () => {
     }
 });
 
-// Inicializar botão de tela cheia quando DOM carregar
+// === SISTEMA DE REDIMENSIONAMENTO AUTOMÁTICO ===
+function resizeCanvas() {
+    // Obter dimensões da janela
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Calcular proporção adequada mantendo aspect ratio 4:3
+    const aspectRatio = 4 / 3;
+    let newWidth, newHeight;
+    
+    if (windowWidth / windowHeight > aspectRatio) {
+        // Janela é mais larga que a proporção desejada
+        newHeight = Math.floor(windowHeight * 0.95); // 95% da altura da janela
+        newWidth = Math.floor(newHeight * aspectRatio);
+    } else {
+        // Janela é mais alta que a proporção desejada
+        newWidth = Math.floor(windowWidth * 0.95); // 95% da largura da janela
+        newHeight = Math.floor(newWidth / aspectRatio);
+    }
+    
+    // Definir tamanhos mínimos
+    newWidth = Math.max(newWidth, 600);
+    newHeight = Math.max(newHeight, 450);
+    
+    // Atualizar as dimensões do canvas
+    CANVAS_WIDTH = newWidth;
+    CANVAS_HEIGHT = newHeight;
+    
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    
+    // Reposicionar elementos que dependem das dimensões
+    updateGameElementsForResize();
+    
+    console.log(`Canvas redimensionado para: ${CANVAS_WIDTH}x${CANVAS_HEIGHT}`);
+}
+
+// Função para posicionar jogador no solo
+function positionPlayerOnGround() {
+    const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    posY = groundLevel - (frameHeight * scale);
+    onGround = true;
+    velocityY = 0;
+}
+
+// Atualizar elementos do jogo após redimensionamento
+function updateGameElementsForResize() {
+    // Posicionar jogador no solo após redimensionamento
+    positionPlayerOnGround();
+    
+    // Atualizar plataformas para nova altura
+    const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    for (let platform of platforms) {
+        if (platform.type === 'ground') {
+            platform.y = groundLevel + (frameHeight * scale);
+            platform.width = CANVAS_WIDTH * 3; // Expandir plataforma principal
+        } else {
+            // Manter plataformas proporcionais à nova altura
+            const heightRatio = platform.y / 600; // 600 era a altura original
+            platform.y = CANVAS_HEIGHT * heightRatio;
+        }
+    }
+}
+
+// Event listeners para redimensionamento
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', () => {
+    setTimeout(resizeCanvas, 100); // Pequeno delay para orientação mudar completamente
+});
+
+// Inicializar botão de tela cheia e redimensionamento quando DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     if (fullscreenBtn) {
         fullscreenBtn.addEventListener('click', toggleFullscreen);
     }
+    
+    // Redimensionar canvas inicialmente
+    resizeCanvas();
 });
