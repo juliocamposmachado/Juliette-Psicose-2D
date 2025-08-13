@@ -184,11 +184,12 @@ canvas {
     border-color: #999;
 }
 
-/* === BOTÃO TELA CHEIA MOBILE === */
+/* === BOTÃO TELA CHEIA MOBILE - CENTRALIZADO === */
 .mobile-fullscreen-btn {
     position: fixed;
     top: 8px;
-    right: 8px;
+    left: 50%;
+    transform: translateX(-50%);
     background: linear-gradient(135deg, #1a1a2e, #16213e);
     color: #fff;
     border: 1px solid #555;
@@ -201,7 +202,7 @@ canvas {
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     z-index: 9998;
-    width: 70px;
+    width: 90px;
     height: 35px;
     text-align: center;
     backdrop-filter: blur(5px);
@@ -219,7 +220,7 @@ canvas {
     background: linear-gradient(135deg, #2a2a4e, #26315e);
     border-color: #777;
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
-    transform: scale(1.05);
+    transform: translateX(-50%) scale(1.05);
     opacity: 1;
 }
 
@@ -229,29 +230,32 @@ canvas {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
-/* === BOTÃO FECHAR GUIA MOBILE === */
+/* === BOTÃO FECHAR GUIA MOBILE - CENTRALIZADO E PISCANTE === */
 .mobile-close-guide-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
+    position: fixed;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
     background: linear-gradient(135deg, #dc2626, #991b1b);
     color: #fff;
     border: 1px solid #b91c1c;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
+    border-radius: 8px;
+    width: 140px;
+    height: 40px;
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    z-index: 1002;
+    z-index: 10002;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     opacity: 0.9;
+    /* Efeito piscante */
+    animation: blinkingButton 1.5s infinite;
 }
 
 .mobile-close-guide-btn:hover,
@@ -259,12 +263,30 @@ canvas {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     border-color: #dc2626;
     box-shadow: 0 3px 10px rgba(220, 38, 38, 0.4);
-    transform: scale(1.1);
+    transform: translateX(-50%) scale(1.1);
     opacity: 1;
+    animation: none; /* Para animação quando hover */
 }
 
 .mobile-close-guide-btn:active {
-    transform: scale(0.95);
+    transform: translateX(-50%) scale(0.95);
+}
+
+/* === ANIMAÇÃO PISCANTE PARA BOTÃO FECHAR GUIA === */
+@keyframes blinkingButton {
+    0% {
+        opacity: 0.9;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.6);
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    100% {
+        opacity: 0.9;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
 }
 
 /* === MELHORIAS PARA DISPOSITIVOS TOUCH === */
@@ -276,13 +298,13 @@ canvas {
     }
     
     .mobile-fullscreen-btn {
-        width: 80px;
+        width: 100px;
         height: 44px;
         font-size: 12px;
     }
     
     .mobile-close-guide-btn {
-        width: 44px;
+        width: 160px;
         height: 44px;
         font-size: 16px;
     }
