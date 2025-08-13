@@ -1100,18 +1100,29 @@ function drawBackground() {
     // Calcula quantas repetições do fundo são necessárias
     const numRepeats = Math.ceil(CANVAS_WIDTH / bgWidth) + 2;
     
+    // Calcular onde começa o piso para posicionar o "fundo 2d melhor" acima
+    const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
+    const backgroundLayerHeight = groundLevel; // Altura da camada de fundo (até o piso)
+    
     for (let i = -1; i < numRepeats; i++) {
         const x = (backgroundX % bgWidth) + (i * bgWidth);
         
-        // Desenha a cena como fundo
+        // Desenha a cena01 como primeiro plano (com menos transparência)
         if (sceneImg.complete) {
+            ctx.globalAlpha = 0.9; // Diminuir transparência (era 1.0)
             ctx.drawImage(sceneImg, x, 0, bgWidth, bgHeight);
+            ctx.globalAlpha = 1.0;
         }
         
-        // Sobrepõe o fundo 2D se disponível
+        // Sobrepõe o "fundo 2d melhor" apenas acima do piso
         if (backgroundImg.complete) {
-            ctx.globalAlpha = 0.7;
-            ctx.drawImage(backgroundImg, x, 0, bgWidth, bgHeight);
+            ctx.globalAlpha = 0.8; // Aumentar um pouco a transparência desta camada
+            // Desenhar apenas a parte que fica acima do piso
+            ctx.drawImage(
+                backgroundImg, 
+                0, 0, backgroundImg.width, backgroundImg.height, // Fonte completa
+                x, 0, bgWidth, backgroundLayerHeight // Destino: da posição x, y=0, até o nível do piso
+            );
             ctx.globalAlpha = 1.0;
         }
     }
