@@ -5504,10 +5504,10 @@ function initializeMobileGuide() {
     
     // Botão para fechar guia
     if (guideCloseBtn) {
-        guideCloseBtn.addEventListener('click', closeMobileGuide);
+        guideCloseBtn.addEventListener('click', closeMobileGuideCompletely);
         guideCloseBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            closeMobileGuide();
+            closeMobileGuideCompletely();
         }, { passive: false });
     }
     
