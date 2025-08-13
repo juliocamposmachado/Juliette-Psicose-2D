@@ -135,20 +135,30 @@ Juliette_Psicose_2D/
 - **Cronômetros**: Fase, escudo e tempo de jogo
 - **Barras Visuais**: Energia e escudo com cores dinâmicas
 
-### 📱 Sistema de Responsividade Avançada
+### 📱 Sistema de Responsividade Ultra-Avançada
 - **Detecção Inteligente**: User Agent + Dimensões + Pixel Ratio + Touch
 - **Breakpoints Dinâmicos**: Mobile (768px), Tablet (1024px), Desktop (1440px+)
 - **Canvas Adaptativo**: Redimensiona automaticamente para qualquer tela
 - **Orientação Automática**: Portrait/Landscape com reposicionamento
-- **Aspect Ratio**: Mantém proporções ideais em qualquer dispositivo
+- **Aspect Ratio Flexível**: Adapta-se perfeitamente a qualquer dispositivo
+- **🆕 Tela Cheia Mobile**: 100% viewport sem barras pretas em mobile/tablet
+- **🆕 Safe-Area Support**: Compatibilidade com notch de iPhone e bordas
+- **🆕 Dynamic Viewport**: Altura dinâmica (100dvh) para navegadores mobile
+- **🆕 PWA Aprimorado**: Orientação flexível e instalação otimizada
+- **🆕 Detecção Condicional**: Interface adapta elementos por tipo de dispositivo
 
-### 📲 Interface Móvel Completa
+### 📲 Interface Móvel Ultra-Completa
 - **Controles Touch**: D-Pad virtual + botões de ação responsivos
 - **Feedback Háptico**: Vibração em dispositivos suportados
 - **Guia Interativo**: Painel deslizante com gestos touch
 - **Estados Visuais**: Botões com animações press/release
 - **Prevenção de Zoom**: Bloqueia gestos indesejados do navegador
 - **Toggle de Visibilidade**: Controles ocultáveis para mais tela
+- **🆕 Fullscreen Nativo**: Usa 100% da tela disponível sem bordas
+- **🆕 Elementos Condicionais**: Interface desktop oculta automaticamente
+- **🆕 Object-Fit Cover**: Preenchimento total da tela sem distorções
+- **🆕 Notch Compatibility**: Suporte para iPhone X+ e dispositivos similares
+- **🆕 PWA Standalone**: Experiência de app nativo quando instalado
 
 ### 🎯 Recursos do Guia Móvel
 - **📋 Expansão por Toque**: Clique/toque no cabeçalho para abrir
@@ -244,7 +254,19 @@ python process_sprites.py
 
 ## 🕰️ Versionamento e Updates
 
-### ✨ **Última Atualização**: Sistema de Controles Arrastáveis Individuais
+### ✨ **Última Atualização**: Tela Cheia Mobile sem Barras Pretas + PWA Aprimorado
+- 📱 **Fullscreen Mobile Total**: Uso de 100% da viewport disponível em mobile/tablet
+- 🎯 **Detecção Inteligente Dispositivos**: Diferenciação automática mobile vs desktop
+- 🖥️ **Elementos Desktop Condicionais**: Interface adapta-se automaticamente ao dispositivo
+- 📏 **Object-Fit Adaptativo**: Cover em mobile, contain em desktop
+- 🌐 **PWA Otimizado**: Orientação flexível e meta tags aprimoradas
+- 🔧 **Safe-Area Support**: Compatibilidade com notch e bordas arredondadas
+- 📱 **Dynamic Viewport**: Altura dinâmica (100dvh) para mobile moderno
+- ⚡ **Performance Mobile**: Otimizações específicas para dispositivos móveis
+- 🎨 **Interface Responsiva**: Canvas sem distorções em qualquer resolução
+- 🔄 **Auto-Adaptação**: Transições suaves entre orientações
+
+### 🔥 **Atualização Anterior**: Sistema de Controles Arrastáveis Individuais
 - 🎯 **Drag & Drop Avançado**: Cada controle pode ser reposicionado livremente na tela
 - 💾 **Persistência Inteligente**: Posições salvas no localStorage entre sessões
 - 📳 **Feedback Háptico Premium**: Vibração precisa em cada interação
