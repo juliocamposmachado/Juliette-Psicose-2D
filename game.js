@@ -271,9 +271,22 @@ let playerSpeed = 4;
 let playerHealth = 100;
 let canShoot = true;
 let shootCooldown = 0;
-let weaponType = 'none'; // none, normal, spread, laser, machine
+let weaponType = 'none'; // none, normal, spread, laser, machine, plasma, storm, nuclear
 let invulnerable = false;
 let invulnerableTime = 0;
+
+// === NOVO SISTEMA DE ESCUDO ===
+let shieldActive = true; // NOVO: Começa com escudo ativo
+let shieldEnergy = 100;
+let shieldMaxEnergy = 100;
+let shieldRegenRate = 0.5;
+let shieldCooldown = 0;
+let shieldEffects = [];
+let shieldHitEffects = [];
+// === ESCUDO INICIAL ===
+let initialShieldActive = true; // Escudo especial inicial
+let initialShieldDuration = 3600; // 60 segundos * 60 frames = 3600 frames
+let initialShieldTimer = 3600; // Cronômetro regressivo
 
 // === NOVAS VARIÁVEIS PARA ANIMAÇÕES ESPECIAIS ===
 let specialAnimTimer = 0;  // Timer para animações especiais
@@ -324,12 +337,44 @@ const platforms = [
     { x: 1500, y: groundLevel - 160, width: 100, height: 20, type: 'platform' }
 ];
 
-// Configurações de armas (inspirado no Contra)
+// Configurações de armas (inspirado no Contra) - SISTEMA PROGRESSIVO
 const weapons = {
-    normal: { damage: 20, speed: 8, cooldown: 10, color: '#ffff00' },
-    spread: { damage: 15, speed: 7, cooldown: 8, color: '#ff4444' },
-    laser: { damage: 30, speed: 12, cooldown: 15, color: '#44ff44' },
-    machine: { damage: 12, speed: 10, cooldown: 4, color: '#4444ff' }
+    normal: { 
+        damage: 20, speed: 8, cooldown: 10, color: '#ffff00',
+        description: 'Tiro Normal',
+        bulletSize: 4, bulletCount: 1
+    },
+    spread: { 
+        damage: 18, speed: 9, cooldown: 8, color: '#ff4444',
+        description: 'Tiro Triplo Expandido', 
+        bulletSize: 5, bulletCount: 3, spreadAngle: 25
+    },
+    laser: { 
+        damage: 35, speed: 14, cooldown: 12, color: '#44ff44',
+        description: 'Laser Penetrante',
+        bulletSize: 8, bulletCount: 1, piercing: true
+    },
+    machine: { 
+        damage: 15, speed: 12, cooldown: 3, color: '#4444ff',
+        description: 'Metralhadora Rápida',
+        bulletSize: 3, bulletCount: 2
+    },
+    // === NOVAS ARMAS PROGRESSIVAS ===
+    plasma: {
+        damage: 45, speed: 16, cooldown: 15, color: '#ff00ff',
+        description: 'Plasma Devastador',
+        bulletSize: 10, bulletCount: 1, explosive: true
+    },
+    storm: {
+        damage: 25, speed: 11, cooldown: 6, color: '#00ffff', 
+        description: 'Tempestade de Projéteis',
+        bulletSize: 4, bulletCount: 5, spreadAngle: 40
+    },
+    nuclear: {
+        damage: 80, speed: 10, cooldown: 25, color: '#ffff00',
+        description: 'Núcleo Atômico',
+        bulletSize: 15, bulletCount: 1, explosive: true, piercing: true
+    }
 };
 
 // Variáveis da animação do cenário
@@ -453,7 +498,15 @@ document.addEventListener('keydown', e => {
         }
     }
     
-    // === CHEAT CODES PARA TESTE ===
+    // === CONTROLE DO ESCUDO ===
+    if (e.code === 'KeyD') {
+        // Ativar escudo
+        if (shieldEnergy > 20 && shieldCooldown === 0) {
+            activateShield();
+        }
+    }
+    
+    // === CHEAT CODES PARA TESTE - ARMAS PROGRESSIVAS ===
     if (e.code === 'Digit1') {
         weaponType = 'normal';
     }
@@ -466,6 +519,15 @@ document.addEventListener('keydown', e => {
     if (e.code === 'Digit4') {
         weaponType = 'machine';
     }
+    if (e.code === 'Digit5') {
+        weaponType = 'plasma';
+    }
+    if (e.code === 'Digit6') {
+        weaponType = 'storm';
+    }
+    if (e.code === 'Digit7') {
+        weaponType = 'nuclear';
+    }
 });
 
 document.addEventListener('keyup', e => {
@@ -477,6 +539,10 @@ document.addEventListener('keyup', e => {
     }
     if (e.code === 'Space') {
         attacking = false;
+    }
+    if (e.code === 'KeyD') {
+        // Desativar escudo
+        deactivateShield();
     }
 });
 
@@ -504,19 +570,20 @@ function shoot() {
     // === NOVO: SISTEMA DE ANIMAÇÃO INTELIGENTE BASEADO NO ÂNGULO ===
     triggerShootAnimation(shootDirection.angle);
     
+    // === NOVO SISTEMA DE TIROS PROGRESSIVOS ===
     switch(weaponType) {
         case 'normal':
             createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
             break;
             
         case 'spread':
-            // Tiro triplo como no Contra, mas com direção
+            // Tiro triplo expandido melhorado
+            const spreadAngle = weapon.spreadAngle || 15;
             createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
-            // Tiros adicionais com pequeno ângulo
             createDirectionalBullet(playerCenterX, playerCenterY, 
-                { angle: shootDirection.angle + 15, speed: shootDirection.speed }, weapon);
+                { angle: shootDirection.angle + spreadAngle, speed: shootDirection.speed }, weapon);
             createDirectionalBullet(playerCenterX, playerCenterY, 
-                { angle: shootDirection.angle - 15, speed: shootDirection.speed }, weapon);
+                { angle: shootDirection.angle - spreadAngle, speed: shootDirection.speed }, weapon);
             break;
             
         case 'laser':
@@ -524,7 +591,29 @@ function shoot() {
             break;
             
         case 'machine':
+            // Tiros duplos da metralhadora
             createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
+            createDirectionalBullet(playerCenterX, playerCenterY, 
+                { angle: shootDirection.angle + 5, speed: shootDirection.speed }, weapon);
+            break;
+            
+        case 'plasma':
+            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'plasma');
+            break;
+            
+        case 'storm':
+            // Tempestade de 5 projéteis
+            const stormSpread = weapon.spreadAngle || 40;
+            const stormStep = stormSpread / (weapon.bulletCount - 1);
+            for (let i = 0; i < weapon.bulletCount; i++) {
+                const angle = shootDirection.angle - (stormSpread/2) + (i * stormStep);
+                createDirectionalBullet(playerCenterX, playerCenterY, 
+                    { angle: angle, speed: shootDirection.speed }, weapon, 'storm');
+            }
+            break;
+            
+        case 'nuclear':
+            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'nuclear');
             break;
     }
     
@@ -632,8 +721,14 @@ function createBullet(x, y, vx, vy, weapon, type = 'normal') {
         damage: weapon.damage,
         color: weapon.color,
         type: type,
-        size: type === 'laser' ? 8 : 4,
-        life: 120
+        size: weapon.bulletSize || 4,
+        life: 120,
+        // === PROPRIEDADES AVANÇADAS DAS BALAS ===
+        piercing: weapon.piercing || false,
+        explosive: weapon.explosive || false,
+        explosionRadius: type === 'nuclear' ? 50 : type === 'plasma' ? 30 : 0,
+        trail: [], // Para rastro visual
+        glowIntensity: Math.random() * 0.3 + 0.7
     });
 }
 
@@ -1511,6 +1606,41 @@ function checkCollisions() {
                 bullet.y < playerRect.y + playerRect.height &&
                 bullet.y + bullet.size > playerRect.y) {
                 
+                // === VERIFICAR ESCUDO PRIMEIRO ===
+                // Prioridade: Escudo inicial > Escudo normal
+                if (initialShieldActive || (shieldActive && shieldEnergy > 0)) {
+                    // Escudo absorve o tiro
+                    if (initialShieldActive) {
+                        // Escudo inicial absorve completamente
+                        bullets.splice(i, 1);
+                        
+                        // Criar efeito visual especial para escudo inicial
+                        createInitialShieldHitEffect(playerRect.x + playerRect.width/2, playerRect.y + playerRect.height/2);
+                        
+                        // Som especial do escudo inicial
+                        playSound('enemyHit', 900, 80);
+                    } else {
+                        // Escudo normal absorve com custo de energia
+                        shieldEnergy -= bullet.damage * 0.5;
+                        bullets.splice(i, 1);
+                        
+                        // Criar efeito visual do escudo sendo atingido
+                        createShieldHitEffect(playerRect.x + playerRect.width/2, playerRect.y + playerRect.height/2);
+                        
+                        // Som de escudo absorvendo
+                        playSound('enemyHit', 800, 100);
+                        
+                        // Se escudo acabou a energia, desativa
+                        if (shieldEnergy <= 0) {
+                            shieldEnergy = 0;
+                            deactivateShield();
+                            playSound('playerHit', 300, 200);
+                        }
+                    }
+                    
+                    continue; // Pular para próxima bala, esse tiro foi bloqueado
+                }
+                
                 // === NOVO SISTEMA DE RESISTÊNCIA A TIROS ===
                 gameState.hitsReceived++;
                 
@@ -1814,103 +1944,517 @@ function drawParticles() {
     }
 }
 
+// === NOVO SISTEMA DE ESCUDO AVANÇADO ===
+
+// Ativar escudo
+function activateShield() {
+    if (shieldEnergy < 20 || shieldCooldown > 0) return;
+    
+    shieldActive = true;
+    
+    // Som de ativação do escudo
+    playSound('powerup', 800, 300);
+    
+    // Criar efeitos visuais de ativação
+    createShieldActivationEffects();
+    
+    console.log('🛡️ ESCUDO ATIVADO!');
+}
+
+// Desativar escudo
+function deactivateShield() {
+    if (!shieldActive) return;
+    
+    shieldActive = false;
+    shieldCooldown = 120; // 2 segundos de cooldown
+    
+    // Som de desativação
+    playSound('enemyHit', 400, 150);
+    
+    console.log('🛡️ ESCUDO DESATIVADO!');
+}
+
+// Criar efeitos de ativação do escudo
+function createShieldActivationEffects() {
+    const centerX = posX + (frameWidth * scale) / 2;
+    const centerY = posY + (frameHeight * scale) / 2;
+    
+    // Criar partículas de energia em círculo
+    for (let i = 0; i < 20; i++) {
+        const angle = (i / 20) * Math.PI * 2;
+        const radius = 60;
+        particles.push({
+            x: centerX + Math.cos(angle) * radius,
+            y: centerY + Math.sin(angle) * radius,
+            vx: Math.cos(angle) * 3,
+            vy: Math.sin(angle) * 3,
+            life: 30,
+            color: '#00FFFF',
+            size: 3,
+            type: 'shield_activation'
+        });
+    }
+    
+    // Criar efeito de pulso central
+    particles.push({
+        x: centerX,
+        y: centerY,
+        vx: 0,
+        vy: 0,
+        life: 40,
+        color: '#FFFFFF',
+        size: 15,
+        type: 'shield_pulse'
+    });
+}
+
+// Criar efeito quando escudo é atingido
+function createShieldHitEffect(x, y) {
+    // Criar faíscas onde o escudo foi atingido
+    for (let i = 0; i < 8; i++) {
+        particles.push({
+            x: x + (Math.random() - 0.5) * 20,
+            y: y + (Math.random() - 0.5) * 20,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            life: 20,
+            color: '#FFFF00',
+            size: Math.random() * 3 + 1,
+            type: 'shield_spark'
+        });
+    }
+    
+    // Efeito de ondas no ponto de impacto
+    shieldHitEffects.push({
+        x: x,
+        y: y,
+        radius: 5,
+        maxRadius: 40,
+        life: 15,
+        alpha: 1.0
+    });
+}
+
+// Atualizar sistema de escudo
+function updateShield() {
+    // === ATUALIZAR ESCUDO INICIAL ===
+    if (initialShieldActive) {
+        initialShieldTimer--;
+        
+        if (initialShieldTimer <= 0) {
+            initialShieldActive = false;
+            initialShieldTimer = 0;
+            
+            // Som de escudo inicial acabando
+            playSound('playerHit', 400, 300);
+            console.log('🛡️ ESCUDO INICIAL EXPIRADO!');
+            
+            // Efeito visual de expiração
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: posX + (frameWidth * scale) / 2 + (Math.random() - 0.5) * 80,
+                    y: posY + (frameHeight * scale) / 2 + (Math.random() - 0.5) * 80,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 40,
+                    color: '#FFD700',
+                    size: Math.random() * 4 + 2
+                });
+            }
+        }
+    }
+    
+    // Regenerar energia do escudo quando não está sendo usado
+    if (!shieldActive && shieldEnergy < shieldMaxEnergy) {
+        shieldEnergy += shieldRegenRate;
+        if (shieldEnergy > shieldMaxEnergy) {
+            shieldEnergy = shieldMaxEnergy;
+        }
+    }
+    
+    // Diminuir energia do escudo quando ativo
+    if (shieldActive) {
+        shieldEnergy -= 0.8; // Drena energia gradualmente
+        
+        if (shieldEnergy <= 0) {
+            shieldEnergy = 0;
+            deactivateShield();
+        }
+    }
+    
+    // Diminuir cooldown
+    if (shieldCooldown > 0) {
+        shieldCooldown--;
+    }
+    
+    // Atualizar efeitos visuais do escudo
+    updateShieldEffects();
+    
+    // Atualizar efeitos de impacto
+    updateShieldHitEffects();
+}
+
+// Atualizar efeitos visuais do escudo
+function updateShieldEffects() {
+    if (!shieldActive) return;
+    
+    const centerX = posX + (frameWidth * scale) / 2;
+    const centerY = posY + (frameHeight * scale) / 2;
+    const time = Date.now() * 0.01;
+    
+    // Criar partículas orbitantes do escudo
+    if (Math.random() < 0.3) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 50 + Math.sin(time * 0.5) * 10;
+        
+        shieldEffects.push({
+            x: centerX + Math.cos(angle) * radius,
+            y: centerY + Math.sin(angle) * radius,
+            vx: Math.cos(angle + Math.PI/2) * 2,
+            vy: Math.sin(angle + Math.PI/2) * 2,
+            life: 25,
+            size: 2,
+            color: '#00FFFF',
+            alpha: 0.8
+        });
+    }
+    
+    // Atualizar partículas do escudo existentes
+    for (let i = shieldEffects.length - 1; i >= 0; i--) {
+        const effect = shieldEffects[i];
+        effect.x += effect.vx;
+        effect.y += effect.vy;
+        effect.life--;
+        effect.alpha = effect.life / 25;
+        
+        if (effect.life <= 0) {
+            shieldEffects.splice(i, 1);
+        }
+    }
+}
+
+// Atualizar efeitos de impacto no escudo
+function updateShieldHitEffects() {
+    for (let i = shieldHitEffects.length - 1; i >= 0; i--) {
+        const effect = shieldHitEffects[i];
+        effect.life--;
+        effect.radius += (effect.maxRadius - effect.radius) * 0.3;
+        effect.alpha = effect.life / 15;
+        
+        if (effect.life <= 0) {
+            shieldHitEffects.splice(i, 1);
+        }
+    }
+}
+
+// Criar efeito especial quando escudo inicial é atingido
+function createInitialShieldHitEffect(x, y) {
+    // Criar faíscas douradas onde o escudo foi atingido
+    for (let i = 0; i < 12; i++) {
+        particles.push({
+            x: x + (Math.random() - 0.5) * 30,
+            y: y + (Math.random() - 0.5) * 30,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 25,
+            color: '#FFD700',
+            size: Math.random() * 4 + 2,
+            type: 'initial_shield_spark'
+        });
+    }
+    
+    // Efeito de ondas douradas no ponto de impacto
+    shieldHitEffects.push({
+        x: x,
+        y: y,
+        radius: 8,
+        maxRadius: 50,
+        life: 20,
+        alpha: 1.0,
+        color: '#FFD700'
+    });
+}
+
+// Desenhar escudo e seus efeitos
+function drawShield() {
+    if (!shieldActive && !initialShieldActive) return;
+    
+    const centerX = posX + (frameWidth * scale) / 2;
+    const centerY = posY + (frameHeight * scale) / 2;
+    const time = Date.now() * 0.005;
+    const energyPercent = shieldEnergy / shieldMaxEnergy;
+    
+    ctx.save();
+    
+    // Determinar tipo de escudo e configurações
+    let shieldColor = [0, 255, 255]; // Ciano padrão
+    let currentRadius = 45;
+    let currentEnergy = energyPercent;
+    
+    if (initialShieldActive) {
+        shieldColor = [255, 215, 0]; // Dourado para escudo inicial
+        currentRadius = 55; // Maior para escudo inicial
+        currentEnergy = initialShieldTimer / initialShieldDuration;
+    }
+    
+    // Escudo principal - anel pulsante
+    const pulseRadius = currentRadius + Math.sin(time * 3) * 8;
+    
+    // Gradiente do escudo baseado na energia e tipo
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, pulseRadius);
+    gradient.addColorStop(0, `rgba(${shieldColor[0]}, ${shieldColor[1]}, ${shieldColor[2]}, 0)`);
+    gradient.addColorStop(0.7, `rgba(${shieldColor[0]}, ${shieldColor[1]}, ${shieldColor[2]}, ${0.4 * currentEnergy})`);
+    gradient.addColorStop(1, `rgba(${shieldColor[0]}, ${shieldColor[1]}, ${shieldColor[2]}, ${0.9 * currentEnergy})`);
+    
+    // Desenhar escudo principal
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Borda do escudo (mais espessa para escudo inicial)
+    const borderWidth = initialShieldActive ? 4 : 3;
+    ctx.strokeStyle = `rgba(${shieldColor[0]}, ${shieldColor[1]}, ${shieldColor[2]}, ${currentEnergy})`;
+    ctx.lineWidth = borderWidth;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Linhas de energia rotativas (mais para escudo inicial)
+    const numLines = initialShieldActive ? 8 : 6;
+    const lineLength = initialShieldActive ? 40 : 30;
+    
+    for (let i = 0; i < numLines; i++) {
+        const angle = (time + i * Math.PI / (numLines/2)) % (Math.PI * 2);
+        
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.7 * currentEnergy})`;
+        ctx.lineWidth = initialShieldActive ? 3 : 2;
+        ctx.beginPath();
+        ctx.moveTo(
+            centerX + Math.cos(angle) * (pulseRadius - lineLength),
+            centerY + Math.sin(angle) * (pulseRadius - lineLength)
+        );
+        ctx.lineTo(
+            centerX + Math.cos(angle) * pulseRadius,
+            centerY + Math.sin(angle) * pulseRadius
+        );
+        ctx.stroke();
+    }
+    
+    // Desenhar partículas orbitantes do escudo
+    for (const effect of shieldEffects) {
+        ctx.globalAlpha = effect.alpha;
+        ctx.fillStyle = effect.color;
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.restore();
+    
+    // Desenhar efeitos de impacto
+    drawShieldHitEffects();
+}
+
+// Desenhar efeitos de impacto no escudo
+function drawShieldHitEffects() {
+    ctx.save();
+    
+    for (const effect of shieldHitEffects) {
+        ctx.globalAlpha = effect.alpha;
+        
+        // Cor baseada no tipo (dourado para inicial, amarelo para normal)
+        const effectColor = effect.color || '#FFFF00';
+        
+        // Onda de choque
+        ctx.strokeStyle = effectColor;
+        ctx.lineWidth = effect.color ? 4 : 3; // Mais espessa para escudo inicial
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Onda secundária
+        ctx.globalAlpha = effect.alpha * 0.5;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, effect.radius * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    
+    ctx.restore();
+}
+
 // Desenhar HUD
 function drawHUD() {
     // Fundo do HUD principal
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, 60);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, CANVAS_WIDTH, 100); // Aumentado para mais espaço
     
-    // === LAYOUT CENTRALIZADO E RESPONSIVO ===
-    const hudFont = CANVAS_WIDTH > 1200 ? '16px' : '14px';
-    const hudFontBold = CANVAS_WIDTH > 1200 ? 'bold 16px Arial' : 'bold 14px Arial';
-    const margin = 20;
-    const centerX = CANVAS_WIDTH / 2;
+    // === LAYOUT REORGANIZADO E COMPACTO ===
+    const hudFontSmall = CANVAS_WIDTH > 1200 ? '11px Arial' : '10px Arial';
+    const hudFontMedium = CANVAS_WIDTH > 1200 ? '13px Arial' : '12px Arial';
+    const margin = 15;
     
-    // Calcular larguras para layout responsivo
-    const elementWidth = (CANVAS_WIDTH - margin * 2) / 5; // 5 elementos principais
-    
-    ctx.font = hudFontBold;
-    ctx.textAlign = 'center'; // Centralizar todos os textos
-    
-    // === LINHA 1 (Y=20) ===
+    // === LINHA 1 (Y=15) - INFORMAÇÕES PRINCIPAIS ===
+    ctx.font = hudFontMedium;
+    ctx.textAlign = 'left';
     
     // 1. SCORE (esquerda)
-    ctx.fillStyle = '#FFD700'; // Dourado para destaque
-    const scoreX = margin + elementWidth * 0.5;
-    ctx.fillText(`SCORE: ${gameState.score.toString().padStart(8, '0')}`, scoreX, 20);
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(`SCORE: ${gameState.score.toString().padStart(6, '0')}`, margin, 15);
     
-    // 2. LIVES (esquerda-centro)
-    ctx.fillStyle = '#FF6B6B'; // Vermelho para vidas
-    const livesX = margin + elementWidth * 1.5;
-    ctx.fillText(`VIDAS: ${gameState.lives}`, livesX, 20);
+    // 2. VIDAS
+    ctx.fillStyle = '#FF6B6B';
+    ctx.fillText(`♥ ${gameState.lives}`, margin + 140, 15);
     
-    // 3. LEVEL E FASE (centro)
-    ctx.fillStyle = '#87CEEB'; // Azul claro
-    ctx.fillText(`FASE ${gameState.currentPhase} | NÍVEL: ${gameState.level}`, centerX, 20);
+    // 3. FASE E NÍVEL (centro)
+    ctx.fillStyle = '#87CEEB';
+    const phaseText = `FASE ${gameState.currentPhase} | LV.${gameState.level}`;
+    ctx.fillText(phaseText, margin + 200, 15);
     
-    // 4. WEAPON (centro-direita)
-    ctx.fillStyle = '#98FB98'; // Verde claro
-    const weaponX = margin + elementWidth * 3.5;
-    ctx.fillText(`ARMA: ${weaponType.toUpperCase()}`, weaponX, 20);
+    // 4. ARMA (centro-direita)
+    ctx.fillStyle = '#98FB98';
+    const weaponDesc = weapons[weaponType] ? weapons[weaponType].description : 'NENHUMA';
+    const weaponText = weaponDesc.length > 15 ? weaponDesc.substring(0, 12) + '...' : weaponDesc;
+    ctx.fillText(`🔫 ${weaponText}`, CANVAS_WIDTH - 220, 15);
     
     // 5. SOM (direita)
     ctx.fillStyle = gameAudio.enabled ? '#00FF00' : '#FF4444';
-    const soundX = margin + elementWidth * 4.5;
-    ctx.fillText(`🔊 ${gameAudio.enabled ? 'ON' : 'OFF'}`, soundX, 20);
+    ctx.fillText(`🔊${gameAudio.enabled ? 'ON' : 'OFF'}`, CANVAS_WIDTH - 60, 15);
     
-    // === LINHA 2 (Y=40) - BARRA DE VIDA CENTRALIZADA ===
+    // === LINHA 2 (Y=35) - CRONÔMETROS ===
+    ctx.font = hudFontSmall;
     
-    // Calcular dimensões da barra de vida
-    const healthBarWidth = Math.min(300, CANVAS_WIDTH * 0.25); // Máximo 300px ou 25% da tela
-    const healthBarHeight = 12;
-    const healthBarX = centerX - healthBarWidth / 2;
-    const healthBarY = 30;
+    // Cronômetro para próxima fase (apenas na fase 1)
+    if (gameState.currentPhase === 1) {
+        const timeToPhase2 = Math.max(0, gameState.phase2StartTime - gameState.timeInGame);
+        const minutes = Math.floor(timeToPhase2 / 60);
+        const seconds = timeToPhase2 % 60;
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText(`⏰ FASE 2 EM: ${minutes}:${seconds.toString().padStart(2, '0')}`, margin, 35);
+    } else {
+        ctx.fillStyle = '#00FF00';
+        ctx.fillText(`✅ FASE 2 ATIVA`, margin, 35);
+    }
     
-    // Label da vida centralizado
+    // Cronômetro do escudo inicial (se ativo)
+    if (initialShieldActive) {
+        const remainingSeconds = Math.ceil(initialShieldTimer / 60);
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+        ctx.fillStyle = '#00FFFF';
+        ctx.fillText(`🛡️ ESCUDO INICIAL: ${minutes}:${seconds.toString().padStart(2, '0')}`, CANVAS_WIDTH - 180, 35);
+    }
+    
+    // === LINHA 3 (Y=55) - BARRAS DE STATUS ===
+    const centerX = CANVAS_WIDTH / 2;
+    const barWidth = Math.min(200, CANVAS_WIDTH * 0.2);
+    const barHeight = 8;
+    
+    // Barra de vida (esquerda do centro)
+    const healthBarX = centerX - barWidth - 10;
+    const healthBarY = 50;
+    
     ctx.fillStyle = 'white';
-    ctx.font = CANVAS_WIDTH > 1200 ? '12px Arial' : '10px Arial';
-    ctx.fillText('ENERGIA', centerX, healthBarY + 5);
+    ctx.font = '9px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('ENERGIA', healthBarX + barWidth/2, healthBarY - 2);
     
-    // Fundo da barra de vida (vermelha)
+    // Fundo da barra de vida
     ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
-    ctx.fillRect(healthBarX, healthBarY + 8, healthBarWidth, healthBarHeight);
+    ctx.fillRect(healthBarX, healthBarY, barWidth, barHeight);
     
-    // Barra de vida atual (verde)
+    // Barra de vida atual
     const healthPercent = playerHealth / 100;
     ctx.fillStyle = healthPercent > 0.6 ? '#00FF00' : 
                    healthPercent > 0.3 ? '#FFFF00' : '#FF0000';
-    ctx.fillRect(healthBarX, healthBarY + 8, healthBarWidth * healthPercent, healthBarHeight);
+    ctx.fillRect(healthBarX, healthBarY, barWidth * healthPercent, barHeight);
     
     // Contorno da barra de vida
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 1;
-    ctx.strokeRect(healthBarX, healthBarY + 8, healthBarWidth, healthBarHeight);
+    ctx.strokeRect(healthBarX, healthBarY, barWidth, barHeight);
     
-    // Texto da porcentagem de vida e contador de tiros
+    // Texto da vida
     ctx.fillStyle = 'white';
-    ctx.font = CANVAS_WIDTH > 1200 ? '10px Arial' : '9px Arial';
+    ctx.font = '8px Arial';
     const maxHits = gameState.currentPhase === 1 ? gameState.maxHitsPhase1 : gameState.maxHitsPhase2;
-    ctx.fillText(`${playerHealth}% | Tiros: ${gameState.hitsReceived}/${maxHits}`, centerX, healthBarY + 30);
+    ctx.fillText(`${playerHealth}% | ${gameState.hitsReceived}/${maxHits}`, healthBarX + barWidth/2, healthBarY + 15);
     
-    // === COOLDOWN DE TIRO (se ativo) ===
+    // === BARRA DE ESCUDO (direita do centro) ===
+    const shieldBarX = centerX + 10;
+    const shieldBarY = 50;
+    
+    ctx.fillStyle = '#00FFFF';
+    ctx.font = '9px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🛡️ ESCUDO', shieldBarX + barWidth/2, shieldBarY - 2);
+    
+    // Fundo da barra de escudo
+    ctx.fillStyle = 'rgba(0, 100, 100, 0.3)';
+    ctx.fillRect(shieldBarX, shieldBarY, barWidth, barHeight);
+    
+    // Barra de energia do escudo
+    const shieldPercent = shieldEnergy / shieldMaxEnergy;
+    let shieldColor = '#00FFFF';
+    
+    // Prioridade: Escudo inicial > Cooldown > Energia baixa
+    if (initialShieldActive) {
+        shieldColor = '#FFD700'; // Dourado para escudo inicial
+    } else if (shieldCooldown > 0) {
+        shieldColor = '#FF4444'; // Vermelho durante cooldown
+    } else if (shieldPercent < 0.3) {
+        shieldColor = '#FFAA00'; // Laranja quando baixa
+    }
+    
+    ctx.fillStyle = shieldColor;
+    const displayPercent = initialShieldActive ? (initialShieldTimer / initialShieldDuration) : shieldPercent;
+    ctx.fillRect(shieldBarX, shieldBarY, barWidth * displayPercent, barHeight);
+    
+    // Contorno da barra de escudo
+    ctx.strokeStyle = (shieldActive || initialShieldActive) ? '#00FFFF' : '#666666';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(shieldBarX, shieldBarY, barWidth, barHeight);
+    
+    // Status do escudo
+    ctx.fillStyle = 'white';
+    ctx.font = '8px Arial';
+    let shieldStatus = 'PRONTO';
+    if (initialShieldActive) {
+        shieldStatus = 'INICIAL ATIVO';
+    } else if (shieldActive) {
+        shieldStatus = 'ATIVO';
+    } else if (shieldCooldown > 0) {
+        shieldStatus = `CD ${Math.ceil(shieldCooldown/60)}s`;
+    } else if (shieldPercent < 0.2) {
+        shieldStatus = 'BAIXA';
+    }
+    
+    const displayPercentValue = Math.floor(displayPercent * 100);
+    ctx.fillText(`${displayPercentValue}% | ${shieldStatus}`, shieldBarX + barWidth/2, shieldBarY + 15);
+    
+    // === LINHA 4 (Y=75) - INFORMAÇÕES ADICIONAIS ===
+    ctx.font = '8px Arial';
+    ctx.textAlign = 'left';
+    
+    // Tempo de jogo
+    const gameMinutes = Math.floor(gameState.timeInGame / 60);
+    const gameSeconds = gameState.timeInGame % 60;
+    ctx.fillStyle = '#CCCCCC';
+    ctx.fillText(`⏱️ ${gameMinutes}:${gameSeconds.toString().padStart(2, '0')}`, margin, 75);
+    
+    // Cooldown de tiro (se ativo)
     if (shootCooldown > 0 && weaponType !== 'none') {
-        const cooldownBarWidth = healthBarWidth * 0.6;
-        const cooldownBarX = centerX - cooldownBarWidth / 2;
-        const cooldownBarY = healthBarY + 35;
-        
-        // Fundo do cooldown
-        ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
-        ctx.fillRect(cooldownBarX, cooldownBarY, cooldownBarWidth, 4);
-        
-        // Barra do cooldown
-        const cooldownPercent = shootCooldown / weapons[weaponType].cooldown;
+        const cooldownPercent = Math.floor((1 - shootCooldown / weapons[weaponType].cooldown) * 100);
         ctx.fillStyle = '#FFFF00';
-        ctx.fillRect(cooldownBarX, cooldownBarY, cooldownBarWidth * cooldownPercent, 4);
-        
-        // Label do cooldown
-        ctx.fillStyle = 'yellow';
-        ctx.font = '8px Arial';
-        ctx.fillText('RECARGA', centerX, cooldownBarY - 2);
+        ctx.fillText(`🔄 RECARGA: ${cooldownPercent}%`, margin + 80, 75);
+    }
+    
+    // Status do chain attack
+    if (chainAttackCooldown > 0) {
+        ctx.fillStyle = '#FF6B6B';
+        ctx.fillText(`⛓️ CD: ${Math.ceil(chainAttackCooldown/60)}s`, CANVAS_WIDTH - 100, 75);
     }
     
     // Resetar alinhamento para outros elementos
@@ -1971,7 +2515,7 @@ function drawControlsPanel() {
     ctx.fillStyle = 'white';
     ctx.fillText('A: Corrente (1 Mão)', colWidth + 10, startY + lineHeight);
     ctx.fillText('S: Corrente (2 Mãos)', colWidth + 10, startY + lineHeight * 2);
-    ctx.fillText('C: Celebração', colWidth + 10, startY + lineHeight * 3);
+    ctx.fillText('D: Escudo | C: Celebração', colWidth + 10, startY + lineHeight * 3);
     
     // Coluna 3 - Sistema (se houver espaço)
     if (numCols >= 3) {
@@ -1988,8 +2532,9 @@ function drawControlsPanel() {
         ctx.fillStyle = '#FFA500';
         ctx.fillText('🛠️ ARMAS:', colWidth * 3 + 10, startY);
         ctx.fillStyle = 'white';
-        ctx.fillText('1: Normal | 2: Spread', colWidth * 3 + 10, startY + lineHeight);
-        ctx.fillText('3: Laser | 4: Machine', colWidth * 3 + 10, startY + lineHeight * 2);
+        ctx.fillText('1-4: Básicas', colWidth * 3 + 10, startY + lineHeight);
+        ctx.fillText('5-7: Avançadas', colWidth * 3 + 10, startY + lineHeight * 2);
+        ctx.fillText('(Plasma, Storm, Nuclear)', colWidth * 3 + 10, startY + lineHeight * 3);
     }
     
     // Status na parte inferior
@@ -2138,6 +2683,7 @@ function gameLoop() {
     updatePowerups();
     updateExplosions();
     updateParticles();
+    updateShield(); // NOVO: Atualizar sistema de escudo
     
     // Spawn de inimigos
     spawnEnemies();
@@ -2182,6 +2728,9 @@ function gameLoop() {
     drawEnemies();
     drawPowerups();
     
+    // Desenhar escudo (antes do jogador para aparecer atrás)
+    drawShield();
+    
     // Desenha o jogador com efeito de invulnerabilidade
     if (invulnerable && Math.floor(Date.now() / 100) % 2) {
         // Pisca quando invulnerável
@@ -2218,6 +2767,13 @@ function restartGame() {
     frameIndex = 0;
     frameCounter = 0;
     posX = 100;
+    
+    // === RESETAR ESCUDO INICIAL ===
+    initialShieldActive = true;
+    initialShieldTimer = initialShieldDuration;
+    shieldActive = true;
+    shieldEnergy = 100;
+    shieldCooldown = 0;
     
     // Posicionar jogador no solo corretamente
     const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
