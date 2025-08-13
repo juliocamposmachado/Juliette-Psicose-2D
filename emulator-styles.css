@@ -1,0 +1,302 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: #333;
+    min-height: 100vh;
+}
+
+/* Container principal */
+.container {
+    display: flex;
+    min-height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Menu lateral */
+.docs-nav {
+    width: 280px;
+    background: #2c3e50;
+    color: white;
+    padding: 20px 0;
+    overflow-y: auto;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    list-style: none;
+}
+
+.docs-nav li {
+    margin: 0;
+    padding: 8px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.docs-nav li:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.docs-nav strong {
+    color: #3498db;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 15px;
+    display: block;
+}
+
+.docs-nav a {
+    color: #ecf0f1;
+    text-decoration: none;
+    display: block;
+    padding: 5px 0;
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.docs-nav a:hover {
+    color: #3498db;
+    transform: translateX(5px);
+    transition: all 0.3s ease;
+}
+
+.docs-nav a.active {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.separator {
+    height: 20px;
+    border-bottom: 2px solid #34495e !important;
+}
+
+/* Upload de ROM */
+#romUpload {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 2px dashed #3498db;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#romUpload:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Conteúdo principal */
+.docs-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+#console-title {
+    color: #2c3e50;
+    font-size: 28px;
+    margin-bottom: 30px;
+    text-align: center;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 10px;
+}
+
+/* Container do emulador */
+#emulator-container {
+    background: #34495e;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+#game {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 3px solid #2c3e50;
+    background: #000;
+}
+
+/* Controles */
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.control-btn {
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(45deg, #2980b9, #3498db);
+}
+
+.control-btn:active {
+    transform: translateY(1px);
+}
+
+/* Código de exemplo */
+h3 {
+    color: #2c3e50;
+    margin: 30px 0 15px 0;
+    font-size: 20px;
+    border-left: 4px solid #3498db;
+    padding-left: 15px;
+}
+
+.prettyprint {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    overflow-x: auto;
+    line-height: 1.6;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.prettyprint .tag { color: #d73a49; }
+.prettyprint .atn { color: #6f42c1; }
+.prettyprint .atv { color: #032f62; }
+.prettyprint .pln { color: #24292e; }
+.prettyprint .pun { color: #d73a49; }
+.prettyprint .str { color: #032f62; }
+.prettyprint .kwd { color: #d73a49; font-weight: bold; }
+.prettyprint .com { color: #6a737d; font-style: italic; }
+
+/* Informações de extensões e BIOS */
+#extensions-info, #bios-info {
+    background: #ecf0f1;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border-left: 4px solid #3498db;
+}
+
+#file-extensions {
+    list-style: none;
+    margin: 10px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#file-extensions li {
+    background: #3498db;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .docs-nav {
+        width: 100%;
+        height: auto;
+        position: static;
+    }
+    
+    .docs-content {
+        padding: 15px;
+    }
+    
+    #console-title {
+        font-size: 22px;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .control-btn {
+        width: 200px;
+    }
+    
+    #emulator-container div[style*="640px"] {
+        width: 100% !important;
+        max-width: 640px;
+    }
+}
+
+@media (max-width: 480px) {
+    .docs-nav {
+        padding: 10px 0;
+    }
+    
+    .docs-nav li {
+        padding: 6px 15px;
+    }
+    
+    #console-title {
+        font-size: 18px;
+    }
+    
+    #emulator-container {
+        padding: 15px;
+    }
+    
+    .control-btn {
+        padding: 10px 15px;
+        font-size: 12px;
+    }
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.docs-content {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Scrollbar personalizada */
+.docs-nav::-webkit-scrollbar {
+    width: 8px;
+}
+
+.docs-nav::-webkit-scrollbar-track {
+    background: #34495e;
+}
+
+.docs-nav::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 4px;
+}
+
+.docs-nav::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+}
