@@ -169,20 +169,22 @@ sceneImg.src = 'assets/cena01.jpg';
 
 // Sistema de animações avançado com sprites específicas
 const animations = {
-    // === ANIMAÇÕES BÁSICAS (spritesheet) ===
-    // SEM ARMA
+    // === ANIMAÇÕES BÁSICAS USANDO IMAGEM ESPECÍFICA ===
+    // SEM ARMA - USANDO "01 MAOS PARA CIMA" COMO POSE PRINCIPAL
     idle_noweapon: { 
-        type: 'spritesheet', 
-        start: 0, end: 0, speed: 60, row: 0,
-        description: 'Parada sem arma' 
+        type: 'sprite', 
+        image: 'maos_para_cima', 
+        duration: 9999999, // Duração muito longa para manter a pose
+        description: 'Parada sem arma (mãos para cima)' 
     },
     walk_noweapon: { 
-        type: 'spritesheet', 
-        start: 0, end: 0, speed: 12, row: 0,
-        description: 'Caminhada sem arma' 
+        type: 'sprite', 
+        image: 'maos_para_cima', 
+        duration: 9999999,
+        description: 'Caminhada sem arma (mãos para cima)' 
     },
     
-    // COM ARMA
+    // COM ARMA - USANDO SPRITESHEET ORIGINAL PARA ANIMAÇÕES COM ARMA
     idle_weapon: { 
         type: 'spritesheet', 
         start: 1, end: 1, speed: 60, row: 0,
@@ -288,6 +290,38 @@ let initialShieldActive = true; // Escudo especial inicial
 let initialShieldDuration = 3600; // 60 segundos * 60 frames = 3600 frames
 let initialShieldTimer = 3600; // Cronômetro regressivo
 
+// === SISTEMA DE BOMBA ===
+let bombCount = 3; // Quantidade inicial de bombas
+let maxBombs = 5; // Máximo de bombas que o jogador pode ter
+let bombCooldown = 0; // Cooldown entre usar bombas
+let bombMaxCooldown = 300; // 5 segundos de cooldown
+
+// === NOVO SISTEMA DE DISCO DE LAVA FLUTUANTE ===
+let lavaDiscActive = false; // Estado do disco de lava
+let lavaDisc = {
+    x: 0,
+    y: 0,
+    radius: 40,
+    heatIntensity: 0,
+    colorPhase: 0,
+    pulsePhase: 0,
+    particles: [],
+    floatOffset: 0,
+    active: false,
+    targetX: 0,
+    targetY: 0
+};
+
+// Estados de cores da lava (quente para muito quente)
+const lavaColors = [
+    { r: 120, g: 20, b: 0 },   // Lava escura/resfriando
+    { r: 180, g: 40, b: 0 },   // Lava média
+    { r: 255, g: 80, b: 0 },   // Lava quente (laranja)
+    { r: 255, g: 140, b: 0 },  // Lava muito quente (laranja brilhante)
+    { r: 255, g: 200, b: 20 }, // Lava extremamente quente (amarelo-laranja)
+    { r: 255, g: 255, b: 100 } // Lava incandescente (amarelo brilhante)
+];
+
 // === NOVAS VARIÁVEIS PARA ANIMAÇÕES ESPECIAIS ===
 let specialAnimTimer = 0;  // Timer para animações especiais
 let isInSpecialAnim = false;  // Flag para controlar animações especiais
@@ -345,28 +379,28 @@ const weapons = {
         bulletSize: 4, bulletCount: 1
     },
     spread: { 
-        damage: 18, speed: 9, cooldown: 8, color: '#ff4444',
+        damage: 18, speed: 9, cooldown: 8, color: '#ffff00',
         description: 'Tiro Triplo Expandido', 
         bulletSize: 5, bulletCount: 3, spreadAngle: 25
     },
     laser: { 
-        damage: 35, speed: 14, cooldown: 12, color: '#44ff44',
+        damage: 35, speed: 14, cooldown: 12, color: '#ffff00',
         description: 'Laser Penetrante',
         bulletSize: 8, bulletCount: 1, piercing: true
     },
     machine: { 
-        damage: 15, speed: 12, cooldown: 3, color: '#4444ff',
+        damage: 15, speed: 12, cooldown: 3, color: '#ffff00',
         description: 'Metralhadora Rápida',
         bulletSize: 3, bulletCount: 2
     },
     // === NOVAS ARMAS PROGRESSIVAS ===
     plasma: {
-        damage: 45, speed: 16, cooldown: 15, color: '#ff00ff',
+        damage: 45, speed: 16, cooldown: 15, color: '#ffff00',
         description: 'Plasma Devastador',
         bulletSize: 10, bulletCount: 1, explosive: true
     },
     storm: {
-        damage: 25, speed: 11, cooldown: 6, color: '#00ffff', 
+        damage: 25, speed: 11, cooldown: 6, color: '#ffff00', 
         description: 'Tempestade de Projéteis',
         bulletSize: 4, bulletCount: 5, spreadAngle: 40
     },
@@ -527,6 +561,20 @@ document.addEventListener('keydown', e => {
     }
     if (e.code === 'Digit7') {
         weaponType = 'nuclear';
+    }
+    
+    // === CONTROLE DA BOMBA ===
+    if (e.code === 'KeyB') {
+        // Ativar bomba
+        if (bombCount > 0 && bombCooldown === 0) {
+            activateBomb();
+        }
+    }
+    
+    // === NOVO CONTROLE DO DISCO DE LAVA ===
+    if (e.code === 'KeyL') {
+        // Ativar/desativar disco de lava
+        toggleLavaDisc();
     }
 });
 
@@ -983,7 +1031,7 @@ function initializeEnemyAtoms(enemy) {
 
 // Criar power-up
 function createPowerup(x, y, type = 'random') {
-    const powerupTypes = ['normal', 'spread', 'laser', 'machine', 'health', 'life'];
+    const powerupTypes = ['normal', 'spread', 'laser', 'machine', 'health', 'life', 'bomb'];
     if (type === 'random') {
         type = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
     }
@@ -1699,9 +1747,15 @@ function checkCollisions() {
                 case 'health':
                     playerHealth = Math.min(100, playerHealth + 50);
                     break;
-                case 'life':
-                    gameState.lives++;
-                    break;
+        case 'life':
+            gameState.lives++;
+            break;
+        case 'bomb':
+            // Coletar bomba (máximo 5)
+            if (bombCount < maxBombs) {
+                bombCount++;
+            }
+            break;
             }
             
             gameState.score += 50;
@@ -1716,17 +1770,52 @@ function checkCollisions() {
 // Desenhar balas
 function drawBullets() {
     for (const bullet of bullets) {
-        ctx.fillStyle = bullet.color;
-        if (bullet.type === 'laser') {
-            // Laser mais largo
-            ctx.fillRect(bullet.x - bullet.size/2, bullet.y - bullet.size/2, 
-                        bullet.size * 2, bullet.size);
-        } else {
-            // Bala normal
+        // Pular balas inimigas (mantêm cor original)
+        if (bullet.type === 'enemy') {
+            ctx.fillStyle = bullet.color;
             ctx.beginPath();
             ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
             ctx.fill();
+            continue;
         }
+        
+        // === BALAS DO JOGADOR: AMARELO COM BORDA VERMELHA ===
+        ctx.save();
+        
+        if (bullet.type === 'laser') {
+            // Laser mais largo com efeito especial
+            // Borda vermelha (mais larga)
+            ctx.fillStyle = '#FF0000'; // Vermelho para borda
+            ctx.fillRect(bullet.x - bullet.size/2 - 1, bullet.y - bullet.size/2 - 1, 
+                        bullet.size * 2 + 2, bullet.size + 2);
+            
+            // Centro amarelo
+            ctx.fillStyle = '#FFFF00'; // Amarelo para centro
+            ctx.fillRect(bullet.x - bullet.size/2, bullet.y - bullet.size/2, 
+                        bullet.size * 2, bullet.size);
+        } else {
+            // Bala normal circular com efeito amarelo/vermelho
+            
+            // Borda vermelha (círculo maior)
+            ctx.fillStyle = '#FF0000'; // Vermelho para borda
+            ctx.beginPath();
+            ctx.arc(bullet.x, bullet.y, bullet.size + 1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Centro amarelo (círculo menor)
+            ctx.fillStyle = '#FFFF00'; // Amarelo para centro
+            ctx.beginPath();
+            ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Efeito de brilho no centro (ainda menor)
+            ctx.fillStyle = '#FFFF99'; // Amarelo mais claro para brilho
+            ctx.beginPath();
+            ctx.arc(bullet.x, bullet.y, bullet.size * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.restore();
     }
 }
 
@@ -1890,6 +1979,7 @@ function drawPowerups() {
             case 'machine': ctx.fillStyle = '#4444ff'; break;
             case 'health': ctx.fillStyle = '#ff44ff'; break;
             case 'life': ctx.fillStyle = '#ffaa44'; break;
+            case 'bomb': ctx.fillStyle = '#ff0000'; break; // Vermelho para bomba
             default: ctx.fillStyle = '#ffffff';
         }
         
@@ -2033,6 +2123,327 @@ function createShieldHitEffect(x, y) {
         life: 15,
         alpha: 1.0
     });
+}
+
+// === NOVA FUNÇÃO: ATIVAR BOMBA ===
+function activateBomb() {
+    if (bombCount <= 0 || bombCooldown > 0) return;
+    
+    bombCount--;
+    bombCooldown = bombMaxCooldown;
+    
+    // Som de bomba explosiva
+    playSound('enemyDestroy', 200, 800);
+    
+    console.log(`💣 BOMBA ATIVADA! Bombas restantes: ${bombCount}`);
+    
+    // === DESTRUIR TODOS OS INIMIGOS ===
+    let enemiesDestroyed = enemies.length;
+    let scoreGained = 0;
+    
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+        
+        // Criar explosão para cada inimigo
+        createExplosion(enemy.x + enemy.size/2, enemy.y + enemy.size/2, 40);
+        
+        // Pontuação
+        scoreGained += enemy.type === 'robot' ? 200 : 100;
+        
+        // Remover inimigo
+        enemies.splice(i, 1);
+    }
+    
+    gameState.score += scoreGained;
+    
+    // === DESTRUIR TODAS AS BALAS INIMIGAS ===
+    let bulletCount = 0;
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        if (bullets[i].type === 'enemy') {
+            createExplosion(bullets[i].x, bullets[i].y, 15);
+            bullets.splice(i, 1);
+            bulletCount++;
+        }
+    }
+    
+    // === CRIAR EFEITO VISUAL DA BOMBA ===
+    createBombExplosionEffect();
+    
+    console.log(`💥 Bomba destruiu ${enemiesDestroyed} inimigos e ${bulletCount} projéteis! +${scoreGained} pontos`);
+}
+
+// === NOVO SISTEMA DE DISCO DE LAVA FLUTUANTE ===
+
+// Função para alternar disco de lava
+function toggleLavaDisc() {
+    if (lavaDisc.active) {
+        deactivateLavaDisc();
+    } else {
+        activateLavaDisc();
+    }
+}
+
+// Ativar disco de lava
+function activateLavaDisc() {
+    // Posicionar disco próximo ao jogador
+    const playerCenterX = posX + (frameWidth * scale) / 2;
+    const playerCenterY = posY + (frameHeight * scale) / 2;
+    
+    lavaDisc.active = true;
+    lavaDisc.x = playerCenterX;
+    lavaDisc.y = playerCenterY - 80; // Flutua um pouco acima do jogador
+    lavaDisc.targetX = playerCenterX;
+    lavaDisc.targetY = playerCenterY - 80;
+    lavaDisc.heatIntensity = 0;
+    lavaDisc.colorPhase = 0;
+    lavaDisc.pulsePhase = 0;
+    lavaDisc.floatOffset = 0;
+    lavaDisc.particles = [];
+    
+    // Som de ativação do disco de lava
+    playSound('powerup', 220, 600);
+    
+    console.log('🌋 DISCO DE LAVA ATIVADO!');
+    
+    // Criar efeito de ativação
+    createLavaDiscActivationEffect();
+}
+
+// Desativar disco de lava
+function deactivateLavaDisc() {
+    lavaDisc.active = false;
+    
+    // Som de desativação
+    playSound('enemyHit', 180, 400);
+    
+    console.log('🌋 DISCO DE LAVA DESATIVADO!');
+    
+    // Criar efeito de desativação
+    createLavaDiscDeactivationEffect();
+}
+
+// Criar efeito de ativação do disco de lava
+function createLavaDiscActivationEffect() {
+    const centerX = lavaDisc.x;
+    const centerY = lavaDisc.y;
+    
+    // Criar partículas de lava em espiral
+    for (let i = 0; i < 15; i++) {
+        const angle = (i / 15) * Math.PI * 2;
+        const radius = 30 + i * 3;
+        
+        particles.push({
+            x: centerX + Math.cos(angle) * radius,
+            y: centerY + Math.sin(angle) * radius,
+            vx: Math.cos(angle) * 2,
+            vy: Math.sin(angle) * 2,
+            life: 40,
+            color: '#FF4500',
+            size: Math.random() * 4 + 2,
+            type: 'lava_activation'
+        });
+    }
+}
+
+// Criar efeito de desativação do disco de lava
+function createLavaDiscDeactivationEffect() {
+    const centerX = lavaDisc.x;
+    const centerY = lavaDisc.y;
+    
+    // Criar partículas de resfriamento
+    for (let i = 0; i < 20; i++) {
+        particles.push({
+            x: centerX + (Math.random() - 0.5) * 80,
+            y: centerY + (Math.random() - 0.5) * 80,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6,
+            life: 30,
+            color: '#666666', // Cinza para lava resfriada
+            size: Math.random() * 5 + 3,
+            type: 'lava_deactivation'
+        });
+    }
+}
+
+// Atualizar disco de lava
+function updateLavaDisc() {
+    if (!lavaDisc.active) return;
+    
+    const time = Date.now() * 0.001;
+    
+    // Atualizar posição alvo (segue o jogador)
+    const playerCenterX = posX + (frameWidth * scale) / 2;
+    const playerCenterY = posY + (frameHeight * scale) / 2;
+    lavaDisc.targetX = playerCenterX;
+    lavaDisc.targetY = playerCenterY - 80;
+    
+    // Movimento suave em direção ao alvo
+    const dx = lavaDisc.targetX - lavaDisc.x;
+    const dy = lavaDisc.targetY - lavaDisc.y;
+    lavaDisc.x += dx * 0.05; // Velocidade de seguimento
+    lavaDisc.y += dy * 0.05;
+    
+    // Flutuação vertical
+    lavaDisc.floatOffset += 0.03;
+    const floatY = Math.sin(lavaDisc.floatOffset) * 8;
+    
+    // Atualizar fases de cor e pulso
+    lavaDisc.colorPhase += 0.02;
+    lavaDisc.pulsePhase += 0.05;
+    lavaDisc.heatIntensity = Math.sin(lavaDisc.pulsePhase) * 0.5 + 0.5;
+    
+    // Gerar partículas de lava
+    if (Math.random() < 0.4) {
+        const particleAngle = Math.random() * Math.PI * 2;
+        const particleRadius = lavaDisc.radius + Math.random() * 10;
+        
+        lavaDisc.particles.push({
+            x: lavaDisc.x + Math.cos(particleAngle) * particleRadius,
+            y: lavaDisc.y + Math.sin(particleAngle) * particleRadius + floatY,
+            vx: (Math.random() - 0.5) * 3,
+            vy: Math.random() * -2 - 1,
+            life: 30 + Math.random() * 20,
+            maxLife: 50,
+            size: Math.random() * 3 + 1,
+            heatLevel: Math.random()
+        });
+    }
+    
+    // Atualizar partículas de lava
+    for (let i = lavaDisc.particles.length - 1; i >= 0; i--) {
+        const particle = lavaDisc.particles[i];
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vy += 0.1; // Gravidade leve
+        particle.vx *= 0.98; // Resistência do ar
+        particle.life--;
+        
+        if (particle.life <= 0) {
+            lavaDisc.particles.splice(i, 1);
+        }
+    }
+}
+
+// Desenhar disco de lava
+function drawLavaDisc() {
+    if (!lavaDisc.active) return;
+    
+    const time = Date.now() * 0.001;
+    const centerX = lavaDisc.x;
+    const centerY = lavaDisc.y + Math.sin(lavaDisc.floatOffset) * 8;
+    
+    ctx.save();
+    
+    // Calcular cor atual baseada na intensidade de calor
+    const colorIndex = Math.floor(lavaDisc.heatIntensity * (lavaColors.length - 1));
+    const nextColorIndex = Math.min(colorIndex + 1, lavaColors.length - 1);
+    const colorMix = (lavaDisc.heatIntensity * (lavaColors.length - 1)) % 1;
+    
+    const currentColor = lavaColors[colorIndex];
+    const nextColor = lavaColors[nextColorIndex];
+    
+    // Interpolar entre cores
+    const r = Math.floor(currentColor.r + (nextColor.r - currentColor.r) * colorMix);
+    const g = Math.floor(currentColor.g + (nextColor.g - currentColor.g) * colorMix);
+    const b = Math.floor(currentColor.b + (nextColor.b - currentColor.b) * colorMix);
+    
+    // Efeito de glow pulsante
+    const glowIntensity = 0.7 + Math.sin(lavaDisc.pulsePhase * 2) * 0.3;
+    ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+    ctx.shadowBlur = 25 * glowIntensity;
+    
+    // Círculo principal do disco (núcleo)
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, lavaDisc.radius);
+    gradient.addColorStop(0, `rgba(255, 255, 200, ${0.9 * glowIntensity})`);
+    gradient.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, ${0.8 * glowIntensity})`);
+    gradient.addColorStop(0.7, `rgba(${Math.floor(r * 0.8)}, ${Math.floor(g * 0.8)}, ${Math.floor(b * 0.8)}, ${0.6 * glowIntensity})`);
+    gradient.addColorStop(1, `rgba(${Math.floor(r * 0.5)}, ${Math.floor(g * 0.5)}, ${Math.floor(b * 0.5)}, ${0.3 * glowIntensity})`);
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, lavaDisc.radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Linhas de energia rotativas no disco
+    const numLines = 8;
+    for (let i = 0; i < numLines; i++) {
+        const angle = (time * 2 + (i / numLines) * Math.PI * 2) % (Math.PI * 2);
+        const lineLength = lavaDisc.radius * 0.7;
+        
+        ctx.strokeStyle = `rgba(255, 255, 100, ${0.6 * glowIntensity})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(
+            centerX + Math.cos(angle) * lineLength,
+            centerY + Math.sin(angle) * lineLength
+        );
+        ctx.stroke();
+    }
+    
+    // Anel externo pulsante
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${glowIntensity})`;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, lavaDisc.radius + 5 + Math.sin(lavaDisc.pulsePhase * 3) * 3, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Desenhar partículas de lava
+    for (const particle of lavaDisc.particles) {
+        const alpha = particle.life / particle.maxLife;
+        const heatColor = lavaColors[Math.floor(particle.heatLevel * (lavaColors.length - 1))];
+        
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = `rgb(${heatColor.r}, ${heatColor.g}, ${heatColor.b})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Texto flutuante indicando o disco
+    ctx.globalAlpha = 0.8 + Math.sin(time * 3) * 0.2;
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🌋 LAVA', centerX, centerY - lavaDisc.radius - 15);
+    
+    ctx.restore();
+}
+
+// Criar efeito visual da bomba
+function createBombExplosionEffect() {
+    const centerX = CANVAS_WIDTH / 2;
+    const centerY = CANVAS_HEIGHT / 2;
+    
+    // Criar múltiplas ondas de explosão
+    for (let wave = 0; wave < 5; wave++) {
+        setTimeout(() => {
+            // Criar partículas em círculo para cada onda
+            for (let i = 0; i < 30; i++) {
+                const angle = (i / 30) * Math.PI * 2;
+                const radius = 100 + wave * 50;
+                
+                particles.push({
+                    x: centerX + Math.cos(angle) * radius,
+                    y: centerY + Math.sin(angle) * radius,
+                    vx: Math.cos(angle) * (8 + wave * 2),
+                    vy: Math.sin(angle) * (8 + wave * 2),
+                    life: 40 - wave * 5,
+                    color: wave % 2 === 0 ? '#FF4444' : '#FFFF44',
+                    size: Math.random() * 6 + 4
+                });
+            }
+            
+            // Criar explosões grandes em pontos aleatórios
+            for (let i = 0; i < 8; i++) {
+                createExplosion(
+                    Math.random() * CANVAS_WIDTH,
+                    Math.random() * CANVAS_HEIGHT,
+                    60 + Math.random() * 40
+                );
+            }
+        }, wave * 100); // Delay entre ondas
+    }
 }
 
 // Atualizar sistema de escudo
@@ -2313,11 +2724,15 @@ function drawHUD() {
     const phaseText = `FASE ${gameState.currentPhase} | LV.${gameState.level}`;
     ctx.fillText(phaseText, margin + 200, 15);
     
-    // 4. ARMA (centro-direita)
+    // 4. ARMA E BOMBA (centro-direita)
     ctx.fillStyle = '#98FB98';
     const weaponDesc = weapons[weaponType] ? weapons[weaponType].description : 'NENHUMA';
-    const weaponText = weaponDesc.length > 15 ? weaponDesc.substring(0, 12) + '...' : weaponDesc;
-    ctx.fillText(`🔫 ${weaponText}`, CANVAS_WIDTH - 220, 15);
+    const weaponText = weaponDesc.length > 12 ? weaponDesc.substring(0, 10) + '..' : weaponDesc;
+    ctx.fillText(`🔫 ${weaponText}`, CANVAS_WIDTH - 260, 15);
+    
+    // Contador de bombas
+    ctx.fillStyle = bombCooldown > 0 ? '#FF4444' : '#FF8800';
+    ctx.fillText(`💣 ${bombCount}`, CANVAS_WIDTH - 120, 15);
     
     // 5. SOM (direita)
     ctx.fillStyle = gameAudio.enabled ? '#00FF00' : '#FF4444';
@@ -2454,7 +2869,16 @@ function drawHUD() {
     // Status do chain attack
     if (chainAttackCooldown > 0) {
         ctx.fillStyle = '#FF6B6B';
-        ctx.fillText(`⛓️ CD: ${Math.ceil(chainAttackCooldown/60)}s`, CANVAS_WIDTH - 100, 75);
+        ctx.fillText(`⛓️ CD: ${Math.ceil(chainAttackCooldown/60)}s`, margin + 160, 75);
+    }
+    
+    // Status da bomba
+    if (bombCooldown > 0) {
+        ctx.fillStyle = '#FF4444';
+        ctx.fillText(`💣 CD: ${Math.ceil(bombCooldown/60)}s`, CANVAS_WIDTH - 100, 75);
+    } else if (bombCount === 0) {
+        ctx.fillStyle = '#888888';
+        ctx.fillText(`💣 SEM BOMBAS`, CANVAS_WIDTH - 100, 75);
     }
     
     // Resetar alinhamento para outros elementos
@@ -2515,7 +2939,8 @@ function drawControlsPanel() {
     ctx.fillStyle = 'white';
     ctx.fillText('A: Corrente (1 Mão)', colWidth + 10, startY + lineHeight);
     ctx.fillText('S: Corrente (2 Mãos)', colWidth + 10, startY + lineHeight * 2);
-    ctx.fillText('D: Escudo | C: Celebração', colWidth + 10, startY + lineHeight * 3);
+    ctx.fillText('D: Escudo | B: Bomba', colWidth + 10, startY + lineHeight * 2);
+    ctx.fillText('C: Celebração', colWidth + 10, startY + lineHeight * 3);
     
     // Coluna 3 - Sistema (se houver espaço)
     if (numCols >= 3) {
@@ -2562,8 +2987,15 @@ function drawControlsPanel() {
 
 // Sistema de spawn de inimigos
 let enemySpawnTimer = 0;
+const MAX_ENEMIES = 10; // Máximo de inimigos simultâneos na tela
+
 function spawnEnemies() {
     enemySpawnTimer++;
+    
+    // === CONTROLE DE LIMITE DE INIMIGOS ===
+    if (enemies.length >= MAX_ENEMIES) {
+        return; // Não criar novos inimigos se já atingiu o limite
+    }
     
     // Spawn baseado no nível
     const spawnRate = Math.max(60 - gameState.level * 5, 30);
@@ -2574,6 +3006,8 @@ function spawnEnemies() {
         // Escolhe tipo de inimigo baseado no nível
         const enemyType = gameState.level > 3 && Math.random() > 0.7 ? 'robot' : 'soldier';
         createEnemy(enemyType);
+        
+        console.log(`Inimigos na tela: ${enemies.length}/${MAX_ENEMIES}`);
     }
     
     // Aumenta nível baseado na pontuação
@@ -2684,6 +3118,12 @@ function gameLoop() {
     updateExplosions();
     updateParticles();
     updateShield(); // NOVO: Atualizar sistema de escudo
+    updateLavaDisc(); // NOVO: Atualizar disco de lava
+    
+    // === ATUALIZAR SISTEMA DE BOMBA ===
+    if (bombCooldown > 0) {
+        bombCooldown--;
+    }
     
     // Spawn de inimigos
     spawnEnemies();
@@ -2731,6 +3171,9 @@ function gameLoop() {
     // Desenhar escudo (antes do jogador para aparecer atrás)
     drawShield();
     
+    // NOVO: Desenhar disco de lava (antes do jogador para aparecer atrás)
+    drawLavaDisc();
+    
     // Desenha o jogador com efeito de invulnerabilidade
     if (invulnerable && Math.floor(Date.now() / 100) % 2) {
         // Pisca quando invulnerável
@@ -2774,6 +3217,10 @@ function restartGame() {
     shieldActive = true;
     shieldEnergy = 100;
     shieldCooldown = 0;
+    
+    // === RESETAR SISTEMA DE BOMBA ===
+    bombCount = 3;
+    bombCooldown = 0;
     
     // Posicionar jogador no solo corretamente
     const groundLevel = CANVAS_HEIGHT - (frameHeight * scale) - 20;
