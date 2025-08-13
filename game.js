@@ -422,6 +422,19 @@ let controlsPanelVisible = true;
 let controlsPanelToggleTimer = 0;
 const CONTROLS_PANEL_TOGGLE_COOLDOWN = 30; // 30 frames = 0.5 segundos
 
+// === SISTEMA DE SPLASH SCREEN ===
+let gameStarted = false;
+let splashScreenTimer = 0;
+let showSplashScreen = true;
+let splashScreenPhase = 0; // 0=fade in, 1=display, 2=fade out
+let splashFadeAlpha = 0;
+const SPLASH_DURATION = 300; // 5 segundos a 60fps
+
+// === SISTEMA DE GAME OVER MELHORADO ===
+let gameOverScrollY = 0;
+let gameOverScrollSpeed = 1;
+let gameOverCreditsStarted = false;
+
 // Controles do teclado
 const keys = {};
 
@@ -1987,13 +2000,19 @@ function drawPowerups() {
         ctx.translate(powerup.x + powerup.size/2, powerup.y + powerup.size/2);
         ctx.rotate(Math.PI / 4);
         ctx.fillRect(-powerup.size/2, -powerup.size/2, powerup.size, powerup.size);
-        
-        // Texto do tipo
         ctx.restore();
+        
+        // Texto do tipo - CORRIGIDO: fundo semi-transparente para evitar sobreposição
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(powerup.x + powerup.size/2 - 8, powerup.y + powerup.size/2 - 8, 16, 16);
+        
         ctx.fillStyle = 'white';
-        ctx.font = '10px Arial';
+        ctx.font = 'bold 11px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(powerup.type[0].toUpperCase(), powerup.x + powerup.size/2, powerup.y + powerup.size/2 + 3);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(powerup.type[0].toUpperCase(), powerup.x + powerup.size/2, powerup.y + powerup.size/2);
+        ctx.restore();
     }
 }
 
@@ -2895,36 +2914,36 @@ function drawControlsPanel() {
         const indicatorY = CANVAS_HEIGHT - 25;
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(0, indicatorY, CANVAS_WIDTH, 25);
-        
+
         ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 12px Arial';
+        ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Pressione H para mostrar/ocultar controles', CANVAS_WIDTH/2, indicatorY + 17);
+        ctx.fillText('Pressione H para mostrar/ocultar controles', CANVAS_WIDTH/2, indicatorY + 18);
         return;
     }
-    
-    const panelHeight = 140; // Aumentado para mais espaço
+
+    const panelHeight = 150; // Aumentado para mais espaço
     const panelY = CANVAS_HEIGHT - panelHeight;
-    
+
     // Fundo do painel de controles
     ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
     ctx.fillRect(0, panelY, CANVAS_WIDTH, panelHeight);
-    
+
     // Título
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 14px Arial';
+    ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText('🎮 CONTROLES ESPECIAIS DA JULIETTE:', 10, panelY + 15);
-    
+    ctx.fillText('🎮 CONTROLES ESPECIAIS DA JULIETTE:', 10, panelY + 20);
+
     // Calcular larguras das colunas baseado na largura da tela
     const numCols = CANVAS_WIDTH > 1400 ? 4 : (CANVAS_WIDTH > 1000 ? 3 : 2);
     const colWidth = Math.floor((CANVAS_WIDTH - 40) / numCols); // Margem de 20px cada lado
-    const fontSize = CANVAS_WIDTH > 1200 ? '12px' : '11px';
-    const lineHeight = CANVAS_WIDTH > 1200 ? 16 : 14;
-    
+    const fontSize = CANVAS_WIDTH > 1200 ? '14px' : '13px';
+    const lineHeight = CANVAS_WIDTH > 1200 ? 20 : 18;
+
     ctx.font = fontSize + ' Arial';
-    const startY = panelY + 35;
-    
+    const startY = panelY + 40;
+
     // Coluna 1 - Controles básicos
     ctx.fillStyle = '#87CEEB';
     ctx.fillText('⚡ BÁSICOS:', 10, startY);
@@ -2932,16 +2951,16 @@ function drawControlsPanel() {
     ctx.fillText('⬅️➡️ Mover | Z: Pular', 10, startY + lineHeight);
     ctx.fillText('X/SPACE: Atirar | M: Som', 10, startY + lineHeight * 2);
     ctx.fillText('⬆️+X: ⬇️+X: ↗️+X: ↙️+X', 10, startY + lineHeight * 3);
-    
+
     // Coluna 2 - Ataques especiais
     ctx.fillStyle = '#FF6B6B';
     ctx.fillText('🔥 ESPECIAIS:', colWidth + 10, startY);
     ctx.fillStyle = 'white';
     ctx.fillText('A: Corrente (1 Mão)', colWidth + 10, startY + lineHeight);
     ctx.fillText('S: Corrente (2 Mãos)', colWidth + 10, startY + lineHeight * 2);
-    ctx.fillText('D: Escudo | B: Bomba', colWidth + 10, startY + lineHeight * 2);
-    ctx.fillText('C: Celebração', colWidth + 10, startY + lineHeight * 3);
-    
+    ctx.fillText('D: Escudo | B: Bomba', colWidth + 10, startY + lineHeight * 3);
+    ctx.fillText('C: Celebração', colWidth + 10, startY + lineHeight * 4);
+
     // Coluna 3 - Sistema (se houver espaço)
     if (numCols >= 3) {
         ctx.fillStyle = '#6BCF7F';
@@ -2951,8 +2970,8 @@ function drawControlsPanel() {
         ctx.fillText('P: Pausar | F11: Tela Cheia', colWidth * 2 + 10, startY + lineHeight * 2);
         ctx.fillText('R: Reiniciar (Game Over)', colWidth * 2 + 10, startY + lineHeight * 3);
     }
-    
-    // Coluna 4 - Cheats (se houver espaço)
+
+    // Coluna 4 - Armas (se houver espaço)
     if (numCols >= 4) {
         ctx.fillStyle = '#FFA500';
         ctx.fillText('🛠️ ARMAS:', colWidth * 3 + 10, startY);
@@ -2961,20 +2980,20 @@ function drawControlsPanel() {
         ctx.fillText('5-7: Avançadas', colWidth * 3 + 10, startY + lineHeight * 2);
         ctx.fillText('(Plasma, Storm, Nuclear)', colWidth * 3 + 10, startY + lineHeight * 3);
     }
-    
+
     // Status na parte inferior
     const statusY = startY + lineHeight * 4.5;
     ctx.fillStyle = '#87CEEB';
-    ctx.font = (CANVAS_WIDTH > 1200 ? '11px' : '10px') + ' Arial';
+    ctx.font = (CANVAS_WIDTH > 1200 ? '13px' : '12px') + ' Arial';
     const statusText = isInSpecialAnim ? `🎭 ${animations[currentAnim].description}` : '🎭 Modo Normal';
     ctx.fillText(statusText, 10, statusY);
-    
+
     // Cooldown de corrente e outros status
     if (chainAttackCooldown > 0) {
         ctx.fillStyle = '#FF6B6B';
         ctx.fillText(`⛓️ Cooldown: ${Math.ceil(chainAttackCooldown/60)}s`, colWidth + 10, statusY);
     }
-    
+
     // Status do som
     ctx.fillStyle = gameAudio.enabled ? '#00FF00' : '#FF4444';
     const soundStatus = gameAudio.enabled ? '🔊 ON' : '🔇 OFF';
