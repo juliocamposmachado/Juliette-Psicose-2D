@@ -826,6 +826,10 @@ function detectMobile() {
     
     if (isMobile) {
         touchControls.enabled = true;
+        
+        // === NOVO: ATIVAR ELEMENTOS MOBILE E DESATIVAR DESKTOP ===
+        activateMobileInterface();
+        
         console.log('📱 Dispositivo móvel detectado - Controles touch ativados!');
         console.log(`   📊 Resolução: ${screenDetection.screenWidth}x${screenDetection.screenHeight}`);
         console.log(`   📱 Tipo: ${screenDetection.isMobile ? 'Mobile' : screenDetection.isTablet ? 'Tablet' : 'Desktop (Touch)'}`);
@@ -5042,37 +5046,191 @@ playerImages.arma_disparando_frente.onload = checkImagesLoaded;
 playerImages.arma_disparando_60_baixo.onload = checkImagesLoaded;
 playerImages.arma_disparando_90_graus.onload = checkImagesLoaded;
 
-// === SISTEMA DE TELA CHEIA ===
+// === SISTEMA DE TELA CHEIA APRIMORADO ===
 let isFullscreen = false;
 
+// === NOVA FUNÇÃO: ATIVAR INTERFACE MOBILE ===
+function activateMobileInterface() {
+    // Ocultar elementos desktop
+    document.querySelectorAll('.desktop-only').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Mostrar elementos mobile
+    document.querySelectorAll('.mobile-only').forEach(el => {
+        el.style.display = 'block';
+    });
+    
+    console.log('📱 Interface mobile ativada!');
+}
+
+// === NOVA FUNÇÃO: DETECÇÃO APRIMORADA DE DISPOSITIVO MÓVEL ===
+function detectMobileDevice() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    
+    // Regex mais abrangente para detectar dispositivos móveis
+    const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|Tablet|tablet/i;
+    const isUserAgentMobile = mobileRegex.test(userAgent);
+    
+    // Detecção por características da tela
+    const hasSmallScreen = window.innerWidth <= 768 || window.innerHeight <= 500;
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const hasCoarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    
+    // Detecção por orientação (comum em dispositivos móveis)
+    const hasOrientationAPI = 'orientation' in window;
+    const isPortrait = window.innerHeight > window.innerWidth;
+    
+    // Detecção por APIs específicas de mobile
+    const hasDeviceMotion = 'DeviceMotionEvent' in window;
+    const hasDeviceOrientation = 'DeviceOrientationEvent' in window;
+    
+    // Verificar se está em PWA mode (comum em mobile)
+    const isPWAMode = window.matchMedia('(display-mode: standalone)').matches || 
+                      window.navigator.standalone === true;
+    
+    // Sistema de pontuação para determinar se é mobile
+    let mobileScore = 0;
+    
+    if (isUserAgentMobile) mobileScore += 3;
+    if (hasSmallScreen) mobileScore += 2;
+    if (isTouchDevice) mobileScore += 2;
+    if (hasCoarsePointer) mobileScore += 2;
+    if (hasOrientationAPI) mobileScore += 1;
+    if (hasDeviceMotion) mobileScore += 1;
+    if (hasDeviceOrientation) mobileScore += 1;
+    if (isPWAMode) mobileScore += 1;
+    
+    const isMobile = mobileScore >= 4; // Threshold ajustável
+    
+    console.log('🔍 Detecção de dispositivo móvel:', {
+        userAgent: isUserAgentMobile,
+        smallScreen: hasSmallScreen,
+        touch: isTouchDevice,
+        coarsePointer: hasCoarsePointer,
+        orientation: hasOrientationAPI,
+        deviceMotion: hasDeviceMotion,
+        deviceOrientation: hasDeviceOrientation,
+        pwaMode: isPWAMode,
+        score: mobileScore,
+        isMobile: isMobile
+    });
+    
+    return isMobile;
+}
+
+// Função de toggle de tela cheia universal
 function toggleFullscreen() {
-    const gameContainer = document.getElementById('gameContainer');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const mobileFullscreenBtn = document.getElementById('mobileFullscreenBtn');
     
     if (!document.fullscreenElement) {
         // Entrar em tela cheia
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
-        } else if (document.documentElement.webkitRequestFullscreen) {
-            document.documentElement.webkitRequestFullscreen();
-        } else if (document.documentElement.msRequestFullscreen) {
-            document.documentElement.msRequestFullscreen();
-        }
-        isFullscreen = true;
-        fullscreenBtn.textContent = '📺 SAIR';
-        fullscreenBtn.classList.add('fullscreen-active');
+        enterFullscreen();
     } else {
         // Sair da tela cheia
+        exitFullscreen();
+    }
+}
+
+// === NOVA FUNÇÃO: ENTRAR EM TELA CHEIA ===
+function enterFullscreen() {
+    const element = document.documentElement;
+    
+    try {
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+        }
+        
+        isFullscreen = true;
+        updateFullscreenButtons(true);
+        
+        // Vibração para feedback em mobile
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+        
+        console.log('📺 Modo tela cheia ativado');
+        
+    } catch (error) {
+        console.error('❌ Erro ao entrar em tela cheia:', error);
+        
+        // Fallback para dispositivos que não suportam fullscreen API
+        attemptMobileSafariFullscreen();
+    }
+}
+
+// === NOVA FUNÇÃO: SAIR DE TELA CHEIA ===
+function exitFullscreen() {
+    try {
         if (document.exitFullscreen) {
             document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
             document.webkitExitFullscreen();
         } else if (document.msExitFullscreen) {
             document.msExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
         }
+        
         isFullscreen = false;
-        fullscreenBtn.textContent = '📺 TELA';
-        fullscreenBtn.classList.remove('fullscreen-active');
+        updateFullscreenButtons(false);
+        
+        console.log('📺 Modo tela cheia desativado');
+        
+    } catch (error) {
+        console.error('❌ Erro ao sair de tela cheia:', error);
+    }
+}
+
+// === NOVA FUNÇÃO: ATUALIZAR BOTÕES DE TELA CHEIA ===
+function updateFullscreenButtons(isActive) {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const mobileFullscreenBtn = document.getElementById('mobileFullscreenBtn');
+    
+    const text = isActive ? 'SAIR' : 'TELA';
+    const mobileText = isActive ? '📱 SAIR' : '📱 TELA';
+    
+    if (fullscreenBtn) {
+        fullscreenBtn.textContent = `📺 ${text}`;
+        fullscreenBtn.classList.toggle('fullscreen-active', isActive);
+    }
+    
+    if (mobileFullscreenBtn) {
+        mobileFullscreenBtn.textContent = mobileText;
+        mobileFullscreenBtn.classList.toggle('fullscreen-active', isActive);
+    }
+}
+
+// === NOVA FUNÇÃO: FALLBACK PARA MOBILE SAFARI ===
+function attemptMobileSafariFullscreen() {
+    // Mobile Safari não suporte fullscreen API, mas podemos tentar outras abordagens
+    const canvas = document.getElementById('gameCanvas');
+    const gameContainer = document.getElementById('gameContainer');
+    
+    if (canvas && gameContainer) {
+        // Expandir canvas para viewport completa
+        document.body.style.overflow = 'hidden';
+        gameContainer.style.position = 'fixed';
+        gameContainer.style.top = '0';
+        gameContainer.style.left = '0';
+        gameContainer.style.width = '100vw';
+        gameContainer.style.height = '100vh';
+        gameContainer.style.zIndex = '9999';
+        
+        // Ocultar barras do navegador (funciona em alguns casos)
+        window.scrollTo(0, 1);
+        
+        console.log('📱 Fallback de tela cheia para Mobile Safari aplicado');
+        
+        isFullscreen = true;
+        updateFullscreenButtons(true);
     }
 }
 
@@ -5381,7 +5539,7 @@ function setupControlsToggle() {
     controlsToggle.addEventListener('click', (e) => {
         e.preventDefault();
         
-        // === NOVA FUNCIONALIDADE: FECHAR GUIA MÓVEL EM DISPOSITIVOS MÓVEIS ===
+// === NOVA FUNCIONALIDADE: INTEGRAÇÃO COM BOTÕES MOBILE ===
         // Se estiver em dispositivo móvel, fechar o guia completo automaticamente
         if (detectMobileDevice() && typeof closeMobileGuideCompletely === 'function') {
             closeMobileGuideCompletely();
