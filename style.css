@@ -188,14 +188,15 @@ canvas::after {
     left: 0;
     right: 0;
     height: 200px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3));
-    backdrop-filter: blur(5px);
-    border-top: 2px solid rgba(255, 255, 255, 0.2);
+    background: transparent; /* TRANSPARÊNCIA TOTAL */
+    backdrop-filter: none; /* Remove blur */
+    border-top: none; /* Remove borda */
     display: none;
     z-index: 1000;
     transition: opacity 0.3s ease, transform 0.3s ease;
     opacity: 0;
     transform: translateY(100%);
+    pointer-events: none; /* Permite passar eventos através do fundo */
 }
 
 .mobile-controls.active {
@@ -204,20 +205,148 @@ canvas::after {
     transform: translateY(0);
 }
 
-.controls-left {
+/* CONTROLES ARRASTÁVEIS INDIVIDUAIS */
+.draggable-control {
+    position: fixed;
+    cursor: grab;
+    z-index: 1001;
+    transition: transform 0.1s ease;
+    pointer-events: auto; /* Reativa eventos para os botões */
+    touch-action: none; /* Previne scroll durante arrasto */
+}
+
+.draggable-control.dragging {
+    cursor: grabbing;
+    transform: scale(1.15);
+    z-index: 1002;
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.8));
+    opacity: 0.9;
+    transition: none; /* Remove transição durante arrasto */
+}
+
+/* Indicador visual de que o controle é arrastável */
+.draggable-control::before {
+    content: '⋮⋮';
     position: absolute;
+    top: -8px;
+    right: -8px;
+    background: rgba(255, 215, 0, 0.8);
+    color: #000;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.draggable-control:hover::before {
+    opacity: 1;
+}
+
+/* Botões individuais arrastáveis */
+.individual-button {
+    position: fixed;
+    background: rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: manipulation;
+    cursor: grab;
+    transition: all 0.2s ease;
+    z-index: 1001;
+}
+
+.individual-button:hover {
+    background: rgba(255, 255, 255, 0.35);
+    border-color: rgba(255, 255, 255, 0.7);
+    transform: scale(1.05);
+}
+
+.individual-button:active {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(0.95);
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.individual-button.dragging {
+    cursor: grabbing;
+    transform: scale(1.2);
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
+    border-color: #FFD700;
+    background: rgba(255, 215, 0, 0.3);
+}
+
+/* Posições iniciais dos botões individuais */
+.individual-button.shoot { 
+    width: 70px; height: 70px; font-size: 18px;
+    background: rgba(255, 100, 100, 0.3);
+    border-color: rgba(255, 100, 100, 0.6);
+}
+.individual-button.jump { 
+    width: 60px; height: 60px; font-size: 16px;
+    background: rgba(100, 255, 100, 0.3);
+    border-color: rgba(100, 255, 100, 0.6);
+}
+.individual-button.chain-left { 
+    width: 55px; height: 55px; font-size: 14px;
+    background: rgba(255, 165, 0, 0.3);
+    border-color: rgba(255, 165, 0, 0.6);
+}
+.individual-button.chain-both { 
+    width: 55px; height: 55px; font-size: 14px;
+    background: rgba(255, 140, 0, 0.3);
+    border-color: rgba(255, 140, 0, 0.6);
+}
+.individual-button.bomb { 
+    width: 50px; height: 50px; font-size: 16px;
+    background: rgba(255, 0, 0, 0.3);
+    border-color: rgba(255, 0, 0, 0.6);
+}
+.individual-button.shield { 
+    width: 50px; height: 50px; font-size: 16px;
+    background: rgba(0, 255, 255, 0.3);
+    border-color: rgba(0, 255, 255, 0.6);
+}
+.individual-button.lava { 
+    width: 50px; height: 50px; font-size: 16px;
+    background: rgba(255, 69, 0, 0.3);
+    border-color: rgba(255, 69, 0, 0.6);
+}
+.individual-button.pause { 
+    width: 45px; height: 45px; font-size: 14px;
+    background: rgba(200, 200, 200, 0.3);
+    border-color: rgba(200, 200, 200, 0.6);
+}
+.individual-button.sound { 
+    width: 45px; height: 45px; font-size: 14px;
+    background: rgba(100, 150, 255, 0.3);
+    border-color: rgba(100, 150, 255, 0.6);
+}
+
+.controls-left {
+    position: fixed;
     left: 20px;
     bottom: 20px;
     width: 160px;
     height: 160px;
+    pointer-events: auto;
 }
 
 .controls-right {
-    position: absolute;
+    position: fixed;
     right: 20px;
     bottom: 20px;
     width: 200px;
     height: 160px;
+    pointer-events: auto;
 }
 
 .dpad {

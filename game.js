@@ -4853,6 +4853,9 @@ function gameLoop() {
     updateMobileControlsState();
     updateMobileGuideInGameLoop();
     
+    // === ATUALIZAR CONTROLES ARRASTÁVEIS INDIVIDUAIS ===
+    updateDraggableControls();
+    
     requestAnimationFrame(gameLoop);
 }
 
@@ -5923,5 +5926,486 @@ function updateGuideIndicators() {
 function updateMobileGuideInGameLoop() {
     if (mobileGuideState.isInitialized && mobileGuideState.isVisible) {
         updateMobileGuide();
+    }
+}
+
+// === SISTEMA DE CONTROLES ARRASTÁVEIS INDIVIDUAIS ===
+let draggableControlsState = {
+    enabled: false,
+    individual: false, // Controles individuais vs agrupados
+    currentlyDragging: null,
+    dragOffset: { x: 0, y: 0 },
+    positions: {}, // Armazena posições personalizadas
+    initialized: false
+};
+
+// Posições padrão dos controles individuais
+const defaultControlPositions = {
+    dpad: { x: 80, y: window.innerHeight - 80 },
+    shoot: { x: window.innerWidth - 80, y: window.innerHeight - 80 },
+    jump: { x: window.innerWidth - 150, y: window.innerHeight - 130 },
+    chainLeft: { x: window.innerWidth - 220, y: window.innerHeight - 90 },
+    chainBoth: { x: window.innerWidth - 220, y: window.innerHeight - 150 },
+    bomb: { x: 60, y: 60 },
+    shield: { x: 120, y: 60 },
+    lava: { x: 180, y: 60 },
+    pause: { x: window.innerWidth - 60, y: 60 },
+    sound: { x: window.innerWidth - 120, y: 60 }
+};
+
+// Inicializar controles arrastáveis
+function initializeDraggableControls() {
+    if (!mobileControlsState.enabled || draggableControlsState.initialized) return;
+    
+    // Ativar sistema arrastável em dispositivos móveis landscape
+    if (screenDetection.orientation === 'landscape' && (screenDetection.isMobile || screenDetection.isTablet)) {
+        draggableControlsState.enabled = true;
+        draggableControlsState.individual = true;
+        
+        // Criar controles individuais
+        createIndividualControls();
+        
+        console.log('🎮 Controles arrastáveis individuais ativados para landscape!');
+    }
+    
+    draggableControlsState.initialized = true;
+}
+
+// Criar controles individuais
+function createIndividualControls() {
+    if (!draggableControlsState.enabled) return;
+    
+    // Carregar posições salvas ou usar padrões
+    const savedPositions = localStorage.getItem('juliette-control-positions');
+    if (savedPositions) {
+        try {
+            draggableControlsState.positions = JSON.parse(savedPositions);
+        } catch (e) {
+            console.log('❌ Erro ao carregar posições salvas, usando padrões');
+            draggableControlsState.positions = { ...defaultControlPositions };
+        }
+    } else {
+        draggableControlsState.positions = { ...defaultControlPositions };
+    }
+    
+    // Criar elementos DOM para controles individuais
+    createDraggableControlElements();
+    
+    // Adicionar event listeners para arrastar
+    setupDragEventListeners();
+}
+
+// Criar elementos DOM dos controles
+function createDraggableControlElements() {
+    // Remover controles existentes se houver
+    document.querySelectorAll('.individual-draggable-control').forEach(el => el.remove());
+    
+    const controlsConfig = [
+        { id: 'dpad', icon: '🎮', class: 'dpad-control', size: 80 },
+        { id: 'shoot', icon: '🎯', class: 'shoot', size: 70 },
+        { id: 'jump', icon: '⬆️', class: 'jump', size: 60 },
+        { id: 'chainLeft', icon: '⛓️', class: 'chain-left', size: 55 },
+        { id: 'chainBoth', icon: '⛓️⛓️', class: 'chain-both', size: 55 },
+        { id: 'bomb', icon: '💣', class: 'bomb', size: 50 },
+        { id: 'shield', icon: '🛡️', class: 'shield', size: 50 },
+        { id: 'lava', icon: '🌋', class: 'lava', size: 50 },
+        { id: 'pause', icon: '⏸️', class: 'pause', size: 45 },
+        { id: 'sound', icon: '🔊', class: 'sound', size: 45 }
+    ];
+    
+    controlsConfig.forEach(config => {
+        const element = document.createElement('div');
+        element.id = `draggable-${config.id}`;
+        element.className = `individual-draggable-control draggable-control individual-button ${config.class}`;
+        element.innerHTML = config.icon;
+        
+        // Aplicar posição
+        const pos = draggableControlsState.positions[config.id] || defaultControlPositions[config.id];
+        element.style.left = `${pos.x - config.size/2}px`;
+        element.style.top = `${pos.y - config.size/2}px`;
+        element.style.width = `${config.size}px`;
+        element.style.height = `${config.size}px`;
+        element.style.fontSize = `${Math.floor(config.size * 0.25)}px`;
+        
+        // Dados para identificação
+        element.dataset.controlId = config.id;
+        element.dataset.controlSize = config.size;
+        
+        document.body.appendChild(element);
+    });
+    
+    console.log('🎮 Elementos de controle individuais criados');
+}
+
+// Configurar event listeners para arrastar
+function setupDragEventListeners() {
+    const controls = document.querySelectorAll('.individual-draggable-control');
+    
+    controls.forEach(control => {
+        // Touch events
+        control.addEventListener('touchstart', handleDragStart, { passive: false });
+        control.addEventListener('touchmove', handleDragMove, { passive: false });
+        control.addEventListener('touchend', handleDragEnd, { passive: false });
+        
+        // Mouse events (para desktop de teste)
+        control.addEventListener('mousedown', handleDragStart, { passive: false });
+        control.addEventListener('mousemove', handleDragMove, { passive: false });
+        control.addEventListener('mouseup', handleDragEnd, { passive: false });
+        
+        // Click/Touch para ação do controle
+        control.addEventListener('click', handleControlAction);
+        control.addEventListener('touchstart', handleControlTouch, { passive: false });
+    });
+    
+    // Event listeners globais para mouse
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+}
+
+// Handlers de arrastar
+function handleDragStart(e) {
+    e.preventDefault();
+    
+    const control = e.currentTarget;
+    const controlId = control.dataset.controlId;
+    
+    // Distinguir entre arrastar e ação
+    const isTouch = e.type === 'touchstart';
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    
+    // Calcular offset do drag
+    const rect = control.getBoundingClientRect();
+    draggableControlsState.dragOffset = {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+    };
+    
+    // Preparar para arrastar
+    draggableControlsState.currentlyDragging = control;
+    control.classList.add('dragging');
+    
+    // Haptic feedback
+    if (navigator.vibrate && isTouch) {
+        navigator.vibrate(50);
+    }
+    
+    console.log(`🎮 Iniciando arrastar: ${controlId}`);
+}
+
+function handleDragMove(e) {
+    if (!draggableControlsState.currentlyDragging) return;
+    
+    e.preventDefault();
+    
+    const isTouch = e.type === 'touchmove';
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    
+    // Calcular nova posição
+    const newX = clientX - draggableControlsState.dragOffset.x;
+    const newY = clientY - draggableControlsState.dragOffset.y;
+    
+    // Limites da tela
+    const control = draggableControlsState.currentlyDragging;
+    const size = parseInt(control.dataset.controlSize);
+    const maxX = window.innerWidth - size;
+    const maxY = window.innerHeight - size;
+    
+    const clampedX = Math.max(0, Math.min(newX, maxX));
+    const clampedY = Math.max(0, Math.min(newY, maxY));
+    
+    // Aplicar posição
+    control.style.left = `${clampedX}px`;
+    control.style.top = `${clampedY}px`;
+}
+
+function handleDragEnd(e) {
+    if (!draggableControlsState.currentlyDragging) return;
+    
+    const control = draggableControlsState.currentlyDragging;
+    const controlId = control.dataset.controlId;
+    
+    // Salvar nova posição
+    const rect = control.getBoundingClientRect();
+    const size = parseInt(control.dataset.controlSize);
+    const centerX = rect.left + size/2;
+    const centerY = rect.top + size/2;
+    
+    draggableControlsState.positions[controlId] = {
+        x: centerX,
+        y: centerY
+    };
+    
+    // Salvar no localStorage
+    localStorage.setItem('juliette-control-positions', JSON.stringify(draggableControlsState.positions));
+    
+    // Limpar estado de arrastar
+    control.classList.remove('dragging');
+    draggableControlsState.currentlyDragging = null;
+    
+    // Haptic feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(30);
+    }
+    
+    console.log(`🎮 Posição salva para ${controlId}:`, { x: centerX, y: centerY });
+}
+
+// Handlers globais para mouse
+function handleGlobalMouseMove(e) {
+    if (draggableControlsState.currentlyDragging) {
+        handleDragMove(e);
+    }
+}
+
+function handleGlobalMouseUp(e) {
+    if (draggableControlsState.currentlyDragging) {
+        handleDragEnd(e);
+    }
+}
+
+// Handler de ação dos controles
+function handleControlAction(e) {
+    if (draggableControlsState.currentlyDragging) return; // Não ativar se estava arrastando
+    
+    const controlId = e.currentTarget.dataset.controlId;
+    executeControlAction(controlId);
+}
+
+function handleControlTouch(e) {
+    // Detectar se é um tap rápido vs drag
+    const startTime = Date.now();
+    e.currentTarget.dataset.touchStartTime = startTime;
+    
+    setTimeout(() => {
+        const currentTime = Date.now();
+        const touchTime = parseInt(e.currentTarget.dataset.touchStartTime);
+        
+        // Se foi um toque rápido (menos de 200ms) e não estava arrastando
+        if (currentTime - touchTime < 200 && !draggableControlsState.currentlyDragging) {
+            const controlId = e.currentTarget.dataset.controlId;
+            executeControlAction(controlId);
+        }
+    }, 200);
+}
+
+// Executar ação do controle
+function executeControlAction(controlId) {
+    console.log(`🎮 Executando ação: ${controlId}`);
+    
+    switch (controlId) {
+        case 'shoot':
+            if (!attacking) {
+                shoot();
+                attacking = true;
+            }
+            break;
+        case 'jump':
+            jump();
+            break;
+        case 'chainLeft':
+            if (!isInSpecialAnim && chainAttackCooldown === 0) {
+                chainAttack('left_hand');
+            }
+            break;
+        case 'chainBoth':
+            if (!isInSpecialAnim && chainAttackCooldown === 0) {
+                chainAttack('both_hands');
+            }
+            break;
+        case 'bomb':
+            if (bombCount > 0 && bombCooldown === 0) {
+                activateBomb();
+            }
+            break;
+        case 'shield':
+            if (shieldEnergy > 20 && shieldCooldown === 0) {
+                activateShield();
+            }
+            break;
+        case 'lava':
+            toggleLavaDisc();
+            break;
+        case 'pause':
+            gameState.paused = !gameState.paused;
+            break;
+        case 'sound':
+            gameAudio.enabled = !gameAudio.enabled;
+            updateSoundButton();
+            break;
+    }
+}
+
+// Atualizar botão de som
+function updateSoundButton() {
+    const soundButton = document.getElementById('draggable-sound');
+    if (soundButton) {
+        soundButton.innerHTML = gameAudio.enabled ? '🔊' : '🔇';
+    }
+}
+
+// D-Pad especial (mais complexo)
+function setupDPadControl() {
+    const dpadElement = document.getElementById('draggable-dpad');
+    if (!dpadElement) return;
+    
+    // Adicionar event listeners especiais para D-Pad
+    let dpadActive = false;
+    let dpadCenter = { x: 0, y: 0 };
+    
+    function handleDPadStart(e) {
+        const rect = dpadElement.getBoundingClientRect();
+        dpadCenter.x = rect.left + rect.width/2;
+        dpadCenter.y = rect.top + rect.height/2;
+        dpadActive = true;
+        
+        handleDPadMove(e);
+    }
+    
+    function handleDPadMove(e) {
+        if (!dpadActive) return;
+        
+        const isTouch = e.type.includes('touch');
+        const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+        const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+        
+        const deltaX = clientX - dpadCenter.x;
+        const deltaY = clientY - dpadCenter.y;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        
+        if (distance > 20) { // Zona morta
+            const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+            
+            // Resetar movimento
+            moving = false;
+            backgroundScrolling = false;
+            
+            // Determinar direção
+            if (angle >= -45 && angle <= 45) {
+                // Direita
+                if (!isInSpecialAnim) {
+                    moving = true;
+                    facingRight = true;
+                    backgroundScrolling = true;
+                }
+            } else if (angle >= 135 || angle <= -135) {
+                // Esquerda
+                if (!isInSpecialAnim) {
+                    moving = true;
+                    facingRight = false;
+                    backgroundScrolling = true;
+                }
+            } else if (angle >= -135 && angle <= -45) {
+                // Cima
+                if (hasWeapon && onGround && !isInSpecialAnim) {
+                    startSpecialAnimation('weapon_up');
+                } else if (!isInSpecialAnim) {
+                    jump();
+                }
+            }
+        }
+    }
+    
+    function handleDPadEnd(e) {
+        dpadActive = false;
+        moving = false;
+        backgroundScrolling = false;
+    }
+    
+    // Sobrescrever eventos do D-Pad
+    dpadElement.addEventListener('touchstart', handleDPadStart, { passive: false });
+    dpadElement.addEventListener('touchmove', handleDPadMove, { passive: false });
+    dpadElement.addEventListener('touchend', handleDPadEnd, { passive: false });
+    dpadElement.addEventListener('mousedown', handleDPadStart, { passive: false });
+    dpadElement.addEventListener('mousemove', handleDPadMove, { passive: false });
+    dpadElement.addEventListener('mouseup', handleDPadEnd, { passive: false });
+}
+
+// Reset de posições dos controles
+function resetControlPositions() {
+    draggableControlsState.positions = { ...defaultControlPositions };
+    localStorage.removeItem('juliette-control-positions');
+    
+    if (draggableControlsState.enabled) {
+        createDraggableControlElements();
+        setupDPadControl();
+    }
+    
+    console.log('🎮 Posições dos controles resetadas!');
+}
+
+// Função para alternar entre controles agrupados e individuais
+function toggleControlMode() {
+    if (!mobileControlsState.enabled) return;
+    
+    draggableControlsState.individual = !draggableControlsState.individual;
+    
+    if (draggableControlsState.individual) {
+        // Ativar controles individuais
+        document.querySelector('.mobile-controls')?.classList.remove('active');
+        createIndividualControls();
+        setupDPadControl();
+        console.log('🎮 Modo: Controles individuais arrastáveis');
+    } else {
+        // Ativar controles agrupados
+        document.querySelectorAll('.individual-draggable-control').forEach(el => el.remove());
+        document.querySelector('.mobile-controls')?.classList.add('active');
+        console.log('🎮 Modo: Controles agrupados tradicionais');
+    }
+}
+
+// Integração com mudança de orientação
+function handleControlOrientationChange() {
+    updateScreenDetection();
+    
+    // Ativar controles individuais em landscape, desativar em portrait
+    if (screenDetection.orientation === 'landscape' && mobileControlsState.enabled) {
+        if (!draggableControlsState.individual) {
+            toggleControlMode();
+        }
+    } else if (screenDetection.orientation === 'portrait' && draggableControlsState.individual) {
+        toggleControlMode();
+    }
+    
+    console.log(`🎮 Orientação: ${screenDetection.orientation} - Controles: ${draggableControlsState.individual ? 'Individuais' : 'Agrupados'}`);
+}
+
+// Atualizar no loop principal
+function updateDraggableControls() {
+    if (!draggableControlsState.initialized && mobileControlsState.enabled) {
+        initializeDraggableControls();
+    }
+    
+    // Atualizar estado visual dos botões baseado no jogo
+    if (draggableControlsState.enabled && draggableControlsState.individual) {
+        updateControlStates();
+    }
+}
+
+// Atualizar estados visuais dos controles
+function updateControlStates() {
+    const controls = {
+        bomb: document.getElementById('draggable-bomb'),
+        shield: document.getElementById('draggable-shield'),
+        lava: document.getElementById('draggable-lava')
+    };
+    
+    // Bomba
+    if (controls.bomb) {
+        controls.bomb.disabled = bombCount === 0 || bombCooldown > 0;
+        controls.bomb.style.opacity = controls.bomb.disabled ? '0.4' : '1';
+    }
+    
+    // Escudo
+    if (controls.shield) {
+        controls.shield.disabled = shieldEnergy < 20 || shieldCooldown > 0;
+        controls.shield.style.opacity = controls.shield.disabled ? '0.4' : '1';
+        controls.shield.style.borderColor = (shieldActive || initialShieldActive) ? '#00FFFF' : 'rgba(0, 255, 255, 0.6)';
+    }
+    
+    // Lava
+    if (controls.lava) {
+        controls.lava.style.borderColor = lavaDisc.active ? '#FFD700' : 'rgba(255, 69, 0, 0.6)';
     }
 }
