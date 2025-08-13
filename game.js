@@ -5,6 +5,45 @@ const ctx = canvas.getContext('2d');
 let CANVAS_WIDTH = 800;  // Valor inicial, será atualizado
 let CANVAS_HEIGHT = 600; // Valor inicial, será atualizado
 
+// === NOVO SISTEMA DE RESPONSIVIDADE PARA MOBILE ===
+let screenDetection = {
+    isMobile: false,
+    isTablet: false,
+    isDesktop: true,
+    screenWidth: window.innerWidth,
+    screenHeight: window.innerHeight,
+    aspectRatio: window.innerWidth / window.innerHeight,
+    orientation: 'landscape', // 'portrait' ou 'landscape'
+    pixelRatio: window.devicePixelRatio || 1,
+    // Breakpoints responsivos
+    breakpoints: {
+        mobile: 768,
+        tablet: 1024,
+        desktop: 1440
+    },
+    // Configurações por dispositivo
+    configs: {
+        mobile: {
+            width: 360,
+            height: 640,
+            scale: 0.8,
+            touchControls: true
+        },
+        tablet: {
+            width: 768,
+            height: 1024,
+            scale: 1.0,
+            touchControls: true
+        },
+        desktop: {
+            width: 1200,
+            height: 800,
+            scale: 1.0,
+            touchControls: false
+        }
+    }
+};
+
 const frameWidth = 48;
 const frameHeight = 64;
 const scale = 1.5; // Personagem menor, mais próximo do Contra original
@@ -768,23 +807,155 @@ let touchControls = {
     }
 };
 
-// Detectar se é dispositivo móvel
+// === NOVA FUNÇÃO: DETECÇÃO AVANÇADA DE DISPOSITIVOS MÓVEIS ===
 function detectMobile() {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    updateScreenDetection();
+    
+    const isMobileDevice = screenDetection.isMobile || screenDetection.isTablet;
+    const hasSmallScreen = screenDetection.screenWidth < screenDetection.breakpoints.tablet;
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     
-    const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-    const isMobileUA = mobileRegex.test(userAgent);
-    
-    // É mobile se: detectou pelo user agent OU tem touch E tela pequena
-    isMobile = isMobileUA || (isTouchDevice && CANVAS_WIDTH < 1024);
+    // É mobile se: dispositivo móvel OU (touch E tela pequena)
+    isMobile = isMobileDevice || (isTouchDevice && hasSmallScreen);
     
     if (isMobile) {
         touchControls.enabled = true;
         console.log('📱 Dispositivo móvel detectado - Controles touch ativados!');
+        console.log(`   📊 Resolução: ${screenDetection.screenWidth}x${screenDetection.screenHeight}`);
+        console.log(`   📱 Tipo: ${screenDetection.isMobile ? 'Mobile' : screenDetection.isTablet ? 'Tablet' : 'Desktop (Touch)'}`);
+        console.log(`   🔄 Orientação: ${screenDetection.orientation}`);
+        console.log(`   📐 Aspect Ratio: ${screenDetection.aspectRatio.toFixed(2)}`);
     }
     
     return isMobile;
+}
+
+// === NOVA FUNÇÃO: ATUALIZAR DETECÇÃO DE TELA ===
+function updateScreenDetection() {
+    // Obter dimensões da tela
+    screenDetection.screenWidth = window.innerWidth;
+    screenDetection.screenHeight = window.innerHeight;
+    screenDetection.aspectRatio = screenDetection.screenWidth / screenDetection.screenHeight;
+    screenDetection.pixelRatio = window.devicePixelRatio || 1;
+    
+    // Determinar orientação
+    screenDetection.orientation = screenDetection.aspectRatio > 1 ? 'landscape' : 'portrait';
+    
+    // Classificar tipo de dispositivo baseado na largura
+    screenDetection.isDesktop = screenDetection.screenWidth >= screenDetection.breakpoints.desktop;
+    screenDetection.isTablet = screenDetection.screenWidth >= screenDetection.breakpoints.tablet && 
+                               screenDetection.screenWidth < screenDetection.breakpoints.desktop;
+    screenDetection.isMobile = screenDetection.screenWidth < screenDetection.breakpoints.mobile;
+    
+    // Verificação adicional por User Agent
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+    const isMobileUA = mobileRegex.test(userAgent);
+    
+    // Override: se UA detecta mobile/tablet, ajustar classificação
+    if (isMobileUA) {
+        if (screenDetection.screenWidth < screenDetection.breakpoints.mobile) {
+            screenDetection.isMobile = true;
+            screenDetection.isTablet = false;
+            screenDetection.isDesktop = false;
+        } else if (screenDetection.screenWidth < screenDetection.breakpoints.desktop) {
+            screenDetection.isMobile = false;
+            screenDetection.isTablet = true;
+            screenDetection.isDesktop = false;
+        }
+    }
+    
+    console.log(`📊 Detecção de tela atualizada:`, {
+        width: screenDetection.screenWidth,
+        height: screenDetection.screenHeight,
+        aspectRatio: screenDetection.aspectRatio.toFixed(2),
+        orientation: screenDetection.orientation,
+        deviceType: screenDetection.isMobile ? 'Mobile' : 
+                   screenDetection.isTablet ? 'Tablet' : 'Desktop',
+        pixelRatio: screenDetection.pixelRatio
+    });
+}
+
+// === NOVA FUNÇÃO: CONFIGURAR CANVAS RESPONSIVO ===
+function setupResponsiveCanvas() {
+    updateScreenDetection();
+    
+    let config;
+    
+    // Selecionar configuração baseada no tipo de dispositivo
+    if (screenDetection.isMobile) {
+        config = screenDetection.configs.mobile;
+    } else if (screenDetection.isTablet) {
+        config = screenDetection.configs.tablet;
+    } else {
+        config = screenDetection.configs.desktop;
+    }
+    
+    // Calcular dimensões ideais
+    let targetWidth, targetHeight;
+    
+    if (screenDetection.orientation === 'landscape') {
+        // Modo paisagem - usar mais largura disponível
+        targetWidth = Math.min(screenDetection.screenWidth * 0.95, config.width);
+        targetHeight = Math.min(screenDetection.screenHeight * 0.90, config.height);
+        
+        // Garantir aspect ratio 16:10 ou similar em paisagem
+        const landscapeRatio = 16/10;
+        if (targetWidth / targetHeight > landscapeRatio) {
+            targetWidth = targetHeight * landscapeRatio;
+        } else {
+            targetHeight = targetWidth / landscapeRatio;
+        }
+    } else {
+        // Modo retrato - ajustar para vertical
+        targetWidth = Math.min(screenDetection.screenWidth * 0.98, config.width * 0.8);
+        targetHeight = Math.min(screenDetection.screenHeight * 0.85, config.height);
+        
+        // Garantir aspect ratio 3:4 ou similar em retrato
+        const portraitRatio = 3/4;
+        if (targetWidth / targetHeight > portraitRatio) {
+            targetWidth = targetHeight * portraitRatio;
+        } else {
+            targetHeight = targetWidth / portraitRatio;
+        }
+    }
+    
+    // Aplicar tamanhos mínimos
+    targetWidth = Math.max(targetWidth, 320); // Mínimo para smartphones muito pequenos
+    targetHeight = Math.max(targetHeight, 480);
+    
+    // Atualizar dimensões do canvas
+    CANVAS_WIDTH = Math.floor(targetWidth);
+    CANVAS_HEIGHT = Math.floor(targetHeight);
+    
+    // Aplicar ao elemento canvas
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+    
+    // Aplicar escala CSS se necessário (para telas de alta resolução)
+    if (screenDetection.pixelRatio > 1 && !screenDetection.isMobile) {
+        canvas.style.width = CANVAS_WIDTH + 'px';
+        canvas.style.height = CANVAS_HEIGHT + 'px';
+    }
+    
+    // Configurar controles touch se necessário
+    if (config.touchControls && !touchControls.enabled) {
+        touchControls.enabled = true;
+        console.log('📱 Controles touch ativados por configuração responsiva');
+    }
+    
+    // Log das configurações aplicadas
+    console.log(`🎮 Canvas configurado:`, {
+        original: `${screenDetection.screenWidth}x${screenDetection.screenHeight}`,
+        canvas: `${CANVAS_WIDTH}x${CANVAS_HEIGHT}`,
+        scale: config.scale,
+        orientation: screenDetection.orientation,
+        deviceType: screenDetection.isMobile ? 'Mobile' : 
+                   screenDetection.isTablet ? 'Tablet' : 'Desktop',
+        touchControls: config.touchControls
+    });
+    
+    return { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, config };
 }
 
 // Controles do teclado
@@ -4855,29 +5026,20 @@ document.addEventListener('fullscreenchange', () => {
 
 // === SISTEMA DE REDIMENSIONAMENTO AUTOMÁTICO ===
 function resizeCanvas() {
-    // Obter dimensões da janela
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // NOVO: Usar toda a área disponível do navegador
-    let newWidth = Math.floor(windowWidth * 0.98); // 98% da largura total
-    let newHeight = Math.floor(windowHeight * 0.95); // 95% da altura total (espaço para barra de endereço)
-    
-    // Definir tamanhos mínimos para garantir jogabilidade
-    newWidth = Math.max(newWidth, 800);
-    newHeight = Math.max(newHeight, 500);
-    
-    // Atualizar as dimensões do canvas
-    CANVAS_WIDTH = newWidth;
-    CANVAS_HEIGHT = newHeight;
-    
-    canvas.width = newWidth;
-    canvas.height = newHeight;
+    // NOVO: Usar sistema responsivo avançado
+    const responsiveConfig = setupResponsiveCanvas();
     
     // Reposicionar elementos que dependem das dimensões
     updateGameElementsForResize();
     
-    console.log(`Canvas redimensionado para: ${CANVAS_WIDTH}x${CANVAS_HEIGHT} (${(newWidth/windowWidth*100).toFixed(1)}% x ${(newHeight/windowHeight*100).toFixed(1)}%)`);
+    // Reposicionar controles touch se mobile
+    if (isMobile && touchControls.enabled) {
+        positionTouchControls();
+    }
+    
+    console.log(`Canvas responsivo configurado: ${responsiveConfig.width}x${responsiveConfig.height}`);
+    console.log(`   Tipo: ${screenDetection.isMobile ? 'Mobile' : screenDetection.isTablet ? 'Tablet' : 'Desktop'}`);
+    console.log(`   Orientação: ${screenDetection.orientation}`);
 }
 
 // Função para posicionar jogador no solo
@@ -5638,6 +5800,32 @@ function handleGuideHeaderTouchEnd(e) {
     }
     
     mobileGuideState.isDragging = false;
+}
+
+// Fechar guia móvel completamente (esconder botão flutuante também)
+function closeMobileGuideCompletely() {
+    const mobileGuide = document.getElementById('mobileGuide');
+    const guideToggleBtn = document.getElementById('guideToggleBtn');
+    const guideContent = document.querySelector('.guide-content');
+    
+    if (!mobileGuide) return;
+    
+    mobileGuideState.isOpen = false;
+    mobileGuideState.isVisible = false;
+    mobileGuide.classList.remove('open');
+    
+    // Ocultar tudo
+    mobileGuide.style.display = 'none';
+    if (guideToggleBtn) {
+        guideToggleBtn.style.display = 'none';
+    }
+    
+    // Haptic feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(100);
+    }
+    
+    console.log('📋 Guia móvel fechado completamente');
 }
 
 // === RESPONSIVIDADE E ORIENTAÇÃO ===

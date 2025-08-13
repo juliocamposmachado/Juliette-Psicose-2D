@@ -6,22 +6,36 @@
 
 - **🎯 Sistema de Fases**: Progressão automática com resistência variável
 - **🎭 Animação Avançada**: Sistema dual spritesheet + sprites individuais
-- **🚀 Resolução Adaptativa**: Redimensionamento automático (800x600 mínimo)
+- **📱 Responsividade Total**: Detecção avançada mobile/tablet/desktop
+- **🎮 Controles Universais**: Teclado + touch screen + mouse
 - **💥 Sistema de Combate**: Armas progressivas, escudo e ataques especiais
 - **🏰 Plataformas Dinâmicas**: Sistema de física com pulo e gravidade
 - **🎨 Visual Cyberpunk**: Efeitos de partículas e glow piscante
 - **🔊 Sistema de Áudio**: Sons procedurais com Web Audio API
 - **🌋 Efeitos Especiais**: Disco de lava, correntes e bombas
+- **📋 Interface Móvel**: Guia interativo e controles touch
 
 ## 🎮 Controles Completos
 
-### ⚡ Controles Básicos
+### ⚡ Controles Básicos (Teclado)
 - **⬅️➡️ Setas**: Movimento horizontal
 - **Z**: Pular
 - **X/SPACE**: Atirar
 - **⬆️+X**: Tiro para cima
 - **⬇️+X**: Tiro para baixo
 - **↗️+X, ↙️+X**: Tiros diagonais
+
+### 📱 Controles Touch (Mobile)
+- **🕹️ D-Pad Virtual**: Movimento em 4 direções
+- **🎯 Botão Atirar**: Disparo principal
+- **⬆️ Botão Pular**: Pulo e navegação vertical
+- **⛓️ Corrente Esquerda**: Ataque especial 1 mão
+- **⛓️⛓️ Corrente Dupla**: Ataque especial 2 mãos
+- **💣 Bomba**: Eliminação total de inimigos
+- **🛡️ Escudo**: Proteção energética
+- **🌋 Lava**: Disco de lava flutuante
+- **⏸️ Pause**: Pausa do jogo
+- **🔊 Som**: Toggle de áudio
 
 ### 🔥 Ataques Especiais
 - **A**: Corrente (1 mão) - Dano em área
@@ -110,6 +124,29 @@ Juliette_Psicose_2D/
 - **Cronômetros**: Fase, escudo e tempo de jogo
 - **Barras Visuais**: Energia e escudo com cores dinâmicas
 
+### 📱 Sistema de Responsividade Avançada
+- **Detecção Inteligente**: User Agent + Dimensões + Pixel Ratio + Touch
+- **Breakpoints Dinâmicos**: Mobile (768px), Tablet (1024px), Desktop (1440px+)
+- **Canvas Adaptativo**: Redimensiona automaticamente para qualquer tela
+- **Orientação Automática**: Portrait/Landscape com reposicionamento
+- **Aspect Ratio**: Mantém proporções ideais em qualquer dispositivo
+
+### 📲 Interface Móvel Completa
+- **Controles Touch**: D-Pad virtual + botões de ação responsivos
+- **Feedback Háptico**: Vibração em dispositivos suportados
+- **Guia Interativo**: Painel deslizante com gestos touch
+- **Estados Visuais**: Botões com animações press/release
+- **Prevenção de Zoom**: Bloqueia gestos indesejados do navegador
+- **Toggle de Visibilidade**: Controles ocultáveis para mais tela
+
+### 🎯 Recursos do Guia Móvel
+- **📋 Expansão por Toque**: Clique/toque no cabeçalho para abrir
+- **👆 Gestos de Deslize**: Arrastar para cima/baixo para controlar
+- **📊 Indicadores Dinâmicos**: Status em tempo real de arma/escudo/bombas
+- **❌ Fechamento Completo**: Botão para ocultar guia completamente
+- **🔄 Auto-Reposicionamento**: Adapta-se a mudanças de orientação
+- **🎨 Visual Responsivo**: Cores e ícones que refletem estado do jogo
+
 ## 🚀 Como Executar
 
 1. Abra o arquivo `index.html` em um navegador moderno
@@ -184,7 +221,17 @@ python process_sprites.py
 
 ## 🕰️ Versionamento e Updates
 
-### ✨ **Última Atualização**: Animação Principal
+### ✨ **Última Atualização**: Sistema de Responsividade Completo
+- 📱 **Detecção Avançada**: User Agent + Dimensões + Pixel Ratio + Touch
+- 🎮 **Controles Touch Universais**: D-Pad virtual + botões responsivos
+- 📋 **Guia Móvel Interativo**: Painel deslizante com gestos e indicadores
+- 🔄 **Canvas Adaptativo**: Redimensiona automaticamente para qualquer tela
+- 🎨 **Orientação Dinâmica**: Portrait/Landscape com reposicionamento
+- 🎯 **Feedback Háptico**: Vibração em dispositivos suportados
+- 🚫 **Prevenção de Zoom**: Bloqueia gestos indesejados do navegador
+
+### 📅 **Atualizações Anteriores**
+#### 🎭 **Animação Principal**
 - 🎭 Personagem usa "01 maos para cima" como pose padrão
 - 🎯 Animações idle/walk sem arma atualizadas
 - ⚙️ Sistema híbrido spritesheet + sprites individuais
