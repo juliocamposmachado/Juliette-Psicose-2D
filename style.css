@@ -339,6 +339,197 @@ canvas::after {
     display: block;
 }
 
+/* === GUIA RECOLHÍVEL PARA MOBILE === */
+.mobile-guide {
+    position: fixed;
+    bottom: 210px; /* Acima dos controles touch */
+    left: 10px;
+    right: 10px;
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 40, 0.95));
+    border: 2px solid #FFD700;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    z-index: 999;
+    display: none;
+    max-height: 60vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    transition: all 0.4s ease;
+    transform: translateY(100%);
+    opacity: 0;
+}
+
+.mobile-guide.active {
+    display: block;
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.mobile-guide-header {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 12px 15px;
+    font-weight: bold;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.mobile-guide-toggle {
+    background: none;
+    border: none;
+    color: #000;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.3s ease;
+}
+
+.mobile-guide-toggle.collapsed {
+    transform: rotate(180deg);
+}
+
+.mobile-guide-content {
+    padding: 15px;
+    max-height: 50vh;
+    overflow-y: auto;
+    transition: max-height 0.4s ease;
+}
+
+.mobile-guide-content.collapsed {
+    max-height: 0;
+    padding: 0 15px;
+    overflow: hidden;
+}
+
+.mobile-guide-section {
+    margin-bottom: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    border-left: 4px solid #FFD700;
+}
+
+.mobile-guide-section h3 {
+    color: #FFD700;
+    font-size: 14px;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mobile-guide-section p {
+    color: #FFFFFF;
+    font-size: 12px;
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
+.mobile-guide-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.mobile-guide-control {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 11px;
+    text-align: center;
+    color: #FFD700;
+}
+
+.mobile-guide-tip {
+    background: linear-gradient(135deg, rgba(0, 150, 255, 0.2), rgba(0, 200, 255, 0.1));
+    border: 1px solid rgba(0, 150, 255, 0.4);
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 11px;
+    color: #87CEEB;
+    text-align: center;
+}
+
+/* Botão flutuante do guia */
+.mobile-guide-fab {
+    position: fixed;
+    bottom: 280px; /* Acima dos controles e do guia */
+    right: 15px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border: 2px solid #FFFFFF;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #000;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.5);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    animation: guidePulse 2s infinite;
+}
+
+.mobile-guide-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.7);
+}
+
+.mobile-guide-fab.mobile {
+    display: flex;
+}
+
+@keyframes guidePulse {
+    0%, 100% { 
+        box-shadow: 0 4px 16px rgba(255, 215, 0, 0.5);
+    }
+    50% { 
+        box-shadow: 0 4px 16px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+}
+
+/* Responsividade do guia móvel */
+@media (max-width: 480px) {
+    .mobile-guide {
+        left: 5px;
+        right: 5px;
+        bottom: 170px;
+        max-height: 55vh;
+    }
+    
+    .mobile-guide-fab {
+        bottom: 240px;
+        right: 10px;
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .mobile-guide-header {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    
+    .mobile-guide-content {
+        padding: 12px;
+    }
+    
+    .mobile-guide-section {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+}
+
 /* === NOVOS ESTILOS PARA CONTROLES ESPECÍFICOS === */
 /* D-Pad Center Icon */
 .dpad-center {

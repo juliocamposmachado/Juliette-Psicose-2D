@@ -4678,6 +4678,10 @@ function gameLoop() {
     // Desenha HUD
     drawHUD();
     
+    // === ATUALIZAR CONTROLES MÓVEIS E GUIA ===
+    updateMobileControlsState();
+    updateMobileGuideInGameLoop();
+    
     requestAnimationFrame(gameLoop);
 }
 
@@ -4938,6 +4942,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // === INICIALIZAR CONTROLES TOUCH MÓVEIS ===
     initializeMobileControls();
+    
+    // === INICIALIZAR GUIA MÓVEL ===
+    initializeMobileGuide();
 });
 
 // === SISTEMA COMPLETO DE CONTROLES TOUCH MÓVEIS ===
@@ -5438,5 +5445,295 @@ function updateMobileControlsState() {
                 console.log('📱 Reajustando controles após mudança de orientação');
             }
         }, 500);
+    }
+}
+
+// === SISTEMA DE GUIA MÓVEL RECOLHÍVEL ===
+let mobileGuideState = {
+    isOpen: false,
+    isVisible: false,
+    touchStartY: 0,
+    isDragging: false,
+    isInitialized: false
+};
+
+// Inicializar guia móvel
+function initializeMobileGuide() {
+    if (mobileGuideState.isInitialized) return;
+    
+    const mobileGuide = document.getElementById('mobileGuide');
+    const guideHeader = document.getElementById('guideHeader');
+    const guideToggleBtn = document.getElementById('guideToggleBtn');
+    const guideCloseBtn = document.getElementById('guideCloseBtn');
+    
+    if (!mobileGuide || !guideHeader) {
+        console.log('❌ Elementos do guia móvel não encontrados');
+        return;
+    }
+    
+    // Detectar se deve mostrar o guia móvel
+    const isMobileDevice = detectMobileDevice() || window.innerWidth <= 1024;
+    
+    if (isMobileDevice) {
+        mobileGuideState.isVisible = true;
+        mobileGuide.style.display = 'block';
+        console.log('📱 Guia móvel ativado!');
+    } else {
+        mobileGuide.style.display = 'none';
+        console.log('🖥️ Desktop detectado - guia móvel oculto');
+    }
+    
+    // === EVENT LISTENERS ===
+    
+    // Clique no cabeçalho para expandir/recolher
+    if (guideHeader) {
+        guideHeader.addEventListener('click', toggleMobileGuide);
+        guideHeader.addEventListener('touchstart', handleGuideHeaderTouchStart, { passive: false });
+        guideHeader.addEventListener('touchmove', handleGuideHeaderTouchMove, { passive: false });
+        guideHeader.addEventListener('touchend', handleGuideHeaderTouchEnd, { passive: false });
+    }
+    
+    // Botão flutuante para abrir guia
+    if (guideToggleBtn) {
+        guideToggleBtn.addEventListener('click', openMobileGuide);
+        guideToggleBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            openMobileGuide();
+        }, { passive: false });
+    }
+    
+    // Botão para fechar guia
+    if (guideCloseBtn) {
+        guideCloseBtn.addEventListener('click', closeMobileGuide);
+        guideCloseBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            closeMobileGuide();
+        }, { passive: false });
+    }
+    
+    // Listener para mudanças de orientação
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    
+    mobileGuideState.isInitialized = true;
+    console.log('📋 Sistema de guia móvel inicializado!');
+}
+
+// Toggle do guia móvel
+function toggleMobileGuide() {
+    if (mobileGuideState.isOpen) {
+        closeMobileGuide();
+    } else {
+        openMobileGuide();
+    }
+}
+
+// Abrir guia móvel
+function openMobileGuide() {
+    const mobileGuide = document.getElementById('mobileGuide');
+    const guideToggleBtn = document.getElementById('guideToggleBtn');
+    const guideContent = document.querySelector('.guide-content');
+    
+    if (!mobileGuide) return;
+    
+    mobileGuideState.isOpen = true;
+    mobileGuide.classList.add('open');
+    
+    // Ocultar botão flutuante
+    if (guideToggleBtn) {
+        guideToggleBtn.style.display = 'none';
+    }
+    
+    // Animar abertura do conteúdo
+    if (guideContent) {
+        guideContent.style.maxHeight = guideContent.scrollHeight + 'px';
+        guideContent.style.opacity = '1';
+    }
+    
+    // Haptic feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+    
+    console.log('📋 Guia móvel aberto');
+}
+
+// Fechar guia móvel
+function closeMobileGuide() {
+    const mobileGuide = document.getElementById('mobileGuide');
+    const guideToggleBtn = document.getElementById('guideToggleBtn');
+    const guideContent = document.querySelector('.guide-content');
+    
+    if (!mobileGuide) return;
+    
+    mobileGuideState.isOpen = false;
+    mobileGuide.classList.remove('open');
+    
+    // Mostrar botão flutuante novamente
+    if (guideToggleBtn && mobileGuideState.isVisible) {
+        guideToggleBtn.style.display = 'flex';
+    }
+    
+    // Animar fechamento do conteúdo
+    if (guideContent) {
+        guideContent.style.maxHeight = '0';
+        guideContent.style.opacity = '0';
+    }
+    
+    // Haptic feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(30);
+    }
+    
+    console.log('📋 Guia móvel fechado');
+}
+
+// === GESTOS DE TOQUE PARA O CABEÇALHO ===
+
+function handleGuideHeaderTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    mobileGuideState.touchStartY = touch.clientY;
+    mobileGuideState.isDragging = false;
+    
+    // Adicionar classe de interação
+    const guideHeader = document.getElementById('guideHeader');
+    if (guideHeader) {
+        guideHeader.classList.add('touching');
+    }
+}
+
+function handleGuideHeaderTouchMove(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - mobileGuideState.touchStartY;
+    
+    // Se mover mais de 10px, considerar como dragging
+    if (Math.abs(deltaY) > 10) {
+        mobileGuideState.isDragging = true;
+        
+        // Lógica de arrasto para cima/baixo
+        if (deltaY < -20 && !mobileGuideState.isOpen) {
+            // Arrasto para cima = abrir
+            openMobileGuide();
+        } else if (deltaY > 20 && mobileGuideState.isOpen) {
+            // Arrasto para baixo = fechar
+            closeMobileGuide();
+        }
+    }
+}
+
+function handleGuideHeaderTouchEnd(e) {
+    e.preventDefault();
+    
+    // Remover classe de interação
+    const guideHeader = document.getElementById('guideHeader');
+    if (guideHeader) {
+        guideHeader.classList.remove('touching');
+    }
+    
+    // Se não foi dragging, tratar como clique
+    if (!mobileGuideState.isDragging) {
+        toggleMobileGuide();
+    }
+    
+    mobileGuideState.isDragging = false;
+}
+
+// === RESPONSIVIDADE E ORIENTAÇÃO ===
+
+function handleOrientationChange() {
+    setTimeout(() => {
+        const isMobileDevice = detectMobileDevice() || window.innerWidth <= 1024;
+        const mobileGuide = document.getElementById('mobileGuide');
+        const guideToggleBtn = document.getElementById('guideToggleBtn');
+        
+        if (mobileGuide) {
+            if (isMobileDevice) {
+                mobileGuideState.isVisible = true;
+                mobileGuide.style.display = 'block';
+                
+                // Mostrar botão se guia estiver fechado
+                if (guideToggleBtn && !mobileGuideState.isOpen) {
+                    guideToggleBtn.style.display = 'flex';
+                }
+            } else {
+                mobileGuideState.isVisible = false;
+                mobileGuide.style.display = 'none';
+                
+                // Ocultar botão no desktop
+                if (guideToggleBtn) {
+                    guideToggleBtn.style.display = 'none';
+                }
+            }
+        }
+        
+        console.log(`📱 Orientação alterada - Guia móvel: ${mobileGuideState.isVisible ? 'visível' : 'oculto'}`);
+    }, 300); // Delay para aguardar mudança completa de orientação
+}
+
+// === FUNCIONALIDADES EXTRAS ===
+
+// Atualizar estado do guia baseado no jogo
+function updateMobileGuide() {
+    if (!mobileGuideState.isVisible || !mobileGuideState.isInitialized) return;
+    
+    // Atualizar indicadores dinâmicos no guia
+    updateGuideIndicators();
+}
+
+// Atualizar indicadores dinâmicos
+function updateGuideIndicators() {
+    const armaAtual = document.getElementById('armaAtual');
+    const statusEscudo = document.getElementById('statusEscudo');
+    const contadorBomba = document.getElementById('contadorBomba');
+    
+    // Atualizar arma atual
+    if (armaAtual) {
+        const armaTexto = weaponType === 'none' ? 'NENHUMA' : 
+                         (weapons[weaponType] ? weapons[weaponType].description : 'DESCONHECIDA');
+        armaAtual.textContent = armaTexto;
+        armaAtual.className = `arma-indicator ${weaponType}`;
+    }
+    
+    // Atualizar status do escudo
+    if (statusEscudo) {
+        let escudoStatus = 'INATIVO';
+        let escudoClass = 'inactive';
+        
+        if (initialShieldActive) {
+            escudoStatus = 'INICIAL ATIVO';
+            escudoClass = 'initial-active';
+        } else if (shieldActive) {
+            escudoStatus = 'ATIVO';
+            escudoClass = 'active';
+        } else if (shieldCooldown > 0) {
+            escudoStatus = `CD ${Math.ceil(shieldCooldown/60)}s`;
+            escudoClass = 'cooldown';
+        } else if (shieldEnergy < 20) {
+            escudoStatus = 'ENERGIA BAIXA';
+            escudoClass = 'low-energy';
+        } else {
+            escudoStatus = 'PRONTO';
+            escudoClass = 'ready';
+        }
+        
+        statusEscudo.textContent = escudoStatus;
+        statusEscudo.className = `shield-indicator ${escudoClass}`;
+    }
+    
+    // Atualizar contador de bombas
+    if (contadorBomba) {
+        contadorBomba.textContent = bombCount.toString();
+        contadorBomba.className = `bomb-indicator ${bombCount > 0 ? 'available' : 'empty'} ${bombCooldown > 0 ? 'cooldown' : ''}`;
+    }
+}
+
+// === INTEGRAÇÃO COM O LOOP PRINCIPAL ===
+
+// Chamar essa função no loop principal do jogo
+function updateMobileGuideInGameLoop() {
+    if (mobileGuideState.isInitialized && mobileGuideState.isVisible) {
+        updateMobileGuide();
     }
 }

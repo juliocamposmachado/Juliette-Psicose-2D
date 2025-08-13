@@ -2,9 +2,25 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juliette Psicose 2D - Jogo Responsivo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- === METADADOS PWA === -->
+    <title>Juliette Psicose 2D - Contra Style PWA</title>
+    <meta name="description" content="Jogo de ação 2D estilo Contra com Juliette. Sistema de combate avançado, sons de laser futuristas e controles touch otimizados para mobile.">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Juliette 2D">
+    
+    <!-- === CONFIGURAÇÕES PWA === -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- === ÍCONES PARA DIFERENTES DISPOSITIVOS === -->
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180x180.png">
+    
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pwa-styles.css">
 </head>
 <body>
     <div id="gameContainer">
@@ -64,7 +80,276 @@
     <!-- Botão para mostrar/ocultar controles -->
     <button id="controlsToggle" class="controls-toggle">📱</button>
 
+    <!-- === GUIA RECOLHÍVEL PARA MOBILE === -->
+    <div id="mobileGuide" class="mobile-guide">
+        <div class="mobile-guide-header" id="mobileGuideHeader">
+            <span>🎮 GUIA RÁPIDO</span>
+            <button class="mobile-guide-toggle" id="mobileGuideToggle">▼</button>
+        </div>
+        <div class="mobile-guide-content" id="mobileGuideContent">
+            <div class="mobile-guide-section">
+                <h3>🏃 MOVIMENTO</h3>
+                <div class="mobile-guide-controls">
+                    <div class="mobile-guide-control">◀▶ Mover</div>
+                    <div class="mobile-guide-control">▲ Pular</div>
+                </div>
+                <p>Use o D-Pad para mover e pular</p>
+            </div>
+            
+            <div class="mobile-guide-section">
+                <h3>⚔️ COMBATE</h3>
+                <div class="mobile-guide-controls">
+                    <div class="mobile-guide-control">🎯 Atirar</div>
+                    <div class="mobile-guide-control">⛓️ Corrente</div>
+                </div>
+                <p>Botões à direita para atacar</p>
+            </div>
+            
+            <div class="mobile-guide-section">
+                <h3>💥 ESPECIAIS</h3>
+                <div class="mobile-guide-controls">
+                    <div class="mobile-guide-control">💣 Bomba</div>
+                    <div class="mobile-guide-control">🛡️ Escudo</div>
+                    <div class="mobile-guide-control">🌋 Lava</div>
+                    <div class="mobile-guide-control">⏸️ Pausa</div>
+                </div>
+                <p>Botões superiores para ações especiais</p>
+            </div>
+            
+            <div class="mobile-guide-tip">
+                💡 DICA: Combine movimentos direcionais com ataques para tiros precisos!
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão flutuante do guia -->
+    <button id="mobileGuideFab" class="mobile-guide-fab">❓</button>
+
     <script src="game.js"></script>
     <script src="debug_fix.js"></script>
+    
+    <!-- === PWA SERVICE WORKER === -->
+    <script>
+        // =====================================================
+        // PWA INITIALIZATION AND SERVICE WORKER REGISTRATION
+        // =====================================================
+        
+        let pwaState = {
+            isInstallable: false,
+            isInstalled: false,
+            swRegistration: null,
+            installPrompt: null
+        };
+        
+        // === REGISTRAR SERVICE WORKER ===
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('./sw.js');
+                    pwaState.swRegistration = registration;
+                    
+                    console.log('🚀 Service Worker registrado com sucesso:', registration.scope);
+                    
+                    // Verificar atualizações
+                    registration.addEventListener('updatefound', () => {
+                        console.log('🔄 Nova versão do Service Worker disponível!');
+                        const newWorker = registration.installing;
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateAvailable();
+                            }
+                        });
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Falha ao registrar Service Worker:', error);
+                }
+            });
+        }
+        
+        // === DETECTAR SE PWA PODE SER INSTALADA ===
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('📱 PWA pode ser instalada!');
+            e.preventDefault();
+            pwaState.installPrompt = e;
+            pwaState.isInstallable = true;
+            showInstallButton();
+        });
+        
+        // === DETECTAR QUANDO PWA FOI INSTALADA ===
+        window.addEventListener('appinstalled', (e) => {
+            console.log('✅ PWA instalada com sucesso!');
+            pwaState.isInstalled = true;
+            pwaState.installPrompt = null;
+            hideInstallButton();
+            
+            // Mostrar mensagem de sucesso
+            showNotification('🎉 Juliette 2D instalado! Agora você pode jogar offline!', 'success');
+        });
+        
+        // === FUNÇÃO PARA INSTALAR PWA ===
+        async function installPWA() {
+            if (!pwaState.installPrompt) {
+                console.log('❌ Prompt de instalação não disponível');
+                return;
+            }
+            
+            try {
+                const result = await pwaState.installPrompt.prompt();
+                console.log('📱 Resultado da instalação:', result.outcome);
+                
+                if (result.outcome === 'accepted') {
+                    console.log('✅ Usuário aceitou a instalação');
+                } else {
+                    console.log('❌ Usuário cancelou a instalação');
+                }
+                
+                pwaState.installPrompt = null;
+            } catch (error) {
+                console.error('❌ Erro durante instalação:', error);
+            }
+        }
+        
+        // === MOSTRAR BOTÃO DE INSTALAÇÃO ===
+        function showInstallButton() {
+            let installBtn = document.getElementById('pwaInstallBtn');
+            
+            if (!installBtn) {
+                installBtn = document.createElement('button');
+                installBtn.id = 'pwaInstallBtn';
+                installBtn.className = 'pwa-install-btn';
+                installBtn.innerHTML = '📱 INSTALAR JOGO';
+                installBtn.title = 'Instalar como aplicativo no celular/desktop';
+                
+                installBtn.addEventListener('click', installPWA);
+                
+                // Adicionar ao container do jogo
+                const gameContainer = document.getElementById('gameContainer');
+                if (gameContainer) {
+                    gameContainer.appendChild(installBtn);
+                }
+            }
+            
+            installBtn.style.display = 'block';
+            
+            // Animação de entrada
+            setTimeout(() => {
+                installBtn.classList.add('show');
+            }, 100);
+        }
+        
+        // === OCULTAR BOTÃO DE INSTALAÇÃO ===
+        function hideInstallButton() {
+            const installBtn = document.getElementById('pwaInstallBtn');
+            if (installBtn) {
+                installBtn.classList.remove('show');
+                setTimeout(() => {
+                    installBtn.style.display = 'none';
+                }, 300);
+            }
+        }
+        
+        // === MOSTRAR NOTIFICAÇÃO DE ATUALIZAÇÃO ===
+        function showUpdateAvailable() {
+            const notification = document.createElement('div');
+            notification.className = 'pwa-update-notification';
+            notification.innerHTML = `
+                <div class="pwa-update-content">
+                    <span>🔄 Nova versão disponível!</span>
+                    <button onclick="updatePWA()" class="pwa-update-btn">ATUALIZAR</button>
+                    <button onclick="closeUpdateNotification()" class="pwa-close-btn">✕</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Mostrar com animação
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+        }
+        
+        // === ATUALIZAR PWA ===
+        function updatePWA() {
+            if (pwaState.swRegistration && pwaState.swRegistration.waiting) {
+                pwaState.swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                window.location.reload();
+            }
+        }
+        
+        // === FECHAR NOTIFICAÇÃO DE ATUALIZAÇÃO ===
+        function closeUpdateNotification() {
+            const notification = document.querySelector('.pwa-update-notification');
+            if (notification) {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }
+        }
+        
+        // === MOSTRAR NOTIFICAÇÕES GERAIS ===
+        function showNotification(message, type = 'info', duration = 4000) {
+            const notification = document.createElement('div');
+            notification.className = `pwa-notification pwa-notification-${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Mostrar com animação
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Ocultar automaticamente
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        // === DETECTAR SE ESTÁ EXECUTANDO COMO PWA ===
+        function isPWAMode() {
+            return window.matchMedia('(display-mode: standalone)').matches || 
+                   window.navigator.standalone === true;
+        }
+        
+        // === INICIALIZAÇÃO PWA ===
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isPWAMode()) {
+                console.log('🎮 Executando em modo PWA!');
+                document.body.classList.add('pwa-mode');
+                pwaState.isInstalled = true;
+            } else {
+                console.log('🌐 Executando no navegador');
+            }
+            
+            // Verificar suporte a recursos PWA
+            if ('serviceWorker' in navigator) {
+                console.log('✅ Service Worker suportado');
+            }
+            
+            if ('BeforeInstallPromptEvent' in window) {
+                console.log('✅ Instalação PWA suportada');
+            }
+            
+            // Debug: informações do PWA
+            setTimeout(() => {
+                console.log('📊 Estado PWA:', pwaState);
+            }, 2000);
+        });
+        
+        // === EXPOR FUNÇÕES GLOBAIS ===
+        window.pwaState = pwaState;
+        window.installPWA = installPWA;
+        window.updatePWA = updatePWA;
+        window.showNotification = showNotification;
+        
+    </script>
 </body>
 </html>
