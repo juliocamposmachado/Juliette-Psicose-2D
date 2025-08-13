@@ -11,6 +11,19 @@ body {
     font-family: 'Courier New', monospace;
     overflow: hidden;
     position: relative;
+    /* iOS Safari notch support */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    /* Remove padding mobile para tela cheia */
+}
+
+/* Classe para elementos apenas desktop */
+.desktop-only {
+    display: block;
+}
+
+/* PWA mode - esconde elementos desktop quando instalado */
+body.pwa-mode .desktop-only {
+    display: none;
 }
 
 #gameContainer {
@@ -29,6 +42,26 @@ body {
     box-sizing: border-box;
 }
 
+/* Container mobile fullscreen */
+@media (max-width: 768px) {
+    body {
+        padding: 0; /* Remove padding em mobile */
+        /* Notch support para iOS */
+        padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+    }
+    
+    #gameContainer {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+        /* Garante que use toda a área disponível */
+        max-width: none;
+        max-height: none;
+    }
+}
+
 canvas {
     background: #222;
     border: 2px solid #555;
@@ -38,8 +71,23 @@ canvas {
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
     width: 100%;
     height: 100%;
-    object-fit: fill;
+    object-fit: contain; /* Mudado de fill para contain para evitar distorção */
     position: relative;
+}
+
+/* Canvas mobile fullscreen */
+@media (max-width: 768px) {
+    canvas {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        object-fit: cover; /* Usa toda área disponível em mobile */
+        /* Força uso de toda viewport disponível */
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+    }
 }
 
 /* Informações do jogo */
@@ -127,8 +175,8 @@ canvas::after {
     );
 }
 
-/* Responsividade */
-@media (max-width: 850px) {
+/* Responsividade melhorada */
+@media (max-width: 850px) and (min-width: 769px) {
     body {
         padding: 5px;
     }
@@ -150,34 +198,31 @@ canvas::after {
     }
 }
 
-@media (max-width: 480px) {
+/* Mobile específico - tela cheia sem barras pretas */
+@media (max-width: 768px) {
+    /* Oculta elementos desktop em mobile */
+    .desktop-only {
+        display: none !important;
+    }
+    
     body {
-        padding: 2px;
+        padding: 0;
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height para mobile */
     }
+    
     #gameContainer {
-        padding: 1px;
-        border-radius: 3px;
+        padding: 0;
+        border-radius: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
     }
+    
     canvas {
-        border: 1px solid #333;
-        border-radius: 3px;
-    }
-    .fullscreen-btn {
-        font-size: 9px;
-        padding: 3px 6px;
-        top: 5px;
-        width: 70px;
-        left: 50%;
-        transform: translateX(-50%);
-        backdrop-filter: blur(3px);
-    }
-    .game-info {
-        font-size: 12px;
-        top: -25px;
-    }
-    .controls {
-        font-size: 9px;
-        bottom: -35px;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
     }
 }
 

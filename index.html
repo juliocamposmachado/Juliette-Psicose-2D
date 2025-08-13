@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <!-- === METADADOS PWA === -->
     <title>Juliette Psicose 2D - Contra Style PWA</title>
@@ -10,6 +10,10 @@
     <meta name="theme-color" content="#1a1a2e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-TileColor" content="#1a1a2e">
+    <meta name="msapplication-tap-highlight" content="no">
     <meta name="apple-mobile-web-app-title" content="Juliette 2D">
     
     <!-- === CONFIGURAÇÕES PWA === -->
@@ -24,14 +28,15 @@
 </head>
 <body>
     <div id="gameContainer">
-        <div class="game-info">
+        <!-- Info e controles desktop apenas -->
+        <div class="game-info desktop-only">
             Juliette Psicose 2D - Tela Adaptável
         </div>
         <canvas id="gameCanvas"></canvas>
-        <button id="fullscreenBtn" class="fullscreen-btn" title="Tela Cheia (F11)">
+        <button id="fullscreenBtn" class="fullscreen-btn desktop-only" title="Tela Cheia (F11)">
             📺 TELA
         </button>
-        <div class="controls">
+        <div class="controls desktop-only">
             🏃 Setas: Mover/Mirar | ⚔️ Espaço/X: Atirar | 🦘 Z: Pular | ⏸ P: Pausar | 🔄 R: Reiniciar<br>
             🎯 Múltiplas armas | 💎 Power-ups | 👾 Inimigos inteligentes | 💥 Explosões épicas!<br>
             🎵 <strong>NOVO:</strong> Sons dinâmicos | ⚛️ Inimigos com átomos orbitantes | 🔊 M: Ligar/Desligar Sons

@@ -897,38 +897,53 @@ function setupResponsiveCanvas() {
         config = screenDetection.configs.desktop;
     }
     
-    // Calcular dimensões ideais
+    // === NOVA LÓGICA PARA TELA CHEIA MOBILE SEM BARRAS PRETAS ===
     let targetWidth, targetHeight;
     
-    if (screenDetection.orientation === 'landscape') {
-        // Modo paisagem - usar mais largura disponível
-        targetWidth = Math.min(screenDetection.screenWidth * 0.95, config.width);
-        targetHeight = Math.min(screenDetection.screenHeight * 0.90, config.height);
+    if (screenDetection.isMobile || screenDetection.isTablet) {
+        // Mobile/Tablet: usar TODA viewport disponível
+        targetWidth = screenDetection.screenWidth;
+        targetHeight = screenDetection.screenHeight;
         
-        // Garantir aspect ratio 16:10 ou similar em paisagem
-        const landscapeRatio = 16/10;
-        if (targetWidth / targetHeight > landscapeRatio) {
-            targetWidth = targetHeight * landscapeRatio;
-        } else {
-            targetHeight = targetWidth / landscapeRatio;
-        }
+        // Não forçar aspect ratios específicos em mobile - usar toda tela
+        console.log('📱 Modo mobile/tablet: usando viewport completa');
+        
     } else {
-        // Modo retrato - ajustar para vertical
-        targetWidth = Math.min(screenDetection.screenWidth * 0.98, config.width * 0.8);
-        targetHeight = Math.min(screenDetection.screenHeight * 0.85, config.height);
-        
-        // Garantir aspect ratio 3:4 ou similar em retrato
-        const portraitRatio = 3/4;
-        if (targetWidth / targetHeight > portraitRatio) {
-            targetWidth = targetHeight * portraitRatio;
+        // Desktop: manter lógica anterior com aspect ratios
+        if (screenDetection.orientation === 'landscape') {
+            // Modo paisagem - usar mais largura disponível
+            targetWidth = Math.min(screenDetection.screenWidth * 0.95, config.width);
+            targetHeight = Math.min(screenDetection.screenHeight * 0.90, config.height);
+            
+            // Garantir aspect ratio 16:10 ou similar em paisagem
+            const landscapeRatio = 16/10;
+            if (targetWidth / targetHeight > landscapeRatio) {
+                targetWidth = targetHeight * landscapeRatio;
+            } else {
+                targetHeight = targetWidth / landscapeRatio;
+            }
         } else {
-            targetHeight = targetWidth / portraitRatio;
+            // Modo retrato - ajustar para vertical
+            targetWidth = Math.min(screenDetection.screenWidth * 0.98, config.width * 0.8);
+            targetHeight = Math.min(screenDetection.screenHeight * 0.85, config.height);
+            
+            // Garantir aspect ratio 3:4 ou similar em retrato
+            const portraitRatio = 3/4;
+            if (targetWidth / targetHeight > portraitRatio) {
+                targetWidth = targetHeight * portraitRatio;
+            } else {
+                targetHeight = targetWidth / portraitRatio;
+            }
         }
+        
+        // Aplicar tamanhos mínimos apenas para desktop
+        targetWidth = Math.max(targetWidth, 800);
+        targetHeight = Math.max(targetHeight, 600);
     }
     
-    // Aplicar tamanhos mínimos
-    targetWidth = Math.max(targetWidth, 320); // Mínimo para smartphones muito pequenos
-    targetHeight = Math.max(targetHeight, 480);
+    // Garantir mínimos absolutos para todos os dispositivos
+    targetWidth = Math.max(targetWidth, 320);
+    targetHeight = Math.max(targetHeight, 240);
     
     // Atualizar dimensões do canvas
     CANVAS_WIDTH = Math.floor(targetWidth);
@@ -938,10 +953,29 @@ function setupResponsiveCanvas() {
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
     
-    // Aplicar escala CSS se necessário (para telas de alta resolução)
-    if (screenDetection.pixelRatio > 1 && !screenDetection.isMobile) {
+    // === CONFIGURAÇÃO ESPECIAL MOBILE PARA TELA CHEIA ===
+    if (screenDetection.isMobile || screenDetection.isTablet) {
+        // Forçar uso de toda viewport em mobile
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.objectFit = 'cover'; // Preenche toda a área
+        
+        // Ocultar elementos desktop
+        document.querySelectorAll('.desktop-only').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        console.log('📱 Configuração mobile fullscreen aplicada');
+    } else {
+        // Desktop: usar dimensões calculadas
         canvas.style.width = CANVAS_WIDTH + 'px';
         canvas.style.height = CANVAS_HEIGHT + 'px';
+        canvas.style.objectFit = 'contain';
+        
+        // Mostrar elementos desktop
+        document.querySelectorAll('.desktop-only').forEach(el => {
+            el.style.display = 'block';
+        });
     }
     
     // Configurar controles touch se necessário
@@ -952,9 +986,10 @@ function setupResponsiveCanvas() {
     
     // Log das configurações aplicadas
     console.log(`🎮 Canvas configurado:`, {
-        original: `${screenDetection.screenWidth}x${screenDetection.screenHeight}`,
+        viewport: `${screenDetection.screenWidth}x${screenDetection.screenHeight}`,
         canvas: `${CANVAS_WIDTH}x${CANVAS_HEIGHT}`,
-        scale: config.scale,
+        cssSize: `${canvas.style.width} x ${canvas.style.height}`,
+        objectFit: canvas.style.objectFit,
         orientation: screenDetection.orientation,
         deviceType: screenDetection.isMobile ? 'Mobile' : 
                    screenDetection.isTablet ? 'Tablet' : 'Desktop',
