@@ -26,6 +26,7 @@
 - **↗️+X, ↙️+X**: Tiros diagonais
 
 ### 📱 Controles Touch (Mobile)
+#### 📲 **Modo Tradicional (Portrait)**
 - **🕹️ D-Pad Virtual**: Movimento em 4 direções
 - **🎯 Botão Atirar**: Disparo principal
 - **⬆️ Botão Pular**: Pulo e navegação vertical
@@ -36,6 +37,16 @@
 - **🌋 Lava**: Disco de lava flutuante
 - **⏸️ Pause**: Pausa do jogo
 - **🔊 Som**: Toggle de áudio
+
+#### 🎮 **Modo Arrastável Individual (Landscape)** - ✨ NOVO!
+- **🎯 Drag & Drop**: Reposicione livremente cada controle na tela
+- **💾 Posições Salvas**: Suas configurações persistem entre sessões
+- **📳 Feedback Háptico**: Vibração ao tocar e mover controles
+- **🎨 Estados Dinâmicos**: Botões mudam cor baseado no estado do jogo
+- **🕹️ D-Pad Inteligente**: Zona morta e detecção direcional precisa
+- **🎛️ 10 Controles Individuais**: Cada botão pode ser posicionado independentemente
+- **🔄 Auto-Adaptação**: Ativa automaticamente em modo paisagem
+- **⚡ Tap vs Drag**: Toque rápido = ação, arrastar = reposicionar
 
 ### 🔥 Ataques Especiais
 - **A**: Corrente (1 mão) - Dano em área
@@ -147,6 +158,18 @@ Juliette_Psicose_2D/
 - **🔄 Auto-Reposicionamento**: Adapta-se a mudanças de orientação
 - **🎨 Visual Responsivo**: Cores e ícones que refletem estado do jogo
 
+### 🎮 Sistema de Controles Arrastáveis - ⭐ DESTAQUE
+- **🎯 Drag & Drop Inteligente**: Cada controle pode ser reposicionado livremente na tela
+- **💾 Persistência Local**: Posições são salvas no localStorage e restauradas automaticamente
+- **📳 Feedback Háptico Avançado**: Vibração precisa ao tocar, arrastar e soltar controles
+- **🔄 Detecção de Orientação**: Auto-ativa em landscape, desativa em portrait
+- **⚡ Diferenciação Tap vs Drag**: Toque rápido executa ação, arrastar reposiciona
+- **🎨 Estados Visuais Dinâmicos**: Cores e opacidade mudam baseado no estado do jogo
+- **🛡️ Limitação de Bordas**: Controles não podem ser arrastados para fora da tela
+- **🕹️ D-Pad Especializado**: Zona morta e detecção direcional com precisão angular
+- **🎛️ 10 Controles Independentes**: Cada botão é um elemento DOM individual arrastável
+- **🔧 Reset de Posições**: Função para restaurar posições padrão ergonômicas
+
 ## 🚀 Como Executar
 
 1. Abra o arquivo `index.html` em um navegador moderno
@@ -221,14 +244,17 @@ python process_sprites.py
 
 ## 🕰️ Versionamento e Updates
 
-### ✨ **Última Atualização**: Sistema de Responsividade Completo
-- 📱 **Detecção Avançada**: User Agent + Dimensões + Pixel Ratio + Touch
-- 🎮 **Controles Touch Universais**: D-Pad virtual + botões responsivos
-- 📋 **Guia Móvel Interativo**: Painel deslizante com gestos e indicadores
-- 🔄 **Canvas Adaptativo**: Redimensiona automaticamente para qualquer tela
-- 🎨 **Orientação Dinâmica**: Portrait/Landscape com reposicionamento
-- 🎯 **Feedback Háptico**: Vibração em dispositivos suportados
-- 🚫 **Prevenção de Zoom**: Bloqueia gestos indesejados do navegador
+### ✨ **Última Atualização**: Sistema de Controles Arrastáveis Individuais
+- 🎯 **Drag & Drop Avançado**: Cada controle pode ser reposicionado livremente na tela
+- 💾 **Persistência Inteligente**: Posições salvas no localStorage entre sessões
+- 📳 **Feedback Háptico Premium**: Vibração precisa em cada interação
+- 🔄 **Auto-Adaptação por Orientação**: Landscape = individual, Portrait = agrupado
+- ⚡ **Detecção Tap vs Drag**: Toque rápido = ação, arrastar = reposicionar
+- 🎨 **Estados Visuais Avançados**: Cores e opacidade dinâmicas por estado
+- 🕹️ **D-Pad Especializado**: Zona morta e detecção angular precisa
+- 🛡️ **Sistema de Limites**: Controles não podem sair da tela
+- 🎛️ **10 Controles Independentes**: Cada elemento DOM arrastável individual
+- 🔧 **Reset Ergonômico**: Restauração de posições padrão otimizadas
 
 ### 📅 **Atualizações Anteriores**
 #### 🎭 **Animação Principal**
