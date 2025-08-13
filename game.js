@@ -15,7 +15,15 @@ const gameState = {
     lives: 3,
     level: 1,
     paused: false,
-    gameOver: false
+    gameOver: false,
+    // === NOVO SISTEMA DE FASES ===
+    currentPhase: 1,
+    gameStartTime: 0,
+    timeInGame: 0, // Tempo em segundos
+    hitsReceived: 0, // Contador de tiros recebidos
+    maxHitsPhase1: 10, // Tiros para morrer na fase 1
+    maxHitsPhase2: 1000, // Tiros para morrer na fase 2
+    phase2StartTime: 300 // 5 minutos = 300 segundos
 };
 
 // === SISTEMA DE SONS ===
@@ -151,6 +159,10 @@ backgroundImg.src = 'assets/fundo 2d melhor.png';
 
 const backgroundImgA = new Image();
 backgroundImgA.src = 'assets/fundo 2d a.png';
+
+// === NOVA IMAGEM DA FASE 2 ===
+const backgroundImgPhase2 = new Image();
+backgroundImgPhase2.src = 'assets/fundo 2d melhor fase 2.png';
 
 const sceneImg = new Image();
 sceneImg.src = 'assets/cena01.jpg';
@@ -1114,13 +1126,20 @@ function drawBackground() {
             ctx.globalAlpha = 1.0;
         }
         
-        // Sobrepõe o "fundo 2d melhor" apenas acima do piso
-        if (backgroundImg.complete) {
+        // === SISTEMA DE FASES: ESCOLHER FUNDO BASEADO NA FASE ATUAL ===
+        let currentBackgroundImg = backgroundImg; // Fase 1 padrão
+        
+        if (gameState.currentPhase === 2 && backgroundImgPhase2.complete) {
+            currentBackgroundImg = backgroundImgPhase2; // Fase 2
+        }
+        
+        // Sobrepõe o fundo da fase atual apenas acima do piso
+        if (currentBackgroundImg.complete) {
             ctx.globalAlpha = 0.8; // Aumentar um pouco a transparência desta camada
             // Desenhar apenas a parte que fica acima do piso
             ctx.drawImage(
-                backgroundImg, 
-                0, 0, backgroundImg.width, backgroundImg.height, // Fonte completa
+                currentBackgroundImg, 
+                0, 0, currentBackgroundImg.width, currentBackgroundImg.height, // Fonte completa
                 x, 0, bgWidth, backgroundLayerHeight // Destino: da posição x, y=0, até o nível do piso
             );
             ctx.globalAlpha = 1.0;
@@ -1492,8 +1511,20 @@ function checkCollisions() {
                 bullet.y < playerRect.y + playerRect.height &&
                 bullet.y + bullet.size > playerRect.y) {
                 
-                // Jogador levou dano
-                playerHealth -= bullet.damage;
+                // === NOVO SISTEMA DE RESISTÊNCIA A TIROS ===
+                gameState.hitsReceived++;
+                
+                // Determinar quantos tiros são necessários para morrer baseado na fase
+                const maxHits = gameState.currentPhase === 1 ? gameState.maxHitsPhase1 : gameState.maxHitsPhase2;
+                
+                // Calcular dano baseado na resistência da fase
+                let actualDamage = bullet.damage;
+                if (gameState.currentPhase === 2) {
+                    // Na fase 2, cada tiro causa menos dano (1000 tiros para morrer)
+                    actualDamage = Math.ceil(100 / gameState.maxHitsPhase2 * 10); // Aproximadamente 0.1 de dano por tiro
+                }
+                
+                playerHealth -= actualDamage;
                 bullets.splice(i, 1);
                 invulnerable = true;
                 invulnerableTime = 120; // 2 segundos de invulnerabilidade
@@ -1501,13 +1532,17 @@ function checkCollisions() {
                 // Som de dano no jogador
                 playSound('playerHit', 200, 400);
                 
-                if (playerHealth <= 0) {
+                // Log para debug
+                console.log(`Fase ${gameState.currentPhase}: Tiro ${gameState.hitsReceived}/${maxHits}, Vida: ${playerHealth}`);
+                
+                if (playerHealth <= 0 || gameState.hitsReceived >= maxHits) {
                     gameState.lives--;
                     if (gameState.lives <= 0) {
                         gameState.gameOver = true;
                         playSound('gameOver', 150, 1000);
                     } else {
                         playerHealth = 100;
+                        gameState.hitsReceived = 0; // Resetar contador de tiros
                         weaponType = 'normal'; // Perde power-ups
                     }
                 }
@@ -1785,35 +1820,101 @@ function drawHUD() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, CANVAS_WIDTH, 60);
     
-    // Informações do jogo
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 16px Arial';
-    ctx.fillText(`SCORE: ${gameState.score.toString().padStart(8, '0')}`, 10, 20);
-    ctx.fillText(`LIVES: ${gameState.lives}`, 10, 40);
+    // === LAYOUT CENTRALIZADO E RESPONSIVO ===
+    const hudFont = CANVAS_WIDTH > 1200 ? '16px' : '14px';
+    const hudFontBold = CANVAS_WIDTH > 1200 ? 'bold 16px Arial' : 'bold 14px Arial';
+    const margin = 20;
+    const centerX = CANVAS_WIDTH / 2;
     
-    // Barra de vida
-    ctx.fillText('HEALTH:', 250, 20);
-    ctx.fillStyle = 'red';
-    ctx.fillRect(330, 10, 100, 10);
-    ctx.fillStyle = 'green';
-    ctx.fillRect(330, 10, playerHealth, 10);
+    // Calcular larguras para layout responsivo
+    const elementWidth = (CANVAS_WIDTH - margin * 2) / 5; // 5 elementos principais
     
-    // Arma atual
-    ctx.fillStyle = 'white';
-    ctx.fillText(`WEAPON: ${weaponType.toUpperCase()}`, 450, 20);
+    ctx.font = hudFontBold;
+    ctx.textAlign = 'center'; // Centralizar todos os textos
     
-    // Level
-    ctx.fillText(`LEVEL: ${gameState.level}`, 600, 20);
+    // === LINHA 1 (Y=20) ===
     
-    // Status do som
+    // 1. SCORE (esquerda)
+    ctx.fillStyle = '#FFD700'; // Dourado para destaque
+    const scoreX = margin + elementWidth * 0.5;
+    ctx.fillText(`SCORE: ${gameState.score.toString().padStart(8, '0')}`, scoreX, 20);
+    
+    // 2. LIVES (esquerda-centro)
+    ctx.fillStyle = '#FF6B6B'; // Vermelho para vidas
+    const livesX = margin + elementWidth * 1.5;
+    ctx.fillText(`VIDAS: ${gameState.lives}`, livesX, 20);
+    
+    // 3. LEVEL E FASE (centro)
+    ctx.fillStyle = '#87CEEB'; // Azul claro
+    ctx.fillText(`FASE ${gameState.currentPhase} | NÍVEL: ${gameState.level}`, centerX, 20);
+    
+    // 4. WEAPON (centro-direita)
+    ctx.fillStyle = '#98FB98'; // Verde claro
+    const weaponX = margin + elementWidth * 3.5;
+    ctx.fillText(`ARMA: ${weaponType.toUpperCase()}`, weaponX, 20);
+    
+    // 5. SOM (direita)
     ctx.fillStyle = gameAudio.enabled ? '#00FF00' : '#FF4444';
-    ctx.fillText(`🔊 SOM: ${gameAudio.enabled ? 'ON' : 'OFF'}`, 600, 40);
+    const soundX = margin + elementWidth * 4.5;
+    ctx.fillText(`🔊 ${gameAudio.enabled ? 'ON' : 'OFF'}`, soundX, 20);
     
-    // Cooldown de tiro (só mostra se tem arma)
+    // === LINHA 2 (Y=40) - BARRA DE VIDA CENTRALIZADA ===
+    
+    // Calcular dimensões da barra de vida
+    const healthBarWidth = Math.min(300, CANVAS_WIDTH * 0.25); // Máximo 300px ou 25% da tela
+    const healthBarHeight = 12;
+    const healthBarX = centerX - healthBarWidth / 2;
+    const healthBarY = 30;
+    
+    // Label da vida centralizado
+    ctx.fillStyle = 'white';
+    ctx.font = CANVAS_WIDTH > 1200 ? '12px Arial' : '10px Arial';
+    ctx.fillText('ENERGIA', centerX, healthBarY + 5);
+    
+    // Fundo da barra de vida (vermelha)
+    ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
+    ctx.fillRect(healthBarX, healthBarY + 8, healthBarWidth, healthBarHeight);
+    
+    // Barra de vida atual (verde)
+    const healthPercent = playerHealth / 100;
+    ctx.fillStyle = healthPercent > 0.6 ? '#00FF00' : 
+                   healthPercent > 0.3 ? '#FFFF00' : '#FF0000';
+    ctx.fillRect(healthBarX, healthBarY + 8, healthBarWidth * healthPercent, healthBarHeight);
+    
+    // Contorno da barra de vida
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(healthBarX, healthBarY + 8, healthBarWidth, healthBarHeight);
+    
+    // Texto da porcentagem de vida e contador de tiros
+    ctx.fillStyle = 'white';
+    ctx.font = CANVAS_WIDTH > 1200 ? '10px Arial' : '9px Arial';
+    const maxHits = gameState.currentPhase === 1 ? gameState.maxHitsPhase1 : gameState.maxHitsPhase2;
+    ctx.fillText(`${playerHealth}% | Tiros: ${gameState.hitsReceived}/${maxHits}`, centerX, healthBarY + 30);
+    
+    // === COOLDOWN DE TIRO (se ativo) ===
     if (shootCooldown > 0 && weaponType !== 'none') {
+        const cooldownBarWidth = healthBarWidth * 0.6;
+        const cooldownBarX = centerX - cooldownBarWidth / 2;
+        const cooldownBarY = healthBarY + 35;
+        
+        // Fundo do cooldown
+        ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+        ctx.fillRect(cooldownBarX, cooldownBarY, cooldownBarWidth, 4);
+        
+        // Barra do cooldown
+        const cooldownPercent = shootCooldown / weapons[weaponType].cooldown;
+        ctx.fillStyle = '#FFFF00';
+        ctx.fillRect(cooldownBarX, cooldownBarY, cooldownBarWidth * cooldownPercent, 4);
+        
+        // Label do cooldown
         ctx.fillStyle = 'yellow';
-        ctx.fillRect(330, 35, (shootCooldown / weapons[weaponType].cooldown) * 100, 5);
+        ctx.font = '8px Arial';
+        ctx.fillText('RECARGA', centerX, cooldownBarY - 2);
     }
+    
+    // Resetar alinhamento para outros elementos
+    ctx.textAlign = 'left';
     
     // === PAINEL DE INSTRUÇÕES ===
     drawControlsPanel();
@@ -1942,6 +2043,51 @@ function spawnEnemies() {
     }
 }
 
+// === NOVA FUNÇÃO: ATUALIZAR SISTEMA DE FASES ===
+function updateGamePhase() {
+    // Atualizar tempo de jogo
+    if (gameState.gameStartTime === 0) {
+        gameState.gameStartTime = Date.now();
+    }
+    
+    gameState.timeInGame = Math.floor((Date.now() - gameState.gameStartTime) / 1000);
+    
+    // Verificar se deve avançar para a fase 2
+    if (gameState.currentPhase === 1 && gameState.timeInGame >= gameState.phase2StartTime) {
+        advanceToPhase2();
+    }
+}
+
+// === NOVA FUNÇÃO: AVANÇAR PARA FASE 2 ===
+function advanceToPhase2() {
+    if (gameState.currentPhase === 2) return; // Já está na fase 2
+    
+    gameState.currentPhase = 2;
+    gameState.hitsReceived = 0; // Resetar contador de tiros
+    
+    // Restaurar vida completa na mudança de fase
+    playerHealth = 100;
+    
+    // Som especial de mudança de fase
+    playSound('levelUp', 800, 1000);
+    
+    // Log para debug
+    console.log('🎯 FASE 2 INICIADA! Resistência aumentada para 1000 tiros!');
+    
+    // Criar efeito visual de mudança de fase
+    for (let i = 0; i < 20; i++) {
+        particles.push({
+            x: CANVAS_WIDTH / 2 + (Math.random() - 0.5) * 200,
+            y: CANVAS_HEIGHT / 2 + (Math.random() - 0.5) * 100,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 60,
+            color: '#FFD700', // Dourado para indicar mudança especial
+            size: Math.random() * 6 + 3
+        });
+    }
+}
+
 // Função principal do loop do jogo
 function gameLoop() {
     if (gameState.paused || gameState.gameOver) {
@@ -1955,7 +2101,9 @@ function gameLoop() {
             ctx.fillText('GAME OVER', CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
             ctx.font = '24px Arial';
             ctx.fillText(`Final Score: ${gameState.score}`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 50);
-            ctx.fillText('Press R to Restart', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 100);
+            ctx.fillText(`Fase Alcançada: ${gameState.currentPhase}`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 80);
+            ctx.fillText(`Tempo Jogado: ${Math.floor(gameState.timeInGame / 60)}m ${gameState.timeInGame % 60}s`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 110);
+            ctx.fillText('Press R to Restart', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 140);
         }
         requestAnimationFrame(gameLoop);
         return;
@@ -1963,6 +2111,9 @@ function gameLoop() {
     
     // Limpa a tela
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    
+    // === ATUALIZAR SISTEMA DE FASES ===
+    updateGamePhase();
     
     // Atualiza cooldowns
     if (shootCooldown > 0) shootCooldown--;
@@ -2056,6 +2207,11 @@ function restartGame() {
     gameState.level = 1;
     gameState.paused = false;
     gameState.gameOver = false;
+    // === RESETAR SISTEMA DE FASES ===
+    gameState.currentPhase = 1;
+    gameState.gameStartTime = 0;
+    gameState.timeInGame = 0;
+    gameState.hitsReceived = 0;
     
     // Resetar jogador
     currentAnim = 'idle_noweapon';
@@ -2095,7 +2251,7 @@ function restartGame() {
 
 // Inicia o jogo quando todas as imagens carregarem
 let imagesLoaded = 0;
-const totalImages = 12; // Total de imagens: 3 de fundo + 9 da Juliette (incluindo novas de tiro)
+const totalImages = 13; // Total de imagens: 4 de fundo (incluindo fase 2) + 9 da Juliette (incluindo novas de tiro)
 
 function checkImagesLoaded() {
     imagesLoaded++;
@@ -2111,6 +2267,8 @@ function checkImagesLoaded() {
 sceneImg.onload = checkImagesLoaded;
 backgroundImg.onload = checkImagesLoaded;
 backgroundImgA.onload = checkImagesLoaded;
+// === CARREGAR IMAGEM DA FASE 2 ===
+backgroundImgPhase2.onload = checkImagesLoaded;
 
 // Carregar sprites da Juliette
 playerImages.spritesheet.onload = checkImagesLoaded;
