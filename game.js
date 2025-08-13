@@ -16,16 +16,18 @@ const gameState = {
     level: 1,
     paused: false,
     gameOver: false,
-    // === NOVO SISTEMA DE FASES (3 FASES) ===
+    gameStarted: false, // NOVO: Controla se o jogo já começou
+    showSplash: true, // NOVO: Controla se mostra splash screen
+    splashTimer: 0, // NOVO: Timer do splash screen
+    gameOverScrollY: 0, // NOVO: Posição Y do texto de game over
+    // === NOVO SISTEMA DE FASES ===
     currentPhase: 1,
     gameStartTime: 0,
     timeInGame: 0, // Tempo em segundos
     hitsReceived: 0, // Contador de tiros recebidos
     maxHitsPhase1: 10, // Tiros para morrer na fase 1
     maxHitsPhase2: 1000, // Tiros para morrer na fase 2
-    maxHitsPhase3: 10000, // Tiros para morrer na fase 3
-    phase2StartTime: 180, // 3 minutos = 180 segundos
-    phase3StartTime: 360 // 6 minutos = 360 segundos (3 + 3)
+    phase2StartTime: 300 // 5 minutos = 300 segundos
 };
 
 // === SISTEMA DE SONS ===
@@ -162,12 +164,9 @@ backgroundImg.src = 'assets/fundo 2d melhor.png';
 const backgroundImgA = new Image();
 backgroundImgA.src = 'assets/fundo 2d a.png';
 
-// === NOVAS IMAGENS DAS FASES 2 E 3 ===
+// === NOVA IMAGEM DA FASE 2 ===
 const backgroundImgPhase2 = new Image();
 backgroundImgPhase2.src = 'assets/fundo 2d melhor fase 2.png';
-
-const backgroundImgPhase3 = new Image();
-backgroundImgPhase3.src = 'assets/fundo 2d melhor fase 3.png';
 
 const sceneImg = new Image();
 sceneImg.src = 'assets/cena01.jpg';
@@ -332,28 +331,6 @@ let specialAnimTimer = 0;  // Timer para animações especiais
 let isInSpecialAnim = false;  // Flag para controlar animações especiais
 let previousAnim = 'idle_noweapon';  // Para voltar à animação anterior
 
-// === NOVO: SISTEMA DE ÁTOMOS ORBITANTES DA JULIETTE ===
-let playerAtomOrbs = {
-    count: 8, // Mais átomos que os inimigos (inimigos têm 3-4)
-    orbs: [],
-    rotationSpeed: 0.04, // Rotação um pouco mais rápida que inimigos
-    radius: 55, // Raio maior para destacar
-    initialized: false
-};
-
-// === NOVO: SISTEMA DE TAPETE MÁGICO DE LAVA ===
-let lavaCarpet = {
-    active: true, // Sempre ativo (grudado aos pés)
-    width: 60, // Largura do tapete
-    height: 8, // Altura/espessura do tapete
-    offsetX: 0, // Offset horizontal do centro dos pés
-    offsetY: 5, // Distância abaixo dos pés
-    particles: [], // Partículas de lava
-    wavePhase: 0, // Fase da animação ondulante
-    heatIntensity: 0, // Intensidade do calor
-    glowPhase: 0 // Fase do brilho pulsante
-};
-
 // Sistema de armas especiais/correntes
 let chainWeaponActive = false;
 let chainWeaponType = 'none'; // 'left_hand', 'both_hands'
@@ -449,24 +426,22 @@ let controlsPanelVisible = true;
 let controlsPanelToggleTimer = 0;
 const CONTROLS_PANEL_TOGGLE_COOLDOWN = 30; // 30 frames = 0.5 segundos
 
-// === SISTEMA DE SPLASH SCREEN ===
-let gameStarted = false;
-let splashScreenTimer = 0;
-let showSplashScreen = true;
-let splashScreenPhase = 0; // 0=fade in, 1=display, 2=fade out
-let splashFadeAlpha = 0;
-const SPLASH_DURATION = 300; // 5 segundos a 60fps
-
-// === SISTEMA DE GAME OVER MELHORADO ===
-let gameOverScrollY = 0;
-let gameOverScrollSpeed = 1;
-let gameOverCreditsStarted = false;
-
 // Controles do teclado
 const keys = {};
 
 document.addEventListener('keydown', e => {
     keys[e.code] = true;
+    
+    // === CONTROLE PARA INICIAR JOGO (SPLASH SCREEN) ===
+    if (gameState.showSplash && (e.code === 'Enter' || e.code === 'Space')) {
+        gameState.showSplash = false;
+        gameState.gameStarted = true;
+        console.log('🎮 JOGO INICIADO!');
+        return;
+    }
+    
+    // Não permitir controles se o jogo não foi iniciado ainda
+    if (!gameState.gameStarted) return;
     
     // === CONTROLES BÁSICOS ===
     if (e.code === 'ArrowRight') {
@@ -550,6 +525,11 @@ document.addEventListener('keydown', e => {
     
     if (e.code === 'KeyP') {
         gameState.paused = !gameState.paused;
+    }
+    
+    if (e.code === 'F11') {
+        e.preventDefault();
+        toggleFullscreen();
     }
     
     if (e.code === 'KeyM') {
@@ -1064,43 +1044,6 @@ function initializeEnemyAtoms(enemy) {
     enemy.atomOrbs.initialized = true;
 }
 
-// === NOVA FUNÇÃO: INICIALIZAR ÁTOMOS ORBITANTES DA JULIETTE ===
-function initializePlayerAtoms() {
-    playerAtomOrbs.orbs = [];
-    
-    for (let i = 0; i < playerAtomOrbs.count; i++) {
-        const angle = (i / playerAtomOrbs.count) * Math.PI * 2;
-        const orb = {
-            angle: angle,
-            initialAngle: angle,
-            radius: playerAtomOrbs.radius,
-            size: Math.random() * 4 + 3, // Átomos da Juliette são maiores
-            speed: playerAtomOrbs.rotationSpeed + (Math.random() * 0.03 - 0.015), // Velocidade mais variada
-            color: [
-                '#FFD700', // Dourado - protagonista
-                '#FF6B6B', // Rosa/vermelho
-                '#4ECDC4', // Turquesa
-                '#45B7D1', // Azul claro
-                '#96CEB4', // Verde menta
-                '#FFEAA7', // Amarelo suave
-                '#DDA0DD', // Lilás
-                '#98D8C8'  // Verde água
-            ][i % 8], // Cores especiais para a protagonista
-            pulse: Math.random() * Math.PI * 2, // Para efeito pulsante
-            orbit: {
-                // Órbitas mais elaboradas para a protagonista
-                radiusVariation: Math.random() * 15 + 8,
-                tiltAngle: Math.random() * Math.PI * 0.4, // Inclinação maior
-                eccentricity: Math.random() * 0.4 // Mais excentricidade
-            }
-        };
-        playerAtomOrbs.orbs.push(orb);
-    }
-    
-    playerAtomOrbs.initialized = true;
-    console.log(`🧬 Átomos da Juliette inicializados: ${playerAtomOrbs.count} átomos orbitantes`);
-}
-
 // Criar power-up
 function createPowerup(x, y, type = 'random') {
     const powerupTypes = ['normal', 'spread', 'laser', 'machine', 'health', 'life', 'bomb'];
@@ -1187,46 +1130,6 @@ function updateEnemies() {
         if (enemy.x < -50) {
             enemies.splice(i, 1);
         }
-    }
-}
-
-// === NOVA FUNÇÃO: ATUALIZAR ÁTOMOS ORBITANTES DA JULIETTE ===
-function updatePlayerAtoms() {
-    if (!playerAtomOrbs.initialized) {
-        // Inicializar átomos se ainda não foi feito
-        initializePlayerAtoms();
-        return;
-    }
-    
-    const time = Date.now() * 0.001;
-    const centerX = posX + (frameWidth * scale) / 2;
-    const centerY = posY + (frameHeight * scale) / 2;
-    
-    // Atualizar cada átomo orbitante da Juliette
-    for (let orb of playerAtomOrbs.orbs) {
-        // Atualizar ângulo de rotação
-        orb.angle += orb.speed;
-        
-        // Atualizar pulso para efeito piscante
-        orb.pulse += 0.12; // Um pouco mais rápido que os inimigos
-        
-        // Calcular posição com órbita elíptica e inclinada (mais complexa que inimigos)
-        const baseRadius = orb.radius + Math.sin(orb.pulse) * orb.orbit.radiusVariation;
-        const eccentricRadius = baseRadius * (1 + orb.orbit.eccentricity * Math.cos(orb.angle * 2));
-        
-        // Posição da órbita com inclinação (mais dinâmica para protagonista)
-        const orbX = Math.cos(orb.angle) * eccentricRadius;
-        const orbY = Math.sin(orb.angle) * eccentricRadius * Math.cos(orb.orbit.tiltAngle + time * 0.1);
-        
-        // Posição final do átomo
-        orb.x = centerX + orbX;
-        orb.y = centerY + orbY;
-        
-        // Tamanho pulsante (mais dramático para a protagonista)
-        orb.currentSize = orb.size + Math.sin(orb.pulse * 1.2) * 1;
-        
-        // Alpha pulsante para efeito de energia (mais brilhante)
-        orb.alpha = 0.7 + Math.sin(orb.pulse * 1.3) * 0.3;
     }
 }
 
@@ -1386,8 +1289,6 @@ function drawBackground() {
         
         if (gameState.currentPhase === 2 && backgroundImgPhase2.complete) {
             currentBackgroundImg = backgroundImgPhase2; // Fase 2
-        } else if (gameState.currentPhase === 3 && backgroundImgPhase3.complete) {
-            currentBackgroundImg = backgroundImgPhase3; // Fase 3
         }
         
         // Sobrepõe o fundo da fase atual apenas acima do piso
@@ -1807,21 +1708,13 @@ function checkCollisions() {
                 gameState.hitsReceived++;
                 
                 // Determinar quantos tiros são necessários para morrer baseado na fase
-                let maxHits = gameState.maxHitsPhase1; // Fase 1 padrão
-                if (gameState.currentPhase === 2) {
-                    maxHits = gameState.maxHitsPhase2;
-                } else if (gameState.currentPhase === 3) {
-                    maxHits = gameState.maxHitsPhase3;
-                }
+                const maxHits = gameState.currentPhase === 1 ? gameState.maxHitsPhase1 : gameState.maxHitsPhase2;
                 
                 // Calcular dano baseado na resistência da fase
                 let actualDamage = bullet.damage;
                 if (gameState.currentPhase === 2) {
                     // Na fase 2, cada tiro causa menos dano (1000 tiros para morrer)
                     actualDamage = Math.ceil(100 / gameState.maxHitsPhase2 * 10); // Aproximadamente 0.1 de dano por tiro
-                } else if (gameState.currentPhase === 3) {
-                    // Na fase 3, cada tiro causa ainda menos dano (10000 tiros para morrer)
-                    actualDamage = Math.ceil(100 / gameState.maxHitsPhase3 * 10); // Aproximadamente 0.01 de dano por tiro
                 }
                 
                 playerHealth -= actualDamage;
@@ -2087,104 +1980,6 @@ function drawEnemyAtoms(enemy) {
     ctx.restore();
 }
 
-// === NOVA FUNÇÃO: DESENHAR ÁTOMOS ORBITANTES DA JULIETTE ===
-function drawPlayerAtoms() {
-    if (!playerAtomOrbs.initialized || playerAtomOrbs.orbs.length === 0) return;
-    
-    const time = Date.now() * 0.003; // Mais lento para mais suave
-    
-    ctx.save();
-    
-    for (let orb of playerAtomOrbs.orbs) {
-        // Configurar estilo do átomo da Juliette (mais elaborado que inimigos)
-        ctx.globalAlpha = orb.alpha;
-        ctx.fillStyle = orb.color;
-        
-        // Efeito glow mais intenso nos átomos da protagonista
-        ctx.shadowColor = orb.color;
-        ctx.shadowBlur = 12; // Mais brilhante que inimigos (8)
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        
-        // Desenhar o átomo principal (esfera)
-        ctx.beginPath();
-        ctx.arc(orb.x, orb.y, orb.currentSize, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Núcleo do átomo (mais brilhante e maior)
-        ctx.globalAlpha = orb.alpha * 1.8; // Mais brilhante que inimigos
-        ctx.fillStyle = '#FFFFFF';
-        ctx.beginPath();
-        ctx.arc(orb.x, orb.y, orb.currentSize * 0.4, 0, Math.PI * 2); // Núcleo maior
-        ctx.fill();
-        
-        // Anel interno dourado (especial para protagonista)
-        ctx.globalAlpha = orb.alpha * 0.8;
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(orb.x, orb.y, orb.currentSize * 0.7, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Trilha da órbita (mais visível para a protagonista)
-        if (orb === playerAtomOrbs.orbs[0] || orb === playerAtomOrbs.orbs[1]) { // Desenha 2 trilhas
-            ctx.globalAlpha = 0.15; // Mais visível que inimigos (0.1)
-            ctx.strokeStyle = '#FFD700'; // Dourado para protagonista
-            ctx.lineWidth = 2; // Mais espessa
-            ctx.beginPath();
-            
-            const centerX = posX + (frameWidth * scale) / 2;
-            const centerY = posY + (frameHeight * scale) / 2;
-            
-            // Desenhar órbita elíptica mais complexa
-            for (let angle = 0; angle < Math.PI * 2; angle += 0.08) {
-                const radius = orb.radius * (1 + orb.orbit.eccentricity * Math.cos(angle * 2));
-                const x = centerX + Math.cos(angle) * radius;
-                const y = centerY + Math.sin(angle) * radius * Math.cos(orb.orbit.tiltAngle + time * 0.1);
-                
-                if (angle === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            ctx.closePath();
-            ctx.stroke();
-        }
-        
-        // Partículas de energia ao redor de cada átomo (especial para protagonista)
-        if (Math.random() < 0.1) { // 10% de chance por frame
-            const particleAngle = Math.random() * Math.PI * 2;
-            const particleRadius = orb.currentSize + Math.random() * 5;
-            
-            particles.push({
-                x: orb.x + Math.cos(particleAngle) * particleRadius,
-                y: orb.y + Math.sin(particleAngle) * particleRadius,
-                vx: Math.cos(particleAngle) * 0.5,
-                vy: Math.sin(particleAngle) * 0.5,
-                life: 15,
-                color: orb.color,
-                size: 1,
-                type: 'player_atom_spark'
-            });
-        }
-    }
-    
-    // Texto flutuante indicando os átomos da Juliette (ocasional)
-    if (Math.random() < 0.005 && playerAtomOrbs.orbs.length > 0) { // 0.5% chance por frame
-        const centerX = posX + (frameWidth * scale) / 2;
-        const centerY = posY + (frameHeight * scale) / 2;
-        
-        ctx.globalAlpha = 0.6;
-        ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('⚛️ ÁTOMOS', centerX, centerY - 80);
-    }
-    
-    ctx.restore();
-}
-
 // Desenhar power-ups
 function drawPowerups() {
     for (const powerup of powerups) {
@@ -2207,19 +2002,13 @@ function drawPowerups() {
         ctx.translate(powerup.x + powerup.size/2, powerup.y + powerup.size/2);
         ctx.rotate(Math.PI / 4);
         ctx.fillRect(-powerup.size/2, -powerup.size/2, powerup.size, powerup.size);
+        
+        // Texto do tipo
         ctx.restore();
-        
-        // Texto do tipo - CORRIGIDO: fundo semi-transparente para evitar sobreposição
-        ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(powerup.x + powerup.size/2 - 8, powerup.y + powerup.size/2 - 8, 16, 16);
-        
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 11px Arial';
+        ctx.font = '10px Arial';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(powerup.type[0].toUpperCase(), powerup.x + powerup.size/2, powerup.y + powerup.size/2);
-        ctx.restore();
+        ctx.fillText(powerup.type[0].toUpperCase(), powerup.x + powerup.size/2, powerup.y + powerup.size/2 + 3);
     }
 }
 
@@ -2922,6 +2711,81 @@ function drawShieldHitEffects() {
     ctx.restore();
 }
 
+// === NOVA FUNÇÃO: DESENHAR SPLASH SCREEN ===
+function drawSplashScreen() {
+    // Fundo da splash screen com gradiente
+    const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+    gradient.addColorStop(0, '#001122');
+    gradient.addColorStop(0.5, '#002244');
+    gradient.addColorStop(1, '#001122');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    
+    // Efeitos de partículas no fundo
+    const time = Date.now() * 0.001;
+    for (let i = 0; i < 50; i++) {
+        const x = (Math.sin(time + i) * CANVAS_WIDTH * 0.3) + CANVAS_WIDTH * 0.5;
+        const y = (Math.cos(time * 0.7 + i) * CANVAS_HEIGHT * 0.4) + CANVAS_HEIGHT * 0.5;
+        const size = Math.sin(time * 2 + i) * 3 + 2;
+        const alpha = Math.sin(time + i * 0.5) * 0.5 + 0.5;
+        
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    ctx.save();
+    
+    // Título principal
+    ctx.fillStyle = '#FFD700';
+    ctx.font = `bold ${Math.min(48, CANVAS_WIDTH / 15)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#FF6600';
+    ctx.shadowBlur = 10;
+    ctx.fillText('JULIETTE PSICOSE 2D', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 150);
+    
+    // Subtítulo
+    ctx.fillStyle = '#87CEEB';
+    ctx.font = `${Math.min(20, CANVAS_WIDTH / 35)}px Arial`;
+    ctx.shadowColor = '#4169E1';
+    ctx.shadowBlur = 5;
+    ctx.fillText('Jogo de Ação Cyberpunk', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 110);
+    
+    // Informações do desenvolvedor
+    ctx.fillStyle = '#98FB98';
+    ctx.font = `${Math.min(16, CANVAS_WIDTH / 45)}px Arial`;
+    ctx.shadowColor = 'none';
+    ctx.shadowBlur = 0;
+    
+    const devY = CANVAS_HEIGHT / 2 - 30;
+    ctx.fillText('Programador: Julio Campos Machado', CANVAS_WIDTH / 2, devY);
+    ctx.fillText('WhatsApp: (11) 97060-3441', CANVAS_WIDTH / 2, devY + 25);
+    ctx.fillText('Empresa: Like Look Solutions', CANVAS_WIDTH / 2, devY + 50);
+    ctx.fillText('Site: https://likelook.wixsite.com/solutions', CANVAS_WIDTH / 2, devY + 75);
+    
+    // Instruções para iniciar
+    const pulseIntensity = Math.sin(time * 3) * 0.3 + 0.7;
+    ctx.fillStyle = `rgba(255, 255, 255, ${pulseIntensity})`;
+    ctx.font = `bold ${Math.min(24, CANVAS_WIDTH / 30)}px Arial`;
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 8;
+    ctx.fillText('Pressione ENTER ou ESPAÇO para iniciar', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 150);
+    
+    // Versão do jogo
+    ctx.fillStyle = '#CCCCCC';
+    ctx.font = `${Math.min(12, CANVAS_WIDTH / 60)}px Arial`;
+    ctx.shadowBlur = 0;
+    ctx.textAlign = 'right';
+    ctx.fillText('v2.0 - 2024', CANVAS_WIDTH - 20, CANVAS_HEIGHT - 20);
+    
+    ctx.restore();
+}
+
 // Desenhar HUD
 function drawHUD() {
     // Fundo do HUD principal
@@ -2967,22 +2831,16 @@ function drawHUD() {
     // === LINHA 2 (Y=35) - CRONÔMETROS ===
     ctx.font = hudFontSmall;
     
-    // Cronômetros para próximas fases
+    // Cronômetro para próxima fase (apenas na fase 1)
     if (gameState.currentPhase === 1) {
         const timeToPhase2 = Math.max(0, gameState.phase2StartTime - gameState.timeInGame);
         const minutes = Math.floor(timeToPhase2 / 60);
         const seconds = timeToPhase2 % 60;
         ctx.fillStyle = '#FFD700';
         ctx.fillText(`⏰ FASE 2 EM: ${minutes}:${seconds.toString().padStart(2, '0')}`, margin, 35);
-    } else if (gameState.currentPhase === 2) {
-        const timeToPhase3 = Math.max(0, gameState.phase3StartTime - gameState.timeInGame);
-        const minutes = Math.floor(timeToPhase3 / 60);
-        const seconds = timeToPhase3 % 60;
-        ctx.fillStyle = '#FF6B6B';
-        ctx.fillText(`⏰ FASE 3 EM: ${minutes}:${seconds.toString().padStart(2, '0')}`, margin, 35);
     } else {
-        ctx.fillStyle = '#FF0000';
-        ctx.fillText(`🔥 FASE 3 ATIVA - MÁXIMA!`, margin, 35);
+        ctx.fillStyle = '#00FF00';
+        ctx.fillText(`✅ FASE 2 ATIVA`, margin, 35);
     }
     
     // Cronômetro do escudo inicial (se ativo)
@@ -3127,36 +2985,36 @@ function drawControlsPanel() {
         const indicatorY = CANVAS_HEIGHT - 25;
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(0, indicatorY, CANVAS_WIDTH, 25);
-
+        
         ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Pressione H para mostrar/ocultar controles', CANVAS_WIDTH/2, indicatorY + 18);
+        ctx.fillText('Pressione H para mostrar/ocultar controles', CANVAS_WIDTH/2, indicatorY + 17);
         return;
     }
-
-    const panelHeight = 150; // Aumentado para mais espaço
+    
+    const panelHeight = 140; // Aumentado para mais espaço
     const panelY = CANVAS_HEIGHT - panelHeight;
-
+    
     // Fundo do painel de controles
     ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
     ctx.fillRect(0, panelY, CANVAS_WIDTH, panelHeight);
-
+    
     // Título
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 16px Arial';
+    ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText('🎮 CONTROLES ESPECIAIS DA JULIETTE:', 10, panelY + 20);
-
+    ctx.fillText('🎮 CONTROLES ESPECIAIS DA JULIETTE:', 10, panelY + 15);
+    
     // Calcular larguras das colunas baseado na largura da tela
     const numCols = CANVAS_WIDTH > 1400 ? 4 : (CANVAS_WIDTH > 1000 ? 3 : 2);
     const colWidth = Math.floor((CANVAS_WIDTH - 40) / numCols); // Margem de 20px cada lado
-    const fontSize = CANVAS_WIDTH > 1200 ? '14px' : '13px';
-    const lineHeight = CANVAS_WIDTH > 1200 ? 20 : 18;
-
+    const fontSize = CANVAS_WIDTH > 1200 ? '12px' : '11px';
+    const lineHeight = CANVAS_WIDTH > 1200 ? 16 : 14;
+    
     ctx.font = fontSize + ' Arial';
-    const startY = panelY + 40;
-
+    const startY = panelY + 35;
+    
     // Coluna 1 - Controles básicos
     ctx.fillStyle = '#87CEEB';
     ctx.fillText('⚡ BÁSICOS:', 10, startY);
@@ -3164,16 +3022,16 @@ function drawControlsPanel() {
     ctx.fillText('⬅️➡️ Mover | Z: Pular', 10, startY + lineHeight);
     ctx.fillText('X/SPACE: Atirar | M: Som', 10, startY + lineHeight * 2);
     ctx.fillText('⬆️+X: ⬇️+X: ↗️+X: ↙️+X', 10, startY + lineHeight * 3);
-
+    
     // Coluna 2 - Ataques especiais
     ctx.fillStyle = '#FF6B6B';
     ctx.fillText('🔥 ESPECIAIS:', colWidth + 10, startY);
     ctx.fillStyle = 'white';
     ctx.fillText('A: Corrente (1 Mão)', colWidth + 10, startY + lineHeight);
     ctx.fillText('S: Corrente (2 Mãos)', colWidth + 10, startY + lineHeight * 2);
-    ctx.fillText('D: Escudo | B: Bomba', colWidth + 10, startY + lineHeight * 3);
-    ctx.fillText('C: Celebração', colWidth + 10, startY + lineHeight * 4);
-
+    ctx.fillText('D: Escudo | B: Bomba', colWidth + 10, startY + lineHeight * 2);
+    ctx.fillText('C: Celebração', colWidth + 10, startY + lineHeight * 3);
+    
     // Coluna 3 - Sistema (se houver espaço)
     if (numCols >= 3) {
         ctx.fillStyle = '#6BCF7F';
@@ -3183,8 +3041,8 @@ function drawControlsPanel() {
         ctx.fillText('P: Pausar | F11: Tela Cheia', colWidth * 2 + 10, startY + lineHeight * 2);
         ctx.fillText('R: Reiniciar (Game Over)', colWidth * 2 + 10, startY + lineHeight * 3);
     }
-
-    // Coluna 4 - Armas (se houver espaço)
+    
+    // Coluna 4 - Cheats (se houver espaço)
     if (numCols >= 4) {
         ctx.fillStyle = '#FFA500';
         ctx.fillText('🛠️ ARMAS:', colWidth * 3 + 10, startY);
@@ -3193,20 +3051,20 @@ function drawControlsPanel() {
         ctx.fillText('5-7: Avançadas', colWidth * 3 + 10, startY + lineHeight * 2);
         ctx.fillText('(Plasma, Storm, Nuclear)', colWidth * 3 + 10, startY + lineHeight * 3);
     }
-
+    
     // Status na parte inferior
     const statusY = startY + lineHeight * 4.5;
     ctx.fillStyle = '#87CEEB';
-    ctx.font = (CANVAS_WIDTH > 1200 ? '13px' : '12px') + ' Arial';
+    ctx.font = (CANVAS_WIDTH > 1200 ? '11px' : '10px') + ' Arial';
     const statusText = isInSpecialAnim ? `🎭 ${animations[currentAnim].description}` : '🎭 Modo Normal';
     ctx.fillText(statusText, 10, statusY);
-
+    
     // Cooldown de corrente e outros status
     if (chainAttackCooldown > 0) {
         ctx.fillStyle = '#FF6B6B';
         ctx.fillText(`⛓️ Cooldown: ${Math.ceil(chainAttackCooldown/60)}s`, colWidth + 10, statusY);
     }
-
+    
     // Status do som
     ctx.fillStyle = gameAudio.enabled ? '#00FF00' : '#FF4444';
     const soundStatus = gameAudio.enabled ? '🔊 ON' : '🔇 OFF';
@@ -3263,17 +3121,15 @@ function updateGamePhase() {
     
     gameState.timeInGame = Math.floor((Date.now() - gameState.gameStartTime) / 1000);
     
-    // Verificar se deve avançar para a fase 2 ou 3
+    // Verificar se deve avançar para a fase 2
     if (gameState.currentPhase === 1 && gameState.timeInGame >= gameState.phase2StartTime) {
         advanceToPhase2();
-    } else if (gameState.currentPhase === 2 && gameState.timeInGame >= gameState.phase3StartTime) {
-        advanceToPhase3();
     }
 }
 
 // === NOVA FUNÇÃO: AVANÇAR PARA FASE 2 ===
 function advanceToPhase2() {
-    if (gameState.currentPhase >= 2) return; // Já está na fase 2 ou 3
+    if (gameState.currentPhase === 2) return; // Já está na fase 2
     
     gameState.currentPhase = 2;
     gameState.hitsReceived = 0; // Resetar contador de tiros
@@ -3288,74 +3144,16 @@ function advanceToPhase2() {
     console.log('🎯 FASE 2 INICIADA! Resistência aumentada para 1000 tiros!');
     
     // Criar efeito visual de mudança de fase
-    createPhaseTransitionEffect('#FFD700'); // Dourado para fase 2
-}
-
-// === NOVA FUNÇÃO: AVANÇAR PARA FASE 3 ===
-function advanceToPhase3() {
-    if (gameState.currentPhase >= 3) return; // Já está na fase 3
-    
-    gameState.currentPhase = 3;
-    gameState.hitsReceived = 0; // Resetar contador de tiros
-    
-    // Restaurar vida completa na mudança de fase
-    playerHealth = 100;
-    
-    // Som especial de mudança de fase (mais intenso para fase final)
-    playSound('levelUp', 900, 1200);
-    
-    // Log para debug
-    console.log('🔥 FASE 3 INICIADA! FASE FINAL - Resistência máxima: 10000 tiros!');
-    
-    // Criar efeito visual especial para fase final
-    createPhaseTransitionEffect('#FF0000'); // Vermelho para fase final
-    createFinalPhaseEffect(); // Efeito extra para fase 3
-}
-
-// === FUNÇÃO AUXILIAR: CRIAR EFEITO DE TRANSIÇÃO DE FASE ===
-function createPhaseTransitionEffect(color) {
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 20; i++) {
         particles.push({
-            x: CANVAS_WIDTH / 2 + (Math.random() - 0.5) * 300,
-            y: CANVAS_HEIGHT / 2 + (Math.random() - 0.5) * 150,
-            vx: (Math.random() - 0.5) * 12,
-            vy: (Math.random() - 0.5) * 12,
-            life: 80,
-            color: color,
-            size: Math.random() * 8 + 4
+            x: CANVAS_WIDTH / 2 + (Math.random() - 0.5) * 200,
+            y: CANVAS_HEIGHT / 2 + (Math.random() - 0.5) * 100,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 60,
+            color: '#FFD700', // Dourado para indicar mudança especial
+            size: Math.random() * 6 + 3
         });
-    }
-}
-
-// === FUNÇÃO ESPECIAL: EFEITO DA FASE FINAL ===
-function createFinalPhaseEffect() {
-    // Criar múltiplas ondas de explosões para marcar a fase final
-    for (let wave = 0; wave < 3; wave++) {
-        setTimeout(() => {
-            for (let i = 0; i < 15; i++) {
-                const angle = (i / 15) * Math.PI * 2;
-                const radius = 80 + wave * 40;
-                
-                particles.push({
-                    x: CANVAS_WIDTH / 2 + Math.cos(angle) * radius,
-                    y: CANVAS_HEIGHT / 2 + Math.sin(angle) * radius,
-                    vx: Math.cos(angle) * 6,
-                    vy: Math.sin(angle) * 6,
-                    life: 60,
-                    color: wave % 2 === 0 ? '#FF0000' : '#FF6600',
-                    size: Math.random() * 6 + 3
-                });
-            }
-            
-            // Explosões aleatórias na tela
-            for (let i = 0; i < 5; i++) {
-                createExplosion(
-                    Math.random() * CANVAS_WIDTH,
-                    Math.random() * CANVAS_HEIGHT,
-                    40 + Math.random() * 30
-                );
-            }
-        }, wave * 150);
     }
 }
 
@@ -3375,14 +3173,6 @@ function gameLoop() {
             ctx.fillText(`Fase Alcançada: ${gameState.currentPhase}`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 80);
             ctx.fillText(`Tempo Jogado: ${Math.floor(gameState.timeInGame / 60)}m ${gameState.timeInGame % 60}s`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 110);
             ctx.fillText('Press R to Restart', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 140);
-            
-            // === MOSTRAR ESTATÍSTICAS FINAIS DETALHADAS ===
-            ctx.font = '16px Arial';
-            ctx.fillStyle = '#87CEEB';
-            const finalPhaseText = gameState.currentPhase === 3 ? '🔥 FASE MÁXIMA ALCANÇADA!' : 
-                                 gameState.currentPhase === 2 ? '⚡ FASE 2 ALCANÇADA' : 
-                                 '⭐ FASE 1 COMPLETA';
-            ctx.fillText(finalPhaseText, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 170);
         }
         requestAnimationFrame(gameLoop);
         return;
@@ -3424,9 +3214,6 @@ function gameLoop() {
     if (bombCooldown > 0) {
         bombCooldown--;
     }
-    
-    // === ATUALIZAR TAPETE MÁGICO DE LAVA ===
-    updateLavaCarpet();
     
     // Spawn de inimigos
     spawnEnemies();
@@ -3476,12 +3263,6 @@ function gameLoop() {
     
     // NOVO: Desenhar disco de lava (antes do jogador para aparecer atrás)
     drawLavaDisc();
-    
-    // === NOVO: DESENHAR TAPETE MÁGICO DE LAVA (ANTES DO JOGADOR) ===
-    drawLavaCarpet();
-    
-    // === NOVO: DESENHAR ÁTOMOS ORBITANTES DA JULIETTE ===
-    drawPlayerAtoms();
     
     // Desenha o jogador com efeito de invulnerabilidade
     if (invulnerable && Math.floor(Date.now() / 100) % 2) {
@@ -3561,186 +3342,9 @@ function restartGame() {
     enemySpawnTimer = 0;
 }
 
-// === NOVAS FUNÇÕES: SISTEMA DE TAPETE MÁGICO DE LAVA ===
-
-// Atualizar tapete mágico de lava
-function updateLavaCarpet() {
-    if (!lavaCarpet.active) return;
-    
-    const time = Date.now() * 0.001;
-    
-    // Atualizar fases de animação
-    lavaCarpet.wavePhase += 0.08; // Velocidade da ondulação
-    lavaCarpet.glowPhase += 0.05; // Velocidade do brilho
-    lavaCarpet.heatIntensity = Math.sin(lavaCarpet.glowPhase) * 0.4 + 0.6;
-    
-    // Gerar partículas de lava do tapete
-    if (Math.random() < 0.6) { // 60% de chance por frame
-        const playerCenterX = posX + (frameWidth * scale) / 2;
-        const playerBottomY = posY + (frameHeight * scale) + lavaCarpet.offsetY;
-        
-        // Partícula na área do tapete
-        const particleX = playerCenterX + (Math.random() - 0.5) * lavaCarpet.width;
-        const particleY = playerBottomY + Math.random() * lavaCarpet.height;
-        
-        lavaCarpet.particles.push({
-            x: particleX,
-            y: particleY,
-            vx: (Math.random() - 0.5) * 2,
-            vy: Math.random() * -1.5 - 0.5, // Para cima
-            life: 20 + Math.random() * 15,
-            maxLife: 35,
-            size: Math.random() * 2.5 + 1,
-            heatLevel: Math.random(),
-            type: 'carpet_lava'
-        });
-    }
-    
-    // Atualizar partículas existentes
-    for (let i = lavaCarpet.particles.length - 1; i >= 0; i--) {
-        const particle = lavaCarpet.particles[i];
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        particle.vy += 0.05; // Gravidade leve
-        particle.vx *= 0.98; // Resistência do ar
-        particle.life--;
-        
-        if (particle.life <= 0) {
-            lavaCarpet.particles.splice(i, 1);
-        }
-    }
-}
-
-// Desenhar tapete mágico de lava
-function drawLavaCarpet() {
-    if (!lavaCarpet.active) return;
-    
-    const playerCenterX = posX + (frameWidth * scale) / 2;
-    const playerBottomY = posY + (frameHeight * scale) + lavaCarpet.offsetY;
-    
-    ctx.save();
-    
-    // Calcular cores da lava baseada na intensidade
-    const intensity = lavaCarpet.heatIntensity;
-    const r = Math.floor(120 + (135 * intensity)); // 120-255
-    const g = Math.floor(20 + (60 * intensity));   // 20-80  
-    const b = Math.floor(0 + (20 * intensity));    // 0-20
-    
-    // === DESENHAR O TAPETE PRINCIPAL ===
-    
-    // Sombra do tapete (mais escura)
-    ctx.fillStyle = `rgba(80, 10, 0, 0.8)`;
-    ctx.fillRect(
-        playerCenterX - lavaCarpet.width/2, 
-        playerBottomY + 2, 
-        lavaCarpet.width, 
-        lavaCarpet.height
-    );
-    
-    // Gradiente do tapete com ondulação
-    const gradient = ctx.createLinearGradient(
-        playerCenterX - lavaCarpet.width/2, playerBottomY,
-        playerCenterX + lavaCarpet.width/2, playerBottomY
-    );
-    
-    // Cores que variam com ondulação
-    const waveEffect = Math.sin(lavaCarpet.wavePhase);
-    const leftIntensity = intensity + waveEffect * 0.2;
-    const rightIntensity = intensity - waveEffect * 0.2;
-    
-    gradient.addColorStop(0, `rgba(${Math.floor(r * leftIntensity)}, ${Math.floor(g * leftIntensity)}, ${b}, 0.9)`);
-    gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 1.0)`);
-    gradient.addColorStop(1, `rgba(${Math.floor(r * rightIntensity)}, ${Math.floor(g * rightIntensity)}, ${b}, 0.9)`);
-    
-    ctx.fillStyle = gradient;
-    
-    // Tapete principal com bordas onduladas
-    ctx.beginPath();
-    const segments = 16; // Número de segmentos para criar ondulação
-    const segmentWidth = lavaCarpet.width / segments;
-    
-    // Borda superior ondulada
-    for (let i = 0; i <= segments; i++) {
-        const x = playerCenterX - lavaCarpet.width/2 + i * segmentWidth;
-        const waveOffset = Math.sin(lavaCarpet.wavePhase * 2 + i * 0.5) * 1.5;
-        const y = playerBottomY + waveOffset;
-        
-        if (i === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);
-        }
-    }
-    
-    // Borda inferior (mais estável)
-    for (let i = segments; i >= 0; i--) {
-        const x = playerCenterX - lavaCarpet.width/2 + i * segmentWidth;
-        const y = playerBottomY + lavaCarpet.height;
-        ctx.lineTo(x, y);
-    }
-    
-    ctx.closePath();
-    ctx.fill();
-    
-    // === EFEITOS ADICIONAIS ===
-    
-    // Brilho superior do tapete
-    ctx.fillStyle = `rgba(255, ${Math.floor(200 * intensity)}, ${Math.floor(100 * intensity)}, ${0.7 * intensity})`;
-    ctx.fillRect(
-        playerCenterX - lavaCarpet.width/2 + 4, 
-        playerBottomY + 1, 
-        lavaCarpet.width - 8, 
-        2
-    );
-    
-    // Linhas de energia no tapete
-    const numLines = 3;
-    for (let i = 0; i < numLines; i++) {
-        const lineY = playerBottomY + 2 + i * 2;
-        const lineIntensity = Math.sin(lavaCarpet.wavePhase * 3 + i) * 0.3 + 0.7;
-        
-        ctx.strokeStyle = `rgba(255, ${Math.floor(150 * lineIntensity)}, 0, ${lineIntensity})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(playerCenterX - lavaCarpet.width/2 + 6, lineY);
-        ctx.lineTo(playerCenterX + lavaCarpet.width/2 - 6, lineY);
-        ctx.stroke();
-    }
-    
-    // === DESENHAR PARTÍCULAS DO TAPETE ===
-    for (const particle of lavaCarpet.particles) {
-        const alpha = particle.life / particle.maxLife;
-        const heatColor = lavaColors[Math.floor(particle.heatLevel * (lavaColors.length - 1))];
-        
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = `rgb(${heatColor.r}, ${heatColor.g}, ${heatColor.b})`;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    // === EFEITO DE ELEVAÇÃO MÁGICA ===
-    // Pequenas faíscas que sugerem que o tapete está flutuando
-    const numSparks = 4;
-    for (let i = 0; i < numSparks; i++) {
-        const sparkAngle = (Date.now() * 0.003 + i * Math.PI * 2 / numSparks) % (Math.PI * 2);
-        const sparkRadius = lavaCarpet.width * 0.4;
-        const sparkX = playerCenterX + Math.cos(sparkAngle) * sparkRadius;
-        const sparkY = playerBottomY + lavaCarpet.height/2 + Math.sin(sparkAngle * 2) * 2;
-        
-        ctx.globalAlpha = 0.6 + Math.sin(Date.now() * 0.01 + i) * 0.4;
-        ctx.fillStyle = '#FFFF00'; // Faíscas amarelas
-        ctx.beginPath();
-        ctx.arc(sparkX, sparkY, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    ctx.restore();
-}
-
 // Inicia o jogo quando todas as imagens carregarem
 let imagesLoaded = 0;
-const totalImages = 14; // Total de imagens: 5 de fundo (incluindo fases 2 e 3) + 9 da Juliette (incluindo novas de tiro)
+const totalImages = 13; // Total de imagens: 4 de fundo (incluindo fase 2) + 9 da Juliette (incluindo novas de tiro)
 
 function checkImagesLoaded() {
     imagesLoaded++;
@@ -3756,9 +3360,8 @@ function checkImagesLoaded() {
 sceneImg.onload = checkImagesLoaded;
 backgroundImg.onload = checkImagesLoaded;
 backgroundImgA.onload = checkImagesLoaded;
-// === CARREGAR IMAGENS DAS FASES 2 E 3 ===
+// === CARREGAR IMAGEM DA FASE 2 ===
 backgroundImgPhase2.onload = checkImagesLoaded;
-backgroundImgPhase3.onload = checkImagesLoaded;
 
 // Carregar sprites da Juliette
 playerImages.spritesheet.onload = checkImagesLoaded;
@@ -3772,6 +3375,55 @@ playerImages.arma_disparando_cima.onload = checkImagesLoaded;
 playerImages.arma_disparando_frente.onload = checkImagesLoaded;
 playerImages.arma_disparando_60_baixo.onload = checkImagesLoaded;
 playerImages.arma_disparando_90_graus.onload = checkImagesLoaded;
+
+// === SISTEMA DE TELA CHEIA ===
+let isFullscreen = false;
+
+function toggleFullscreen() {
+    const gameContainer = document.getElementById('gameContainer');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    
+    if (!document.fullscreenElement) {
+        // Entrar em tela cheia
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+        }
+        isFullscreen = true;
+        fullscreenBtn.textContent = '📺 SAIR TELA CHEIA';
+        fullscreenBtn.classList.add('fullscreen-active');
+    } else {
+        // Sair da tela cheia
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        isFullscreen = false;
+        fullscreenBtn.textContent = '📺 TELA CHEIA';
+        fullscreenBtn.classList.remove('fullscreen-active');
+    }
+}
+
+// Detectar mudanças de tela cheia pelo navegador (F11, ESC, etc.)
+document.addEventListener('fullscreenchange', () => {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    
+    if (document.fullscreenElement) {
+        isFullscreen = true;
+        fullscreenBtn.textContent = '📺 SAIR TELA CHEIA';
+        fullscreenBtn.classList.add('fullscreen-active');
+    } else {
+        isFullscreen = false;
+        fullscreenBtn.textContent = '📺 TELA CHEIA';
+        fullscreenBtn.classList.remove('fullscreen-active');
+    }
+});
 
 // === SISTEMA DE REDIMENSIONAMENTO AUTOMÁTICO ===
 function resizeCanvas() {
@@ -3847,8 +3499,13 @@ window.addEventListener('orientationchange', () => {
     setTimeout(resizeCanvas, 100); // Pequeno delay para orientação mudar completamente
 });
 
-// Inicializar quando DOM carregar
+// Inicializar botão de tela cheia e redimensionamento quando DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+    }
+    
     // Inicializar sistema de sons
     initializeSounds();
     
