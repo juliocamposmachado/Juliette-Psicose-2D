@@ -5380,6 +5380,14 @@ function setupControlsToggle() {
     
     controlsToggle.addEventListener('click', (e) => {
         e.preventDefault();
+        
+        // === NOVA FUNCIONALIDADE: FECHAR GUIA MÓVEL EM DISPOSITIVOS MÓVEIS ===
+        // Se estiver em dispositivo móvel, fechar o guia completo automaticamente
+        if (detectMobileDevice() && typeof closeMobileGuideCompletely === 'function') {
+            closeMobileGuideCompletely();
+            console.log('📋 Guia móvel fechado automaticamente ao clicar em Controles');
+        }
+        
         mobileControlsState.visible = !mobileControlsState.visible;
         
         if (mobileControlsState.visible) {
