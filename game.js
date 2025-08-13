@@ -5320,6 +5320,17 @@ document.addEventListener('DOMContentLoaded', () => {
         fullscreenBtn.addEventListener('click', toggleFullscreen);
     }
     
+    // === NOVO: INICIALIZAR BOTÃO DE TELA CHEIA MOBILE ===
+    const mobileFullscreenBtn = document.getElementById('mobileFullscreenBtn');
+    if (mobileFullscreenBtn) {
+        mobileFullscreenBtn.addEventListener('click', toggleFullscreen);
+        mobileFullscreenBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            toggleFullscreen();
+        }, { passive: false });
+        console.log('📱 Botão de tela cheia mobile inicializado!');
+    }
+    
     // Inicializar sistema de sons
     initializeSounds();
     
