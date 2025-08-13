@@ -16,10 +16,6 @@ const gameState = {
     level: 1,
     paused: false,
     gameOver: false,
-    gameStarted: false, // NOVO: Controla se o jogo já começou
-    showSplash: true, // NOVO: Controla se mostra splash screen
-    splashTimer: 0, // NOVO: Timer do splash screen
-    gameOverScrollY: 0, // NOVO: Posição Y do texto de game over
     // === NOVO SISTEMA DE FASES ===
     currentPhase: 1,
     gameStartTime: 0,
@@ -431,17 +427,6 @@ const keys = {};
 
 document.addEventListener('keydown', e => {
     keys[e.code] = true;
-    
-    // === CONTROLE PARA INICIAR JOGO (SPLASH SCREEN) ===
-    if (gameState.showSplash && (e.code === 'Enter' || e.code === 'Space')) {
-        gameState.showSplash = false;
-        gameState.gameStarted = true;
-        console.log('🎮 JOGO INICIADO!');
-        return;
-    }
-    
-    // Não permitir controles se o jogo não foi iniciado ainda
-    if (!gameState.gameStarted) return;
     
     // === CONTROLES BÁSICOS ===
     if (e.code === 'ArrowRight') {
@@ -2711,81 +2696,6 @@ function drawShieldHitEffects() {
     ctx.restore();
 }
 
-// === NOVA FUNÇÃO: DESENHAR SPLASH SCREEN ===
-function drawSplashScreen() {
-    // Fundo da splash screen com gradiente
-    const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-    gradient.addColorStop(0, '#001122');
-    gradient.addColorStop(0.5, '#002244');
-    gradient.addColorStop(1, '#001122');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    
-    // Efeitos de partículas no fundo
-    const time = Date.now() * 0.001;
-    for (let i = 0; i < 50; i++) {
-        const x = (Math.sin(time + i) * CANVAS_WIDTH * 0.3) + CANVAS_WIDTH * 0.5;
-        const y = (Math.cos(time * 0.7 + i) * CANVAS_HEIGHT * 0.4) + CANVAS_HEIGHT * 0.5;
-        const size = Math.sin(time * 2 + i) * 3 + 2;
-        const alpha = Math.sin(time + i * 0.5) * 0.5 + 0.5;
-        
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-    
-    ctx.save();
-    
-    // Título principal
-    ctx.fillStyle = '#FFD700';
-    ctx.font = `bold ${Math.min(48, CANVAS_WIDTH / 15)}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.shadowColor = '#FF6600';
-    ctx.shadowBlur = 10;
-    ctx.fillText('JULIETTE PSICOSE 2D', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 150);
-    
-    // Subtítulo
-    ctx.fillStyle = '#87CEEB';
-    ctx.font = `${Math.min(20, CANVAS_WIDTH / 35)}px Arial`;
-    ctx.shadowColor = '#4169E1';
-    ctx.shadowBlur = 5;
-    ctx.fillText('Jogo de Ação Cyberpunk', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 110);
-    
-    // Informações do desenvolvedor
-    ctx.fillStyle = '#98FB98';
-    ctx.font = `${Math.min(16, CANVAS_WIDTH / 45)}px Arial`;
-    ctx.shadowColor = 'none';
-    ctx.shadowBlur = 0;
-    
-    const devY = CANVAS_HEIGHT / 2 - 30;
-    ctx.fillText('Programador: Julio Campos Machado', CANVAS_WIDTH / 2, devY);
-    ctx.fillText('WhatsApp: (11) 97060-3441', CANVAS_WIDTH / 2, devY + 25);
-    ctx.fillText('Empresa: Like Look Solutions', CANVAS_WIDTH / 2, devY + 50);
-    ctx.fillText('Site: https://likelook.wixsite.com/solutions', CANVAS_WIDTH / 2, devY + 75);
-    
-    // Instruções para iniciar
-    const pulseIntensity = Math.sin(time * 3) * 0.3 + 0.7;
-    ctx.fillStyle = `rgba(255, 255, 255, ${pulseIntensity})`;
-    ctx.font = `bold ${Math.min(24, CANVAS_WIDTH / 30)}px Arial`;
-    ctx.shadowColor = '#FFD700';
-    ctx.shadowBlur = 8;
-    ctx.fillText('Pressione ENTER ou ESPAÇO para iniciar', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 150);
-    
-    // Versão do jogo
-    ctx.fillStyle = '#CCCCCC';
-    ctx.font = `${Math.min(12, CANVAS_WIDTH / 60)}px Arial`;
-    ctx.shadowBlur = 0;
-    ctx.textAlign = 'right';
-    ctx.fillText('v2.0 - 2024', CANVAS_WIDTH - 20, CANVAS_HEIGHT - 20);
-    
-    ctx.restore();
-}
-
 // Desenhar HUD
 function drawHUD() {
     // Fundo do HUD principal
@@ -3028,8 +2938,9 @@ function drawControlsPanel() {
     ctx.fillText('🔥 ESPECIAIS:', colWidth + 10, startY);
     ctx.fillStyle = 'white';
     ctx.fillText('A: Corrente (1 Mão)', colWidth + 10, startY + lineHeight);
-    ctx.fillText('S: Corrente (2 Mãos)', colWidth + 10, startY + lineHeight * 2);
-    ctx.fillText('D: Escudo | B: Bomba', colWidth + 10, startY + lineHeight * 2);
+    ctx.fillText('B: Bomba', colWidth + 10, startY + lineHeight * 2);
+    ctx.fillText('S: Corrente (2 Mãos)', colWidth + 10, startY + lineHeight * 5);
+    ctx.fillText('D: Escudo ', colWidth + 10, startY + lineHeight * 4);
     ctx.fillText('C: Celebração', colWidth + 10, startY + lineHeight * 3);
     
     // Coluna 3 - Sistema (se houver espaço)
