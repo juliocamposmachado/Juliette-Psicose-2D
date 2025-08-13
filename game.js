@@ -761,6 +761,12 @@ let controlsPanelVisible = true;
 let controlsPanelToggleTimer = 0;
 const CONTROLS_PANEL_TOGGLE_COOLDOWN = 30; // 30 frames = 0.5 segundos
 
+// === SISTEMA DE HUD SUPERIOR RECOLHÍVEL ===
+let hudVisible = true;
+let hudToggleTimer = 0;
+const HUD_TOGGLE_COOLDOWN = 30; // 30 frames = 0.5 segundos
+let hudMinimized = false; // Estado minimizado (mostra apenas essenciais)
+
 // === SISTEMA DE CONTROLES TOUCH PARA MOBILE ===
 let isMobile = false;
 let touchControls = {
@@ -4262,6 +4268,20 @@ function drawShieldHitEffects() {
 
 // Desenhar HUD
 function drawHUD() {
+    // Verificar se deve desenhar HUD completo ou só essenciais
+    if (!hudVisible && !hudMinimized) {
+        // HUD completamente oculto - mostrar apenas toggle
+        drawHUDToggleButton();
+        return;
+    }
+    
+    if (hudMinimized) {
+        // HUD minimizado - mostrar apenas informações essenciais
+        drawMinimizedHUD();
+        return;
+    }
+    
+    // HUD completo
     // Fundo do HUD principal
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, CANVAS_WIDTH, 100); // Aumentado para mais espaço
@@ -5927,6 +5947,141 @@ function updateMobileGuideInGameLoop() {
     if (mobileGuideState.isInitialized && mobileGuideState.isVisible) {
         updateMobileGuide();
     }
+}
+
+// === NOVAS FUNÇÕES PARA SISTEMA DE HUD RECOLHÍVEL ===
+
+// Desenhar botão toggle do HUD (quando completamente oculto)
+function drawHUDToggleButton() {
+    const buttonWidth = 120;
+    const buttonHeight = 30;
+    const buttonX = CANVAS_WIDTH - buttonWidth - 10;
+    const buttonY = 10;
+    
+    // Fundo do botão
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+    
+    // Borda piscante
+    const glowIntensity = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
+    ctx.strokeStyle = `rgba(255, 215, 0, ${glowIntensity})`;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+    
+    // Texto do botão
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('📊 MOSTRAR HUD', buttonX + buttonWidth/2, buttonY + 20);
+    
+    // Instrução
+    ctx.fillStyle = '#CCCCCC';
+    ctx.font = '10px Arial';
+    ctx.fillText('Pressione H', buttonX + buttonWidth/2, buttonY + buttonHeight + 15);
+    
+    ctx.textAlign = 'left';
+}
+
+// Desenhar HUD minimizado (apenas informações essenciais)
+function drawMinimizedHUD() {
+    const hudHeight = 60;
+    
+    // Fundo minimizado
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, CANVAS_WIDTH, hudHeight);
+    
+    // Borda inferior
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(0, hudHeight - 2, CANVAS_WIDTH, 2);
+    
+    const margin = 15;
+    const fontSize = '14px Arial';
+    
+    // Linha única com informações essenciais
+    ctx.font = fontSize;
+    ctx.textAlign = 'left';
+    
+    // Score (esquerda)
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(`SCORE: ${gameState.score.toString().padStart(6, '0')}`, margin, 25);
+    
+    // Vidas
+    ctx.fillStyle = '#FF6B6B';
+    ctx.fillText(`♥ ${gameState.lives}`, margin + 150, 25);
+    
+    // Fase
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillText(`FASE ${gameState.currentPhase}`, margin + 220, 25);
+    
+    // Arma atual (centro)
+    ctx.fillStyle = '#98FB98';
+    const weaponName = weaponType === 'none' ? 'SEM ARMA' : weapons[weaponType].description;
+    ctx.fillText(`🔫 ${weaponName}`, CANVAS_WIDTH/2 - 100, 25);
+    
+    // Energia e status críticos (direita)
+    ctx.fillStyle = playerHealth > 30 ? '#00FF00' : '#FF4444';
+    ctx.fillText(`❤️ ${playerHealth}%`, CANVAS_WIDTH - 200, 25);
+    
+    // Escudo status
+    if (initialShieldActive) {
+        ctx.fillStyle = '#FFD700';
+        const remainingSeconds = Math.ceil(initialShieldTimer / 60);
+        ctx.fillText(`🛡️ ${remainingSeconds}s`, CANVAS_WIDTH - 100, 25);
+    } else if (shieldActive) {
+        ctx.fillStyle = '#00FFFF';
+        ctx.fillText(`🛡️ ATIVO`, CANVAS_WIDTH - 100, 25);
+    }
+    
+    // Linha 2: Barras compactas
+    const barY = 40;
+    const barHeight = 4;
+    const barWidth = 80;
+    
+    // Barra de vida compacta
+    const healthBarX = margin;
+    ctx.fillStyle = 'rgba(200, 0, 0, 0.5)';
+    ctx.fillRect(healthBarX, barY, barWidth, barHeight);
+    
+    const healthPercent = playerHealth / 100;
+    ctx.fillStyle = healthPercent > 0.6 ? '#00FF00' : 
+                   healthPercent > 0.3 ? '#FFFF00' : '#FF0000';
+    ctx.fillRect(healthBarX, barY, barWidth * healthPercent, barHeight);
+    
+    // Barra de escudo compacta (se relevante)
+    if (shieldEnergy > 0 || initialShieldActive) {
+        const shieldBarX = margin + barWidth + 10;
+        ctx.fillStyle = 'rgba(0, 100, 100, 0.3)';
+        ctx.fillRect(shieldBarX, barY, barWidth, barHeight);
+        
+        const shieldPercent = initialShieldActive ? 
+            (initialShieldTimer / initialShieldDuration) : 
+            (shieldEnergy / shieldMaxEnergy);
+        
+        ctx.fillStyle = initialShieldActive ? '#FFD700' : '#00FFFF';
+        ctx.fillRect(shieldBarX, barY, barWidth * shieldPercent, barHeight);
+    }
+    
+    // Botão para expandir HUD (canto direito)
+    const expandButtonX = CANVAS_WIDTH - 120;
+    const expandButtonY = 5;
+    const expandButtonWidth = 100;
+    const expandButtonHeight = 25;
+    
+    // Botão expand com animação
+    const pulseIntensity = Math.sin(Date.now() * 0.008) * 0.2 + 0.8;
+    ctx.fillStyle = `rgba(255, 215, 0, ${pulseIntensity * 0.3})`;
+    ctx.fillRect(expandButtonX, expandButtonY, expandButtonWidth, expandButtonHeight);
+    
+    ctx.strokeStyle = `rgba(255, 215, 0, ${pulseIntensity})`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(expandButtonX, expandButtonY, expandButtonWidth, expandButtonHeight);
+    
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('📊 EXPANDIR (H)', expandButtonX + expandButtonWidth/2, expandButtonY + 16);
+    
+    ctx.textAlign = 'left';
 }
 
 // === SISTEMA DE CONTROLES ARRASTÁVEIS INDIVIDUAIS ===
