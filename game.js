@@ -5047,7 +5047,7 @@ document.addEventListener('fullscreenchange', () => {
     
 });
 
-// === SISTEMA DE REDIMENSIONAMENTO AUTOMÁTICO ===
+// === SISTEMA DE REDIMENSIONAMENTO AUTOMÁTICO MELHORADO ===
 function resizeCanvas() {
     // NOVO: Usar sistema responsivo avançado
     const responsiveConfig = setupResponsiveCanvas();
@@ -5060,9 +5060,17 @@ function resizeCanvas() {
         positionTouchControls();
     }
     
+    // === NOVA FUNCIONALIDADE: OTIMIZAÇÃO AUTOMÁTICA POR DISPOSITIVO ===
+    optimizeForDevice();
+    
+    // === NOVA FUNCIONALIDADE: SALVAR CONFIGURAÇÕES DA TELA ===
+    saveScreenSettings();
+    
     console.log(`Canvas responsivo configurado: ${responsiveConfig.width}x${responsiveConfig.height}`);
     console.log(`   Tipo: ${screenDetection.isMobile ? 'Mobile' : screenDetection.isTablet ? 'Tablet' : 'Desktop'}`);
     console.log(`   Orientação: ${screenDetection.orientation}`);
+    console.log(`   Resolução real: ${window.screen.width}x${window.screen.height}`);
+    console.log(`   Área disponível: ${window.innerWidth}x${window.innerHeight}`);
 }
 
 // Função para posicionar jogador no solo
@@ -6563,4 +6571,319 @@ function updateControlStates() {
     if (controls.lava) {
         controls.lava.style.borderColor = lavaDisc.active ? '#FFD700' : 'rgba(255, 69, 0, 0.6)';
     }
+}
+
+// === NOVAS FUNÇÕES DE OTIMIZAÇÃO E CONFIGURAÇÃO DE TELA ===
+
+// Função para otimizar o jogo baseado no tipo de dispositivo
+function optimizeForDevice() {
+    updateScreenDetection();
+    
+    // Otimizações específicas por tipo de dispositivo
+    if (screenDetection.isMobile) {
+        optimizeForMobile();
+    } else if (screenDetection.isTablet) {
+        optimizeForTablet();
+    } else {
+        optimizeForDesktop();
+    }
+    
+    // Otimizações baseadas na orientação
+    if (screenDetection.orientation === 'portrait') {
+        optimizeForPortrait();
+    } else {
+        optimizeForLandscape();
+    }
+    
+    console.log(`🎯 Otimizações aplicadas para: ${screenDetection.isMobile ? 'Mobile' : screenDetection.isTablet ? 'Tablet' : 'Desktop'} (${screenDetection.orientation})`);
+}
+
+// Otimizações específicas para mobile
+function optimizeForMobile() {
+    // Reduzir efeitos visuais para melhor performance
+    const mobileOptimizations = {
+        maxParticles: 30,
+        maxEnemies: 6,
+        reducedShadows: true,
+        simplifiedExplosions: true
+    };
+    
+    // Aplicar limite de partículas
+    if (particles.length > mobileOptimizations.maxParticles) {
+        particles.splice(0, particles.length - mobileOptimizations.maxParticles);
+    }
+    
+    // Aplicar limite de inimigos
+    if (enemies.length > mobileOptimizations.maxEnemies) {
+        const MAX_ENEMIES_MOBILE = mobileOptimizations.maxEnemies;
+        console.log(`📱 Limitando inimigos para mobile: ${MAX_ENEMIES_MOBILE}`);
+    }
+    
+    // Ativar controles touch automaticamente
+    if (!touchControls.enabled) {
+        touchControls.enabled = true;
+        console.log('📱 Controles touch ativados automaticamente para mobile');
+    }
+}
+
+// Otimizações específicas para tablet
+function optimizeForTablet() {
+    // Configurações intermediárias entre mobile e desktop
+    const tabletOptimizations = {
+        maxParticles: 50,
+        maxEnemies: 8,
+        enhancedGraphics: true
+    };
+    
+    console.log('📱 Otimizações de tablet aplicadas');
+}
+
+// Otimizações específicas para desktop
+function optimizeForDesktop() {
+    // Máxima qualidade gráfica e efeitos
+    const desktopOptimizations = {
+        maxParticles: 100,
+        maxEnemies: 12,
+        fullEffects: true,
+        highQualityAudio: true
+    };
+    
+    // Desativar controles touch se não necessário
+    if (touchControls.enabled && !('ontouchstart' in window)) {
+        touchControls.enabled = false;
+        console.log('🖥️ Controles touch desativados para desktop');
+    }
+    
+    console.log('🖥️ Otimizações de desktop aplicadas');
+}
+
+// Otimizações para modo retrato
+function optimizeForPortrait() {
+    // Ajustar interface para modo vertical
+    console.log('📱 Otimizando para modo retrato');
+    
+    // Configurar controles para retrato
+    if (mobileControlsState.enabled) {
+        // Usar controles agrupados em retrato
+        if (draggableControlsState.individual) {
+            toggleControlMode(); // Voltar para controles agrupados
+        }
+    }
+}
+
+// Otimizações para modo paisagem
+function optimizeForLandscape() {
+    console.log('📱 Otimizando para modo paisagem');
+    
+    // Ativar controles individuais em paisagem se mobile/tablet
+    if (mobileControlsState.enabled && (screenDetection.isMobile || screenDetection.isTablet)) {
+        if (!draggableControlsState.individual) {
+            toggleControlMode(); // Ativar controles individuais
+        }
+    }
+}
+
+// Função para salvar configurações da tela no localStorage
+function saveScreenSettings() {
+    const screenSettings = {
+        lastDetection: {
+            width: screenDetection.screenWidth,
+            height: screenDetection.screenHeight,
+            orientation: screenDetection.orientation,
+            deviceType: screenDetection.isMobile ? 'mobile' : 
+                       screenDetection.isTablet ? 'tablet' : 'desktop',
+            pixelRatio: screenDetection.pixelRatio,
+            aspectRatio: screenDetection.aspectRatio
+        },
+        canvasSettings: {
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT
+        },
+        controlSettings: {
+            touchEnabled: touchControls.enabled,
+            mobileControlsVisible: mobileControlsState.visible,
+            draggableEnabled: draggableControlsState.enabled,
+            individualControls: draggableControlsState.individual
+        },
+        timestamp: Date.now()
+    };
+    
+    try {
+        localStorage.setItem('juliette-screen-settings', JSON.stringify(screenSettings));
+        console.log('💾 Configurações de tela salvas no localStorage');
+    } catch (e) {
+        console.warn('⚠️ Não foi possível salvar configurações de tela:', e);
+    }
+}
+
+// Função para carregar configurações salvas da tela
+function loadScreenSettings() {
+    try {
+        const savedSettings = localStorage.getItem('juliette-screen-settings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            
+            // Verificar se as configurações são recentes (menos de 24h)
+            const hoursOld = (Date.now() - settings.timestamp) / (1000 * 60 * 60);
+            if (hoursOld < 24) {
+                console.log('📂 Configurações de tela carregadas:', settings.lastDetection);
+                return settings;
+            } else {
+                console.log('⏰ Configurações de tela expiradas, usando detecção atual');
+                localStorage.removeItem('juliette-screen-settings');
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Erro ao carregar configurações de tela:', e);
+    }
+    
+    return null;
+}
+
+// Função para detectar mudanças significativas na tela
+function detectScreenChanges() {
+    const savedSettings = loadScreenSettings();
+    if (!savedSettings) return true; // Primeira execução
+    
+    const lastDetection = savedSettings.lastDetection;
+    const currentDetection = {
+        width: screenDetection.screenWidth,
+        height: screenDetection.screenHeight,
+        orientation: screenDetection.orientation,
+        deviceType: screenDetection.isMobile ? 'mobile' : 
+                   screenDetection.isTablet ? 'tablet' : 'desktop'
+    };
+    
+    // Verificar mudanças significativas
+    const significantChanges = [
+        Math.abs(currentDetection.width - lastDetection.width) > 50,
+        Math.abs(currentDetection.height - lastDetection.height) > 50,
+        currentDetection.orientation !== lastDetection.orientation,
+        currentDetection.deviceType !== lastDetection.deviceType
+    ];
+    
+    const hasSignificantChanges = significantChanges.some(change => change);
+    
+    if (hasSignificantChanges) {
+        console.log('🔄 Mudanças significativas detectadas na tela:', {
+            anterior: lastDetection,
+            atual: currentDetection
+        });
+    }
+    
+    return hasSignificantChanges;
+}
+
+// Função para aplicar configurações de performance baseadas na tela
+function applyPerformanceSettings() {
+    // Configurações de performance baseadas no dispositivo
+    const performanceSettings = {
+        mobile: {
+            maxParticles: 30,
+            maxEnemies: 6,
+            shadowBlur: 5,
+            animationQuality: 'low'
+        },
+        tablet: {
+            maxParticles: 50,
+            maxEnemies: 8,
+            shadowBlur: 10,
+            animationQuality: 'medium'
+        },
+        desktop: {
+            maxParticles: 100,
+            maxEnemies: 12,
+            shadowBlur: 15,
+            animationQuality: 'high'
+        }
+    };
+    
+    const deviceType = screenDetection.isMobile ? 'mobile' : 
+                      screenDetection.isTablet ? 'tablet' : 'desktop';
+    
+    const settings = performanceSettings[deviceType];
+    
+    // Aplicar configurações
+    console.log(`⚡ Aplicando configurações de performance para ${deviceType}:`, settings);
+    
+    // Limitar arrays baseado na performance
+    if (particles.length > settings.maxParticles) {
+        particles.splice(0, particles.length - settings.maxParticles);
+    }
+    
+    if (enemies.length > settings.maxEnemies) {
+        // Não remover inimigos diretamente, mas ajustar spawn rate
+        console.log(`⚡ Limite de inimigos ajustado para ${settings.maxEnemies}`);
+    }
+}
+
+// Função para exibir informações detalhadas da tela (debug)
+function displayScreenInfo() {
+    const info = {
+        '📊 Resolução da Tela': `${window.screen.width}x${window.screen.height}`,
+        '🖼️ Área Disponível': `${window.innerWidth}x${window.innerHeight}`,
+        '🎮 Canvas do Jogo': `${CANVAS_WIDTH}x${CANVAS_HEIGHT}`,
+        '📐 Aspect Ratio': screenDetection.aspectRatio.toFixed(2),
+        '🔄 Orientação': screenDetection.orientation,
+        '📱 Tipo de Dispositivo': screenDetection.isMobile ? 'Mobile' : 
+                                 screenDetection.isTablet ? 'Tablet' : 'Desktop',
+        '🔍 Pixel Ratio': screenDetection.pixelRatio,
+        '👆 Touch Disponível': ('ontouchstart' in window) ? 'Sim' : 'Não',
+        '🎛️ Controles Touch': touchControls.enabled ? 'Ativados' : 'Desativados'
+    };
+    
+    console.group('📊 INFORMAÇÕES DETALHADAS DA TELA');
+    Object.entries(info).forEach(([key, value]) => {
+        console.log(`${key}: ${value}`);
+    });
+    console.groupEnd();
+    
+    return info;
+}
+
+// Função para adaptar automaticamente o jogo para a tela atual
+function autoAdaptToScreen() {
+    console.log('🎯 Iniciando adaptação automática para a tela...');
+    
+    // 1. Detectar tela
+    updateScreenDetection();
+    
+    // 2. Verificar mudanças
+    const hasChanges = detectScreenChanges();
+    
+    // 3. Configurar canvas responsivo
+    setupResponsiveCanvas();
+    
+    // 4. Otimizar para dispositivo
+    optimizeForDevice();
+    
+    // 5. Aplicar configurações de performance
+    applyPerformanceSettings();
+    
+    // 6. Salvar configurações
+    saveScreenSettings();
+    
+    // 7. Exibir informações (apenas se houve mudanças)
+    if (hasChanges) {
+        displayScreenInfo();
+    }
+    
+    console.log('✅ Adaptação automática para a tela concluída!');
+}
+
+// Função para resetar todas as configurações de tela
+function resetAllScreenSettings() {
+    // Limpar localStorage
+    localStorage.removeItem('juliette-screen-settings');
+    localStorage.removeItem('juliette-control-positions');
+    
+    // Resetar configurações de controles
+    if (draggableControlsState.enabled) {
+        resetControlPositions();
+    }
+    
+    // Redetectar e reconfigurar tela
+    autoAdaptToScreen();
+    
+    console.log('🔄 Todas as configurações de tela foram resetadas!');
 }
