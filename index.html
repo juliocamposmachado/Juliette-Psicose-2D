@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juliette Psicose 2D - Jogo Responsivo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="game-info">
+            Juliette Psicose 2D - Tela Adaptável
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <button id="fullscreenBtn" class="fullscreen-btn" title="Tela Cheia (F11)">
+            📺 TELA
+        </button>
+        <div class="controls">
+            🏃 Setas: Mover/Mirar | ⚔️ Espaço/X: Atirar | 🦘 Z: Pular | ⏸ P: Pausar | 🔄 R: Reiniciar<br>
+            🎯 Múltiplas armas | 💎 Power-ups | 👾 Inimigos inteligentes | 💥 Explosões épicas!<br>
+            🎵 <strong>NOVO:</strong> Sons dinâmicos | ⚛️ Inimigos com átomos orbitantes | 🔊 M: Ligar/Desligar Sons
+        </div>
+    </div>
+
+    <!-- === CONTROLES TOUCH PARA MOBILE === -->
+    <div id="mobileControls" class="mobile-controls">
+        <!-- D-Pad (Controles Direcionais) -->
+        <div class="controls-left">
+            <div class="dpad">
+                <div class="dpad-button dpad-up" data-direction="up">▲</div>
+                <div class="dpad-button dpad-down" data-direction="down">▼</div>
+                <div class="dpad-button dpad-left" data-direction="left">◀</div>
+                <div class="dpad-button dpad-right" data-direction="right">▶</div>
+                <div class="dpad-center">🎮</div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="controls-right">
+            <div class="action-buttons">
+                <!-- Linha Superior -->
+                <div class="button-row top-row">
+                    <button class="action-button secondary" id="chainBothBtn" data-action="chainBoth">⛓️⛓️</button>
+                    <button class="action-button secondary" id="jumpBtn" data-action="jump">⬆️</button>
+                </div>
+                <!-- Linha Inferior -->
+                <div class="button-row bottom-row">
+                    <button class="action-button secondary" id="chainLeftBtn" data-action="chainLeft">⛓️</button>
+                    <button class="action-button primary" id="shootBtn" data-action="shoot">🎯</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões Especiais (Topo) -->
+        <div class="special-controls">
+            <button class="special-button" id="bombBtn" data-action="bomb">💣</button>
+            <button class="special-button" id="shieldBtn" data-action="shield">🛡️</button>
+            <button class="special-button" id="lavaBtn" data-action="lava">🌋</button>
+            <button class="special-button" id="pauseBtn" data-action="pause">⏸️</button>
+            <button class="special-button" id="soundBtn" data-action="sound">🔊</button>
+        </div>
+    </div>
+
+    <!-- Botão para mostrar/ocultar controles -->
+    <button id="controlsToggle" class="controls-toggle">📱</button>
+
+    <script src="game.js"></script>
+    <script src="debug_fix.js"></script>
+</body>
+</html>
