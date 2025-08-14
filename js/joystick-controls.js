@@ -166,37 +166,50 @@ function handleDirectionPress(direction, isPressed, event) {
     
     console.log(`🕹️ Direção ${direction}: ${isPressed ? 'PRESSIONADO' : 'SOLTO'}`);
     
-    // Integração com o jogo
-    if (typeof window !== 'undefined' && window.keys) {
+    // Integração com o sistema de teclas global
+    if (typeof keys !== 'undefined') {
         switch (direction) {
             case 'left':
-                window.keys['ArrowLeft'] = isPressed;
-                
-                if (isPressed && !isInSpecialAnim) {
-                    moving = true;
-                    facingRight = false;
-                    backgroundScrolling = true;
+                keys['ArrowLeft'] = isPressed;
+                break;
+            case 'right':
+                keys['ArrowRight'] = isPressed;
+                break;
+            case 'up':
+                keys['ArrowUp'] = isPressed;
+                break;
+            case 'down':
+                keys['ArrowDown'] = isPressed;
+                break;
+        }
+    }
+    
+    // Integração direta com as variáveis globais do jogo
+    try {
+        switch (direction) {
+            case 'left':
+                if (isPressed && (typeof isInSpecialAnim === 'undefined' || !isInSpecialAnim)) {
+                    if (typeof moving !== 'undefined') moving = true;
+                    if (typeof facingRight !== 'undefined') facingRight = false;
+                    if (typeof backgroundScrolling !== 'undefined') backgroundScrolling = true;
                 } else if (!joystickState.activeDirections['right']) {
-                    moving = false;
-                    backgroundScrolling = false;
+                    if (typeof moving !== 'undefined') moving = false;
+                    if (typeof backgroundScrolling !== 'undefined') backgroundScrolling = false;
                 }
                 break;
                 
             case 'right':
-                window.keys['ArrowRight'] = isPressed;
-                
-                if (isPressed && !isInSpecialAnim) {
-                    moving = true;
-                    facingRight = true;
-                    backgroundScrolling = true;
+                if (isPressed && (typeof isInSpecialAnim === 'undefined' || !isInSpecialAnim)) {
+                    if (typeof moving !== 'undefined') moving = true;
+                    if (typeof facingRight !== 'undefined') facingRight = true;
+                    if (typeof backgroundScrolling !== 'undefined') backgroundScrolling = true;
                 } else if (!joystickState.activeDirections['left']) {
-                    moving = false;
-                    backgroundScrolling = false;
+                    if (typeof moving !== 'undefined') moving = false;
+                    if (typeof backgroundScrolling !== 'undefined') backgroundScrolling = false;
                 }
                 break;
                 
             case 'up':
-                window.keys['ArrowUp'] = isPressed;
                 // Para mirar para cima se necessário
                 break;
                 
@@ -220,38 +233,98 @@ function handleActionPress(action, isPressed, event) {
     if (isPressed) {
         switch (action) {
             case 'shoot':
-                // Integração com sistema de tiro
-                if (typeof shoot === 'function') {
-                    shoot();
-                    if (typeof window !== 'undefined') {
-                        attacking = true;
+                // Integração com sistema de tiro - múltiplas tentativas
+                try {
+                    if (typeof shoot === 'function') {
+                        shoot();
+                        console.log('✅ Função shoot() chamada com sucesso via joystick');
+                    } else if (typeof window.shoot === 'function') {
+                        window.shoot();
+                        console.log('✅ window.shoot() chamada com sucesso via joystick');
+                    } else {
+                        console.warn('⚠️ Função shoot() não encontrada no joystick');
                     }
+                    
+                    // Atualizar variável de ataque
+                    if (typeof attacking !== 'undefined') {
+                        attacking = true;
+                    } else if (typeof window.attacking !== 'undefined') {
+                        window.attacking = true;
+                    }
+                    
+                    // Simular tecla Space para compatibilidade
+                    if (typeof keys !== 'undefined') {
+                        keys['Space'] = true;
+                        setTimeout(() => {
+                            if (typeof keys !== 'undefined') {
+                                keys['Space'] = false;
+                            }
+                        }, 100);
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao executar tiro via joystick:', error);
                 }
                 break;
                 
             case 'jump':
-                // Integração with sistema de pulo
-                if (typeof jump === 'function') {
-                    jump();
+                // Integração com sistema de pulo - múltiplas tentativas
+                try {
+                    if (typeof jump === 'function') {
+                        jump();
+                        console.log('✅ Função jump() chamada com sucesso via joystick');
+                    } else if (typeof window.jump === 'function') {
+                        window.jump();
+                        console.log('✅ window.jump() chamada com sucesso via joystick');
+                    } else {
+                        console.warn('⚠️ Função jump() não encontrada no joystick');
+                    }
+                    
+                    // Simular tecla KeyZ para compatibilidade
+                    if (typeof keys !== 'undefined') {
+                        keys['KeyZ'] = true;
+                        setTimeout(() => {
+                            if (typeof keys !== 'undefined') {
+                                keys['KeyZ'] = false;
+                            }
+                        }, 100);
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao executar pulo via joystick:', error);
                 }
                 break;
                 
             case 'weapon':
-                // Trocar arma
-                if (typeof switchWeapon === 'function') {
-                    switchWeapon();
-                } else if (typeof cycleWeapon === 'function') {
-                    cycleWeapon();
-                } else {
-                    // Fallback global
-                    handleWeaponSwitch();
+                // Trocar arma - múltiplas tentativas
+                try {
+                    if (typeof switchWeapon === 'function') {
+                        switchWeapon();
+                    } else if (typeof window.switchWeapon === 'function') {
+                        window.switchWeapon();
+                    } else if (typeof cycleWeapon === 'function') {
+                        cycleWeapon();
+                    } else if (typeof window.cycleWeapon === 'function') {
+                        window.cycleWeapon();
+                    } else {
+                        // Fallback: usar função auxiliar
+                        handleJoystickWeaponSwitch();
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao trocar arma via joystick:', error);
                 }
                 break;
         }
     } else {
         // Liberar ações
-        if (action === 'shoot' && typeof window !== 'undefined') {
-            attacking = false;
+        if (action === 'shoot') {
+            try {
+                if (typeof attacking !== 'undefined') {
+                    attacking = false;
+                } else if (typeof window.attacking !== 'undefined') {
+                    window.attacking = false;
+                }
+            } catch (error) {
+                console.warn('⚠️ Erro ao liberar ação de tiro no joystick:', error);
+            }
         }
     }
     
@@ -548,6 +621,55 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeJoystickControls();
     }, 1000);
 });
+
+// === FUNÇÃO AUXILIAR PARA TROCAR ARMAS NO JOYSTICK ===
+function handleJoystickWeaponSwitch() {
+    try {
+        // Lista de armas disponíveis
+        const weapons = ['none', 'normal', 'spread', 'laser', 'machine', 'plasma', 'storm', 'nuclear'];
+        
+        // Obter arma atual
+        let currentWeapon = 'none';
+        if (typeof weaponType !== 'undefined') {
+            currentWeapon = weaponType;
+        } else if (typeof window.weaponType !== 'undefined') {
+            currentWeapon = window.weaponType;
+        }
+        
+        // Encontrar índice atual
+        let currentIndex = weapons.indexOf(currentWeapon);
+        if (currentIndex === -1) currentIndex = 0;
+        
+        // Próxima arma
+        const nextIndex = (currentIndex + 1) % weapons.length;
+        const nextWeapon = weapons[nextIndex];
+        
+        // Atualizar arma
+        if (typeof weaponType !== 'undefined') {
+            weaponType = nextWeapon;
+        } else if (typeof window.weaponType !== 'undefined') {
+            window.weaponType = nextWeapon;
+        }
+        
+        // Atualizar hasWeapon
+        const hasWeaponValue = nextWeapon !== 'none';
+        if (typeof hasWeapon !== 'undefined') {
+            hasWeapon = hasWeaponValue;
+        } else if (typeof window.hasWeapon !== 'undefined') {
+            window.hasWeapon = hasWeaponValue;
+        }
+        
+        console.log(`🔫 Arma alterada via joystick para: ${nextWeapon}`);
+        
+        // Feedback háptico
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]);
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao ciclar armas via joystick:', error);
+    }
+}
 
 // === CONFIGURAR SELETOR DE ARMAS ===
 function setupWeaponSelector() {
