@@ -1,5 +1,10 @@
 // Mobile Guide Controls
 document.addEventListener('DOMContentLoaded', function() {
+    // Hide mobile controls by default
+    const mobileControls = document.getElementById('mobileControls');
+    if (mobileControls) {
+        mobileControls.style.display = 'none';
+    }
     const mobileGuide = document.getElementById('mobileGuide');
     const mobileGuideContent = document.getElementById('mobileGuideContent');
     const mobileGuideToggle = document.getElementById('mobileGuideToggle');

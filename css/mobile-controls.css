@@ -1,4 +1,8 @@
 /* === MOBILE GUIDE STYLES === */
+.mobile-controls {
+    display: none; /* Controls start hidden by default */
+}
+
 .mobile-guide {
     display: none; /* Guide starts hidden by default */
     position: fixed;
