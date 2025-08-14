@@ -19,6 +19,13 @@
 }
 
 /* Mobile Guide Styles */
+.mobile-guide.collapsed,
+.mobile-guide-content.collapsed {
+    display: none !important;
+    height: 0;
+    overflow: hidden;
+}
+
 .mobile-guide {
     display: none !important; /* Force hide by default */
 }
