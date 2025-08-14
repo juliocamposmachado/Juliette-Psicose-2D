@@ -1,0 +1,521 @@
+/* ==========================================================================
+   CONTROLES JOYSTICK VIRTUAL PARA JULIETTE 2D
+   ========================================================================== */
+
+/* === CONTAINER PRINCIPAL === */
+.joystick-controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    
+    /* === GARANTIR QUE CONTROLES FIQUEM DENTRO DA TELA === */
+    box-sizing: border-box;
+    padding: 10px;
+    overflow: hidden;
+    
+    /* === ADAPTAR À ÁREA SEGURA DO DISPOSITIVO === */
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-left: max(10px, env(safe-area-inset-left));
+}
+
+/* === MOSTRAR CONTROLES EM DISPOSITIVOS MÓVEIS === */
+@media screen and (max-width: 1024px), (pointer: coarse) {
+    .joystick-controls {
+        display: block;
+    }
+    
+    /* Ocultar controles antigos */
+    .mobile-controls-new {
+        display: none !important;
+    }
+}
+
+.joystick-controls.active {
+    display: block !important;
+}
+
+/* === JOYSTICK VIRTUAL (ESQUERDA) === */
+.virtual-joystick {
+    position: absolute;
+    left: 30px;
+    bottom: 30px;
+    width: 160px;
+    height: 160px;
+    pointer-events: auto;
+}
+
+/* === BASE CIRCULAR DO JOYSTICK === */
+.joystick-base {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(0, 255, 255, 0.4),
+        rgba(0, 200, 255, 0.3),
+        rgba(0, 150, 255, 0.5)
+    );
+    border: 3px solid rgba(0, 255, 255, 0.8);
+    border-radius: 50%;
+    box-shadow: 
+        0 0 20px rgba(0, 255, 255, 0.4),
+        inset 0 0 30px rgba(0, 255, 255, 0.1),
+        inset 0 -10px 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* === EFEITO PISCANTE NA BASE === */
+.joystick-base::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent,
+        rgba(0, 255, 255, 0.5),
+        transparent,
+        rgba(0, 255, 255, 0.5),
+        transparent
+    );
+    animation: joystickRotate 4s linear infinite;
+    z-index: -1;
+}
+
+@keyframes joystickRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* === SETAS DIRECIONAIS === */
+.joystick-arrow {
+    position: absolute;
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, 
+        rgba(0, 255, 255, 0.9) 0%,
+        rgba(0, 200, 255, 0.8) 50%,
+        rgba(0, 150, 255, 0.9) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    box-shadow: 
+        0 4px 15px rgba(0, 255, 255, 0.3),
+        inset 0 2px 5px rgba(255, 255, 255, 0.2),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    user-select: none;
+}
+
+/* === POSICIONAMENTO DAS SETAS === */
+.arrow-up {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.arrow-down {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.arrow-left {
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.arrow-right {
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* === ESTADOS ATIVOS DAS SETAS === */
+.joystick-arrow:active,
+.joystick-arrow.active {
+    transform: scale(0.9);
+    background: linear-gradient(135deg, 
+        rgba(255, 215, 0, 0.9) 0%,
+        rgba(255, 165, 0, 0.8) 50%,
+        rgba(255, 140, 0, 0.9) 100%);
+    box-shadow: 
+        0 2px 8px rgba(255, 215, 0, 0.6),
+        0 0 20px rgba(255, 215, 0, 0.4),
+        inset 0 2px 5px rgba(255, 255, 255, 0.3),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.arrow-up:active,
+.arrow-up.active {
+    transform: translateX(-50%) scale(0.9);
+}
+
+.arrow-down:active,
+.arrow-down.active {
+    transform: translateX(-50%) scale(0.9);
+}
+
+.arrow-left:active,
+.arrow-left.active {
+    transform: translateY(-50%) scale(0.9);
+}
+
+.arrow-right:active,
+.arrow-right.active {
+    transform: translateY(-50%) scale(0.9);
+}
+
+/* === BOTÕES DE AÇÃO CENTRALIZADOS === */
+.action-buttons {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    pointer-events: auto;
+}
+
+/* === ESTILO DOS BOTÕES DE AÇÃO === */
+.action-button {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, 
+        rgba(255, 69, 0, 0.9) 0%,
+        rgba(255, 140, 0, 0.8) 50%,
+        rgba(255, 165, 0, 0.9) 100%);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    box-shadow: 
+        0 6px 20px rgba(255, 69, 0, 0.4),
+        inset 0 3px 8px rgba(255, 255, 255, 0.2),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    user-select: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* === ÍCONES DOS BOTÕES DE AÇÃO === */
+.action-button .btn-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.action-button .btn-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+}
+
+/* === ESTADOS ATIVOS DOS BOTÕES DE AÇÃO === */
+.action-button:active,
+.action-button.active {
+    transform: scale(0.9);
+    background: linear-gradient(135deg, 
+        rgba(255, 215, 0, 0.9) 0%,
+        rgba(255, 165, 0, 0.8) 50%,
+        rgba(255, 140, 0, 0.9) 100%);
+    box-shadow: 
+        0 3px 12px rgba(255, 215, 0, 0.6),
+        0 0 25px rgba(255, 215, 0, 0.4),
+        inset 0 3px 8px rgba(255, 255, 255, 0.3),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* === BOTÃO DE TELA CHEIA === */
+.fullscreen-control {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, 
+        rgba(138, 43, 226, 0.9) 0%,
+        rgba(75, 0, 130, 0.8) 50%,
+        rgba(128, 0, 128, 0.9) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 
+        0 4px 15px rgba(138, 43, 226, 0.4),
+        inset 0 2px 5px rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fullscreen-control:active {
+    transform: scale(0.9);
+    box-shadow: 
+        0 2px 8px rgba(138, 43, 226, 0.6),
+        inset 0 2px 5px rgba(255, 255, 255, 0.3);
+}
+
+/* === BOTÃO TOGGLE === */
+.controls-toggle {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, 
+        rgba(34, 193, 195, 0.9) 0%,
+        rgba(253, 187, 45, 0.8) 100%);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 
+        0 3px 10px rgba(34, 193, 195, 0.4),
+        inset 0 1px 3px rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 1001;
+}
+
+.controls-toggle:active {
+    transform: scale(0.9);
+    box-shadow: 
+        0 1px 5px rgba(34, 193, 195, 0.6),
+        inset 0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+/* === RESPONSIVIDADE === */
+
+/* CELULAR PORTRAIT */
+@media screen and (max-width: 480px) and (orientation: portrait) {
+    .virtual-joystick {
+        width: 140px;
+        height: 140px;
+        left: 20px;
+        bottom: 25px;
+    }
+    
+    .joystick-base {
+        width: 140px;
+        height: 140px;
+    }
+    
+    .joystick-arrow {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .action-button {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .action-button .btn-icon {
+        font-size: 24px;
+    }
+    
+    .action-button .btn-label {
+        font-size: 10px;
+    }
+    
+    .action-buttons {
+        gap: 25px;
+        bottom: 25px;
+    }
+    
+    .fullscreen-control {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+}
+
+/* CELULAR LANDSCAPE */
+@media screen and (max-width: 896px) and (orientation: landscape) {
+    .virtual-joystick {
+        width: 120px;
+        height: 120px;
+        left: 15px;
+        bottom: 15px;
+    }
+    
+    .joystick-base {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .joystick-arrow {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+    
+    .action-button {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .action-button .btn-icon {
+        font-size: 22px;
+    }
+    
+    .action-buttons {
+        gap: 20px;
+        bottom: 15px;
+    }
+    
+    .fullscreen-control {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+    }
+}
+
+/* TABLET */
+@media screen and (min-width: 481px) and (max-width: 1024px) {
+    .virtual-joystick {
+        width: 180px;
+        height: 180px;
+        left: 40px;
+        bottom: 40px;
+    }
+    
+    .joystick-base {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .joystick-arrow {
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+    }
+    
+    .action-button {
+        width: 90px;
+        height: 90px;
+    }
+    
+    .action-button .btn-icon {
+        font-size: 32px;
+    }
+    
+    .action-button .btn-label {
+        font-size: 14px;
+    }
+    
+    .action-buttons {
+        gap: 35px;
+        bottom: 40px;
+    }
+    
+    .fullscreen-control {
+        width: 70px;
+        height: 70px;
+        font-size: 24px;
+    }
+}
+
+/* === ANIMAÇÕES === */
+@keyframes pulseGlow {
+    0%, 100% { 
+        box-shadow: 
+            0 4px 15px rgba(0, 255, 255, 0.3),
+            inset 0 2px 5px rgba(255, 255, 255, 0.2),
+            inset 0 -2px 5px rgba(0, 0, 0, 0.2);
+    }
+    50% { 
+        box-shadow: 
+            0 8px 25px rgba(0, 255, 255, 0.5),
+            0 0 30px rgba(0, 255, 255, 0.3),
+            inset 0 2px 5px rgba(255, 255, 255, 0.3),
+            inset 0 -2px 5px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* === FEEDBACK HÁPTICO === */
+.haptic-feedback {
+    animation: hapticBounce 0.2s ease-out;
+}
+
+@keyframes hapticBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* === OTIMIZAÇÃO PARA PERFORMANCE === */
+.joystick-controls * {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* === OCULTAR EM DESKTOP === */
+@media screen and (min-width: 1025px) and (pointer: fine) {
+    .joystick-controls {
+        display: none !important;
+    }
+}
+
+/* === OVERRIDE PARA DEBUG === */
+.joystick-controls.debug-show {
+    display: block !important;
+}
