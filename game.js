@@ -5,44 +5,403 @@ const ctx = canvas.getContext('2d');
 let CANVAS_WIDTH = 800;  // Valor inicial, será atualizado
 let CANVAS_HEIGHT = 600; // Valor inicial, será atualizado
 
-// === NOVO SISTEMA DE RESPONSIVIDADE PARA MOBILE ===
-let screenDetection = {
+// === SISTEMA AVANÇADO DE ADAPTAÇÃO MOBILE ===
+let mobileAdaptation = {
+    // Estado atual do dispositivo
     isMobile: false,
     isTablet: false,
     isDesktop: true,
+    
+    // Dimensões reais da tela
     screenWidth: window.innerWidth,
     screenHeight: window.innerHeight,
+    availableWidth: window.innerWidth,
+    availableHeight: window.innerHeight,
+    
+    // Informações da viewport
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
     aspectRatio: window.innerWidth / window.innerHeight,
-    orientation: 'landscape', // 'portrait' ou 'landscape'
+    orientation: window.innerWidth > window.innerHeight ? 'landscape' : 'portrait',
     pixelRatio: window.devicePixelRatio || 1,
-    // Breakpoints responsivos
+    
+    // Área segura para controles (1cm = ~37.8px)
+    safeAreaMargin: Math.round(37.8), // 1cm em pixels
+    
+    // Breakpoints para detecção
     breakpoints: {
         mobile: 768,
         tablet: 1024,
         desktop: 1440
     },
-    // Configurações por dispositivo
+    
+    // User Agent detection
+    userAgent: navigator.userAgent || navigator.vendor || window.opera,
+    
+    // Recursos do dispositivo
+    hasTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+    hasOrientationAPI: 'orientation' in window,
+    hasDeviceMotion: 'DeviceMotionEvent' in window,
+    
+    // Estado da adaptação
+    isFullscreen: false,
+    adaptationApplied: false,
+    
+    // Configurações por tipo de dispositivo
     configs: {
         mobile: {
-            width: 360,
-            height: 640,
-            scale: 0.8,
-            touchControls: true
+            useFullViewport: true,
+            controlMargin: 37.8, // 1cm
+            minButtonSize: 60,
+            optimalButtonSize: 70,
+            touchControls: true,
+            hideDesktopElements: true
         },
         tablet: {
-            width: 768,
-            height: 1024,
-            scale: 1.0,
-            touchControls: true
+            useFullViewport: true,
+            controlMargin: 37.8, // 1cm
+            minButtonSize: 70,
+            optimalButtonSize: 80,
+            touchControls: true,
+            hideDesktopElements: false
         },
         desktop: {
-            width: 1200,
-            height: 800,
-            scale: 1.0,
-            touchControls: false
+            useFullViewport: false,
+            controlMargin: 0,
+            minButtonSize: 0,
+            optimalButtonSize: 0,
+            touchControls: false,
+            hideDesktopElements: false
         }
     }
 };
+
+// === SISTEMA DE DETECÇÃO AVANÇADA ===
+function detectDeviceType() {
+    const ua = mobileAdaptation.userAgent.toLowerCase();
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const hasTouch = mobileAdaptation.hasTouch;
+    
+    // Detecção por User Agent
+    const isMobileUA = /android|webos|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua);
+    const isTabletUA = /ipad|android(?!.*mobile)|tablet|kindle|silk|playbook/i.test(ua);
+    
+    // Detecção por tamanho de tela e recursos
+    const isSmallScreen = width <= 768;
+    const isMediumScreen = width > 768 && width <= 1024;
+    const hasCoarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    
+    // Lógica de detecção combinada
+    if (isMobileUA || (isSmallScreen && hasTouch)) {
+        mobileAdaptation.isMobile = true;
+        mobileAdaptation.isTablet = false;
+        mobileAdaptation.isDesktop = false;
+    } else if (isTabletUA || (isMediumScreen && hasTouch && hasCoarsePointer)) {
+        mobileAdaptation.isMobile = false;
+        mobileAdaptation.isTablet = true;
+        mobileAdaptation.isDesktop = false;
+    } else {
+        mobileAdaptation.isMobile = false;
+        mobileAdaptation.isTablet = false;
+        mobileAdaptation.isDesktop = true;
+    }
+    
+    console.log('📱 Detecção de dispositivo:', {
+        mobile: mobileAdaptation.isMobile,
+        tablet: mobileAdaptation.isTablet,
+        desktop: mobileAdaptation.isDesktop,
+        userAgent: ua.substring(0, 50),
+        screenSize: `${width}x${height}`,
+        hasTouch: hasTouch
+    });
+}
+
+// === FUNÇÃO PRINCIPAL DE ADAPTAÇÃO MOBILE ===
+function adaptGameForMobile() {
+    detectDeviceType();
+    updateViewportDimensions();
+    
+    if (mobileAdaptation.isMobile || mobileAdaptation.isTablet) {
+        console.log('📱 Iniciando adaptação para dispositivo móvel...');
+        
+        // 1. Configurar viewport para usar 100% da tela
+        setupMobileViewport();
+        
+        // 2. Adaptar canvas do jogo
+        adaptCanvasForMobile();
+        
+        // 3. Ocultar elementos desktop
+        hideDesktopElements();
+        
+        // 4. Configurar controles mobile
+        setupMobileGameControls();
+        
+        // 5. Aplicar estilos mobile
+        applyMobileStyles();
+        
+        mobileAdaptation.adaptationApplied = true;
+        console.log('✅ Adaptação mobile concluída!');
+        
+    } else {
+        console.log('🖥️ Desktop detectado - usando configuração padrão');
+        setupDesktopCanvas();
+    }
+}
+
+// === ATUALIZAR DIMENSÕES DA VIEWPORT ===
+function updateViewportDimensions() {
+    mobileAdaptation.screenWidth = screen.width;
+    mobileAdaptation.screenHeight = screen.height;
+    mobileAdaptation.viewportWidth = window.innerWidth;
+    mobileAdaptation.viewportHeight = window.innerHeight;
+    mobileAdaptation.availableWidth = window.innerWidth;
+    mobileAdaptation.availableHeight = window.innerHeight;
+    mobileAdaptation.aspectRatio = mobileAdaptation.viewportWidth / mobileAdaptation.viewportHeight;
+    mobileAdaptation.orientation = mobileAdaptation.viewportWidth > mobileAdaptation.viewportHeight ? 'landscape' : 'portrait';
+    
+    console.log('📐 Dimensões atualizadas:', {
+        screen: `${mobileAdaptation.screenWidth}x${mobileAdaptation.screenHeight}`,
+        viewport: `${mobileAdaptation.viewportWidth}x${mobileAdaptation.viewportHeight}`,
+        orientation: mobileAdaptation.orientation,
+        aspectRatio: mobileAdaptation.aspectRatio.toFixed(2)
+    });
+}
+
+// === CONFIGURAR VIEWPORT MOBILE ===
+function setupMobileViewport() {
+    // Atualizar meta viewport para garantir escala correta
+    let viewportMeta = document.querySelector('meta[name="viewport"]');
+    if (viewportMeta) {
+        viewportMeta.setAttribute('content', 
+            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no'
+        );
+    }
+    
+    // Configurar body para usar tela completa
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.width = '100vw';
+    document.body.style.height = '100vh';
+    document.body.style.overflow = 'hidden';
+    
+    // Configurar html para tela completa
+    document.documentElement.style.margin = '0';
+    document.documentElement.style.padding = '0';
+    document.documentElement.style.width = '100%';
+    document.documentElement.style.height = '100%';
+    
+    console.log('📱 Viewport mobile configurado para tela completa');
+}
+
+// === ADAPTAR CANVAS PARA MOBILE ===
+function adaptCanvasForMobile() {
+    const canvas = document.getElementById('gameCanvas');
+    const gameContainer = document.getElementById('gameContainer');
+    
+    if (!canvas || !gameContainer) {
+        console.error('❌ Canvas ou container não encontrado!');
+        return;
+    }
+    
+    // Usar 100% da viewport disponível
+    CANVAS_WIDTH = mobileAdaptation.viewportWidth;
+    CANVAS_HEIGHT = mobileAdaptation.viewportHeight;
+    
+    // Configurar canvas
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+    canvas.style.display = 'block';
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.zIndex = '1';
+    
+    // Configurar container
+    gameContainer.style.width = '100vw';
+    gameContainer.style.height = '100vh';
+    gameContainer.style.position = 'fixed';
+    gameContainer.style.top = '0';
+    gameContainer.style.left = '0';
+    gameContainer.style.margin = '0';
+    gameContainer.style.padding = '0';
+    
+    console.log(`🎮 Canvas adaptado: ${CANVAS_WIDTH}x${CANVAS_HEIGHT}`);
+}
+
+// === OCULTAR ELEMENTOS DESKTOP ===
+function hideDesktopElements() {
+    // Ocultar elementos marcados como desktop-only
+    document.querySelectorAll('.desktop-only').forEach(element => {
+        element.style.display = 'none';
+    });
+    
+    // Ocultar informações de controles desktop
+    const gameInfo = document.querySelector('.game-info');
+    if (gameInfo) {
+        gameInfo.style.display = 'none';
+    }
+    
+    const controls = document.querySelector('.controls');
+    if (controls) {
+        controls.style.display = 'none';
+    }
+    
+    console.log('🖥️ Elementos desktop ocultados');
+}
+
+// === CONFIGURAR CONTROLES MOBILE DO JOGO ===
+function setupMobileGameControls() {
+    const deviceType = mobileAdaptation.isMobile ? 'mobile' : 'tablet';
+    const config = mobileAdaptation.configs[deviceType];
+    
+    // Calcular posições dos controles com margem de 1cm
+    const margin = config.controlMargin;
+    
+    // Área disponível para controles (descontando margens)
+    const availableWidth = CANVAS_WIDTH - (margin * 2);
+    const availableHeight = CANVAS_HEIGHT - (margin * 2);
+    
+    // Configurar posições dos controles
+    const controlPositions = {
+        leftControls: {
+            x: margin,
+            y: CANVAS_HEIGHT - margin - config.optimalButtonSize
+        },
+        rightControls: {
+            x: CANVAS_WIDTH - margin - config.optimalButtonSize,
+            y: CANVAS_HEIGHT - margin - config.optimalButtonSize
+        },
+        topControls: {
+            x: margin,
+            y: margin
+        }
+    };
+    
+    // Aplicar configurações globais
+    window.mobileControlPositions = controlPositions;
+    window.mobileButtonSize = config.optimalButtonSize;
+    window.mobileControlMargin = margin;
+    
+    console.log('🎮 Controles mobile configurados:', {
+        buttonSize: config.optimalButtonSize,
+        margin: margin,
+        positions: controlPositions
+    });
+}
+
+// === APLICAR ESTILOS MOBILE ===
+function applyMobileStyles() {
+    // Criar ou atualizar estilos mobile dinâmicos
+    let mobileStyleSheet = document.getElementById('mobile-dynamic-styles');
+    if (!mobileStyleSheet) {
+        mobileStyleSheet = document.createElement('style');
+        mobileStyleSheet.id = 'mobile-dynamic-styles';
+        document.head.appendChild(mobileStyleSheet);
+    }
+    
+    const deviceType = mobileAdaptation.isMobile ? 'mobile' : 'tablet';
+    const config = mobileAdaptation.configs[deviceType];
+    const margin = config.controlMargin;
+    const buttonSize = config.optimalButtonSize;
+    
+    const mobileCSS = `
+        /* === ADAPTAÇÃO MOBILE DINÂMICA === */
+        .mobile-controls-new {
+            width: 100vw !important;
+            height: 100vh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 1000 !important;
+        }
+        
+        .controls-left {
+            left: ${margin}px !important;
+            bottom: ${margin}px !important;
+        }
+        
+        .controls-right {
+            right: ${margin}px !important;
+            bottom: ${margin}px !important;
+        }
+        
+        .controls-top {
+            top: ${margin}px !important;
+            left: ${margin}px !important;
+        }
+        
+        .control-btn {
+            width: ${buttonSize}px !important;
+            height: ${buttonSize}px !important;
+        }
+        
+        .controls-toggle {
+            top: ${margin}px !important;
+            right: ${margin}px !important;
+            width: 50px !important;
+            height: 50px !important;
+        }
+        
+        /* === GARANTIR CANVAS COMPLETO === */
+        #gameCanvas {
+            width: 100vw !important;
+            height: 100vh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 1 !important;
+        }
+        
+        #gameContainer {
+            width: 100vw !important;
+            height: 100vh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* === OCULTAR ELEMENTOS DESKTOP === */
+        .desktop-only {
+            display: none !important;
+        }
+        
+        /* === FORÇAR TELA COMPLETA === */
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+    `;
+    
+    mobileStyleSheet.textContent = mobileCSS;
+    console.log('🎨 Estilos mobile aplicados dinamicamente');
+}
+
+// === CONFIGURAR CANVAS DESKTOP ===
+function setupDesktopCanvas() {
+    const canvas = document.getElementById('gameCanvas');
+    
+    // Configuração padrão desktop
+    CANVAS_WIDTH = 1200;
+    CANVAS_HEIGHT = 800;
+    
+    if (canvas) {
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+        canvas.style.width = CANVAS_WIDTH + 'px';
+        canvas.style.height = CANVAS_HEIGHT + 'px';
+        canvas.style.position = 'relative';
+    }
+    
+    console.log(`🖥️ Canvas desktop configurado: ${CANVAS_WIDTH}x${CANVAS_HEIGHT}`);
+}
 
 const frameWidth = 48;
 const frameHeight = 64;
@@ -4668,8 +5027,12 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('📱 Botão de tela cheia mobile inicializado!');
     }
     
-    // Inicializar sistema de sons
+// Inicializar sistema de sons
     initializeSounds();
+    
+    // === NOVO: SISTEMA COMPLETO DE ADAPTAÇÃO MOBILE ===
+    // Adaptar o jogo para dispositivos móveis
+    adaptGameForMobile();
     
     // Redimensionar canvas inicialmente
     resizeCanvas();

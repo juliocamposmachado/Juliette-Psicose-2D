@@ -16,6 +16,17 @@
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    
+    /* === GARANTIR QUE CONTROLES FIQUEM DENTRO DA TELA === */
+    box-sizing: border-box;
+    padding: 10px;
+    overflow: hidden;
+    
+    /* === ADAPTAR À ÁREA SEGURA DO DISPOSITIVO === */
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-left: max(10px, env(safe-area-inset-left));
 }
 
 /* === MOSTRAR CONTROLES EM DISPOSITIVOS MÓVEIS === */
@@ -32,18 +43,25 @@
 
 /* === ÁREAS DE CONTROLES === */
 .controls-left, 
-.controls-right {
+.controls-right,
+.controls-top {
     position: absolute;
-    bottom: 20px;
     pointer-events: auto;
 }
 
 .controls-left {
     left: 20px;
+    bottom: 20px;
 }
 
 .controls-right {
     right: 20px;
+    bottom: 20px;
+}
+
+.controls-top {
+    top: 20px;
+    left: 20px;
 }
 
 /* === CONTAINER DOS BOTÕES === */
@@ -125,6 +143,12 @@
     width: 80px;
     height: 80px;
     font-size: 16px;
+}
+
+.special-btn {
+    width: 70px;
+    height: 70px;
+    font-size: 14px;
 }
 
 /* === ÍCONES DOS BOTÕES === */
@@ -213,6 +237,46 @@
     box-shadow: 
         0 1px 5px rgba(255, 69, 0, 0.6),
         inset 0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+/* === BOTÃO DE TELA CHEIA MÓVEL === */
+.fullscreen-btn {
+    background: linear-gradient(135deg, 
+        rgba(138, 43, 226, 0.9) 0%,
+        rgba(75, 0, 130, 0.8) 50%,
+        rgba(128, 0, 128, 0.9) 100%) !important;
+    box-shadow: 
+        0 4px 15px rgba(138, 43, 226, 0.4),
+        inset 0 2px 5px rgba(255, 255, 255, 0.2),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.2) !important;
+}
+
+.fullscreen-btn::before {
+    background: linear-gradient(45deg, 
+        transparent, 
+        rgba(138, 43, 226, 0.3), 
+        transparent) !important;
+}
+
+.fullscreen-btn:active,
+.fullscreen-btn.active {
+    background: linear-gradient(135deg, 
+        rgba(255, 215, 0, 0.9) 0%,
+        rgba(255, 165, 0, 0.8) 50%,
+        rgba(255, 140, 0, 0.9) 100%) !important;
+    box-shadow: 
+        0 2px 8px rgba(255, 215, 0, 0.4),
+        inset 0 2px 5px rgba(255, 255, 255, 0.3),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.3) !important;
+}
+
+.fullscreen-btn .btn-icon {
+    font-size: 22px;
+}
+
+.fullscreen-btn .btn-label {
+    font-size: 9px;
+    font-weight: 700;
 }
 
 /* === ANIMAÇÕES DE ENTRADA === */

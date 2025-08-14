@@ -64,6 +64,9 @@ function setupTouchEventListeners() {
     // Botões de ação
     setupActionControls();
     
+    // Botões especiais
+    setupSpecialControls();
+    
     // Prevenir comportamentos padrão
     preventDefaultTouchBehaviors();
 }
@@ -93,6 +96,16 @@ function setupActionControls() {
     
     if (shootBtn) {
         setupButtonEvents(shootBtn, 'shoot', handleActionPress);
+    }
+}
+
+// === CONFIGURAR CONTROLES ESPECIAIS ===
+function setupSpecialControls() {
+    const fullscreenBtn = document.getElementById('mobileFullscreenBtn');
+    
+    if (fullscreenBtn) {
+        setupButtonEvents(fullscreenBtn, 'fullscreen', handleSpecialPress);
+        console.log('📺 Botão de tela cheia móvel configurado!');
     }
 }
 
@@ -199,6 +212,120 @@ function handleActionPress(action, isPressed, event) {
     
     // Feedback visual
     updateButtonVisualState(event.target, isPressed);
+}
+
+// === MANIPULAR PRESSÃO DE CONTROLES ESPECIAIS ===
+function handleSpecialPress(action, isPressed, event) {
+    mobileControlsState.buttonsPressed[action] = isPressed;
+    
+    console.log(`🎯 Especial ${action}: ${isPressed ? 'PRESSIONADO' : 'SOLTO'}`);
+    
+    if (isPressed) {
+        switch (action) {
+            case 'fullscreen':
+                // Ativar/desativar tela cheia
+                if (typeof toggleFullscreen === 'function') {
+                    toggleFullscreen();
+                } else {
+                    // Fallback: usar função global de tela cheia
+                    toggleMobileFullscreen();
+                }
+                
+                // Feedback visual especial
+                const fullscreenBtn = document.getElementById('mobileFullscreenBtn');
+                if (fullscreenBtn) {
+                    fullscreenBtn.classList.add('fullscreen-active');
+                    setTimeout(() => {
+                        fullscreenBtn.classList.remove('fullscreen-active');
+                    }, 500);
+                }
+                
+                console.log('📺 Tela cheia ativada via controle móvel!');
+                break;
+        }
+    }
+    
+    // Feedback visual
+    updateButtonVisualState(event.target, isPressed);
+}
+
+// === FUNÇÃO DE TELA CHEIA MÓVEL ===
+function toggleMobileFullscreen() {
+    const element = document.documentElement;
+    
+    try {
+        if (!document.fullscreenElement) {
+            // Entrar em tela cheia
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            }
+            
+            console.log('📺 Entrando em tela cheia móvel...');
+            
+            // Feedback háptico
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+            
+        } else {
+            // Sair da tela cheia
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            }
+            
+            console.log('📺 Saindo da tela cheia móvel...');
+            
+            // Feedback háptico
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao alternar tela cheia móvel:', error);
+        
+        // Fallback para dispositivos que não suportam fullscreen API
+        attemptMobileSafariFullscreen();
+    }
+}
+
+// === FALLBACK PARA MOBILE SAFARI ===
+function attemptMobileSafariFullscreen() {
+    const canvas = document.getElementById('gameCanvas');
+    const gameContainer = document.getElementById('gameContainer');
+    
+    if (canvas && gameContainer) {
+        // Expandir canvas para viewport completa
+        document.body.style.overflow = 'hidden';
+        gameContainer.style.position = 'fixed';
+        gameContainer.style.top = '0';
+        gameContainer.style.left = '0';
+        gameContainer.style.width = '100vw';
+        gameContainer.style.height = '100vh';
+        gameContainer.style.zIndex = '9999';
+        
+        // Ocultar barras do navegador (funciona em alguns casos)
+        window.scrollTo(0, 1);
+        
+        console.log('📱 Fallback de tela cheia para Mobile Safari aplicado');
+        
+        // Feedback háptico
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+        }
+    }
 }
 
 // === CONFIGURAR TOGGLE DOS CONTROLES ===
