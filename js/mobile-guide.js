@@ -1,5 +1,16 @@
 // Mobile Guide Controls
 document.addEventListener('DOMContentLoaded', function() {
+    // Force guide to be collapsed on page load and after any toggle
+    function ensureGuideCollapsed() {
+        const mobileGuideContent = document.getElementById('mobileGuideContent');
+        if (mobileGuideContent) {
+            mobileGuideContent.classList.remove('show');
+            mobileGuideContent.style.display = 'none';
+        }
+    }
+
+    // Run on initial load
+    ensureGuideCollapsed();
     // Hide mobile controls by default
     const mobileControls = document.getElementById('mobileControls');
     if (mobileControls) {

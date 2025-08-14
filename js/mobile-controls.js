@@ -1,5 +1,11 @@
 // Mobile Controls Management
 document.addEventListener('DOMContentLoaded', function() {
+    // Always start with controls hidden
+    const mobileGuideContent = document.getElementById('mobileGuideContent');
+    if (mobileGuideContent) {
+        mobileGuideContent.classList.remove('show');
+        mobileGuideContent.style.display = 'none';
+    }
     const controlsToggle = document.getElementById('controlsToggle');
     const mobileControls = document.getElementById('mobileControls');
 

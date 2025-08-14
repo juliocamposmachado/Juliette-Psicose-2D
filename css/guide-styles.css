@@ -27,6 +27,15 @@
     display: block !important;
 }
 
+/* Controls Guide */
+.controls-guide {
+    display: none !important;
+}
+
+.controls-guide.show {
+    display: block !important;
+}
+
 /* Desktop Guide Elements */
 .game-info.desktop-only,
 .controls.desktop-only {
