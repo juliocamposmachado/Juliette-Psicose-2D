@@ -30,6 +30,11 @@ function initializeAIIntegration() {
 
     // Inicializar sistemas de IA
     initializeEnemyAI();
+    
+    // Inicializar gerador de mapas
+    if (typeof initializeMapGenerator === 'function') {
+        initializeMapGenerator();
+    }
 
     // Hook no loop principal do jogo
     hookGameLoop();
@@ -116,6 +121,12 @@ function updateAISystems() {
         if (typeof checkSpecialHeartCollisions === 'function') {
             const player = getPlayerObject();
             checkSpecialHeartCollisions(playerPos.x, playerPos.y, player);
+        }
+        
+        // Verificar colisões com mapa procedural
+        if (typeof checkMapCollisions === 'function') {
+            const mapCollisions = checkMapCollisions(playerPos.x, playerPos.y);
+            handleMapCollisions(mapCollisions);
         }
 
         // Atualizar estatísticas
@@ -329,6 +340,85 @@ function handlePlayerEnemyCollision(enemy) {
     }
 }
 
+// === LIDAR COM COLISÕES DO MAPA PROCEDURAL ===
+function handleMapCollisions(collisions) {
+    if (!collisions || Object.keys(collisions).length === 0) return;
+    
+    try {
+        // Aplicar colisões de plataformas
+        if (collisions.platforms) {
+            // Ajustar posição do jogador se necessário
+            const playerPos = getPlayerPosition();
+            
+            collisions.platforms.forEach(platform => {
+                if (platform.blocked) {
+                    // Impedir movimento em direção bloqueada
+                    if (typeof updatePlayerPosition === 'function') {
+                        updatePlayerPosition(platform.correctedX, platform.correctedY);
+                    }
+                }
+            });
+        }
+        
+        // Lidar com obstáculos especiais
+        if (collisions.obstacles) {
+            collisions.obstacles.forEach(obstacle => {
+                switch (obstacle.type) {
+                    case 'spikes':
+                        // Aplicar dano de espinhos
+                        if (typeof window.lives !== 'undefined' && window.lives > 0) {
+                            window.lives--;
+                            console.log('⚡ Jogador pisou em espinhos!');
+                            
+                            // Feedback visual e háptico
+                            const playerPos = getPlayerPosition();
+                            createImpactEffect(playerPos.x, playerPos.y);
+                            if (navigator.vibrate) {
+                                navigator.vibrate([100, 50, 100, 50, 100]);
+                            }
+                        }
+                        break;
+                        
+                    case 'lava':
+                        // Dano contínuo de lava
+                        if (typeof window.lives !== 'undefined' && window.lives > 0) {
+                            window.lives -= 2; // Dano dobrado
+                            console.log('🌋 Jogador tocou na lava!');
+                            
+                            const playerPos = getPlayerPosition();
+                            createImpactEffect(playerPos.x, playerPos.y);
+                            if (navigator.vibrate) {
+                                navigator.vibrate([200, 100, 200, 100, 200]);
+                            }
+                        }
+                        break;
+                        
+                    case 'teleport':
+                        // Teletransporte
+                        if (obstacle.teleportTo && typeof updatePlayerPosition === 'function') {
+                            updatePlayerPosition(obstacle.teleportTo.x, obstacle.teleportTo.y);
+                            console.log('🌀 Jogador foi teletransportado!');
+                        }
+                        break;
+                }
+            });
+        }
+        
+        // Lidar com elementos de decoração interativos
+        if (collisions.decorations) {
+            collisions.decorations.forEach(decoration => {
+                if (decoration.interactive) {
+                    // Pode implementar efeitos especiais de decorações
+                    console.log(`🎨 Interação com decoração: ${decoration.type}`);
+                }
+            });
+        }
+        
+    } catch (error) {
+        console.warn('❌ Erro ao lidar com colisões do mapa:', error);
+    }
+}
+
 // === HOOK NO SISTEMA DE RENDERIZAÇÃO ===
 function hookRenderSystem() {
     if (aiIntegrationState.renderSystemHooked) return;
@@ -373,6 +463,11 @@ function renderAIElements() {
     if (!ctx) return;
 
     try {
+        // Renderizar mapa procedural (primeiro, no fundo)
+        if (typeof renderCurrentMap === 'function') {
+            renderCurrentMap(ctx);
+        }
+        
         // Renderizar inimigos de IA
         if (enemySpawner) {
             enemySpawner.renderEnemies(ctx);
@@ -423,7 +518,15 @@ function updateStatsDisplay() {
         'Inimigos Ativos': enemySpawner ? enemySpawner.enemies.length : 0,
         'Chefe Ativo': enemyAIState.bossSpawned ? '👑 SIM' : 'Não',
         'API Gemini': enemyAIState.aiEnabled ? '🤖 ATIVA' : '❌ OFF',
-        'Corações': specialHeartManager ? specialHeartManager.getHeartCount() : 0
+        'Corações': specialHeartManager ? specialHeartManager.getHeartCount() : 0,
+        '---MAPAS---': '---',
+        'Mapa Atual': typeof getMapGeneratorStats === 'function' ? 
+            getMapGeneratorStats().currentMapId?.substring(0, 15) + '...' : 'N/A',
+        'Tema/Diff': typeof getMapGeneratorStats === 'function' ?
+            `${getMapGeneratorStats().currentTheme}/${getMapGeneratorStats().currentDifficulty}` : 'N/A',
+        'Mapas Gerados': typeof getMapGeneratorStats === 'function' ? 
+            getMapGeneratorStats().mapsGenerated : 0,
+        'API Mapas': typeof mapGeneratorState !== 'undefined' && mapGeneratorState.apiEnabled ? '🗺️ ON' : '❌ OFF'
     };
 
     let html = '<strong>🤖 IA STATUS</strong><br>';
@@ -467,6 +570,24 @@ function addDebugControls() {
             if (enemySpawner) {
                 enemySpawner.clearAllEnemies();
                 showDebugMessage('🧹 Todos os inimigos removidos');
+            }
+        }
+        
+        // Tecla F8 para gerar novo mapa
+        if (e.key === 'F8') {
+            e.preventDefault();
+            if (typeof forceRegenerateMap === 'function') {
+                forceRegenerateMap();
+                showDebugMessage('🗺️ NOVO MAPA GERADO!');
+            }
+        }
+        
+        // Tecla F7 para toggle da API de mapas
+        if (e.key === 'F7') {
+            e.preventDefault();
+            if (typeof toggleMapGeneratorAPI === 'function') {
+                const isEnabled = toggleMapGeneratorAPI();
+                showDebugMessage(`API MAPAS ${isEnabled ? 'ATIVADA' : 'DESATIVADA'}`);
             }
         }
     });
