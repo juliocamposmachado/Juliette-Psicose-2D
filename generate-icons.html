@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Ícones PWA - Juliette 2D</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        canvas {
+            border: 2px solid #fff;
+            margin: 10px;
+            border-radius: 15px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, #FF5252, #26C6DA);
+            transform: translateY(-2px);
+        }
+        
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .icon-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .size-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4ECDC4;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Gerador de Ícones PWA</h1>
+    <h2>Juliette Psicose 2D</h2>
+    
+    <p>Clique no botão abaixo para gerar todos os ícones PWA automaticamente:</p>
+    
+    <button onclick="generateAllIcons()">🎨 Gerar Todos os Ícones</button>
+    <button onclick="downloadAll()">📦 Download Todos</button>
+    
+    <div class="icon-grid" id="iconGrid"></div>
+
+    <script>
+        const iconSizes = [
+            { size: 72, name: 'icon-72x72' },
+            { size: 96, name: 'icon-96x96' },
+            { size: 128, name: 'icon-128x128' },
+            { size: 144, name: 'icon-144x144' },
+            { size: 152, name: 'icon-152x152' },
+            { size: 180, name: 'icon-180x180' },
+            { size: 192, name: 'icon-192x192' },
+            { size: 384, name: 'icon-384x384' },
+            { size: 512, name: 'icon-512x512' }
+        ];
+
+        function generateIcon(size, canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Configurar canvas
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Fundo com gradiente
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(0.5, '#16213e');
+            gradient.addColorStop(1, '#0f3460');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Borda arredondada
+            const cornerRadius = size * 0.15;
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, cornerRadius);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Símbolo do jogo - "J" estilizado
+            ctx.font = `bold ${size * 0.4}px Arial`;
+            ctx.fillStyle = '#FF6B6B';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('J', size / 2, size / 2 - size * 0.05);
+            
+            // Efeito de brilho
+            const glowGradient = ctx.createRadialGradient(
+                size / 2, size / 2, size * 0.1,
+                size / 2, size / 2, size * 0.4
+            );
+            glowGradient.addColorStop(0, 'rgba(76, 236, 196, 0.8)');
+            glowGradient.addColorStop(1, 'rgba(76, 236, 196, 0)');
+            
+            ctx.fillStyle = glowGradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Adicionar texto "2D" pequeno
+            ctx.font = `bold ${size * 0.15}px Arial`;
+            ctx.fillStyle = '#4ECDC4';
+            ctx.fillText('2D', size / 2, size * 0.75);
+            
+            return canvas;
+        }
+
+        function generateAllIcons() {
+            const iconGrid = document.getElementById('iconGrid');
+            iconGrid.innerHTML = '';
+            
+            iconSizes.forEach((iconData, index) => {
+                const iconItem = document.createElement('div');
+                iconItem.className = 'icon-item';
+                
+                const sizeLabel = document.createElement('div');
+                sizeLabel.className = 'size-label';
+                sizeLabel.textContent = `${iconData.size}x${iconData.size}`;
+                
+                const canvas = document.createElement('canvas');
+                canvas.id = `canvas-${index}`;
+                canvas.style.maxWidth = '100%';
+                canvas.style.height = 'auto';
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = '⬇️ Download';
+                downloadBtn.onclick = () => downloadIcon(canvas, iconData.name);
+                downloadBtn.style.fontSize = '12px';
+                downloadBtn.style.padding = '8px 16px';
+                
+                iconItem.appendChild(sizeLabel);
+                iconItem.appendChild(canvas);
+                iconItem.appendChild(downloadBtn);
+                iconGrid.appendChild(iconItem);
+                
+                // Gerar o ícone após adicionar ao DOM
+                setTimeout(() => {
+                    generateIcon(iconData.size, canvas.id);
+                }, 100);
+            });
+            
+            console.log('✅ Todos os ícones PWA gerados!');
+        }
+
+        function downloadIcon(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = `${filename}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadAll() {
+            iconSizes.forEach((iconData, index) => {
+                const canvas = document.getElementById(`canvas-${index}`);
+                if (canvas) {
+                    setTimeout(() => {
+                        downloadIcon(canvas, iconData.name);
+                    }, index * 500); // Delay para não sobrecarregar o browser
+                }
+            });
+        }
+
+        // Polyfill para roundRect se não estiver disponível
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.lineTo(x + width - radius, y);
+                this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.lineTo(x + width, y + height - radius);
+                this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.lineTo(x + radius, y + height);
+                this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.lineTo(x, y + radius);
+                this.quadraticCurveTo(x, y, x + radius, y);
+                this.closePath();
+            };
+        }
+
+        // Gerar ícones automaticamente ao carregar a página
+        window.addEventListener('load', () => {
+            setTimeout(generateAllIcons, 1000);
+        });
+    </script>
+</body>
+</html>

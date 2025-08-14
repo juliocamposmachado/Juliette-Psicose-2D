@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- === ESTILOS === -->
+    <link rel="stylesheet" href="css/mobile-controls.css">
+    <link rel="stylesheet" href="css/mobile-controls-new.css">
+    <link rel="stylesheet" href="css/joystick-controls.css">
+    <link rel="stylesheet" href="css/guide-styles.css">
+    
+    <!-- === METADADOS PWA === -->
+    <title>Juliette Psicose 2D - Contra Style PWA</title>
+    <meta name="description" content="Jogo de ação 2D estilo Contra com Juliette. Sistema de combate avançado, sons de laser futuristas e controles touch otimizados para mobile.">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-TileColor" content="#1a1a2e">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="apple-mobile-web-app-title" content="Juliette 2D">
+    
+    <!-- === CONFIGURAÇÕES PWA === -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- === ÍCONES PARA DIFERENTES DISPOSITIVOS === -->
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180x180.png">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pwa-styles.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Info e controles desktop apenas -->
+        <div class="game-info desktop-only">
+            Juliette Psicose 2D - Tela Adaptável
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <button id="fullscreenBtn" class="fullscreen-btn desktop-only" title="Tela Cheia (F11)">
+            📺 TELA
+        </button>
+        
+        <div class="controls desktop-only">
+            🏃 Setas: Mover/Mirar | ⚔️ Espaço/X: Atirar | 🦘 Z: Pular | ⏸ P: Pausar | 🔄 R: Reiniciar<br>
+            🎯 Múltiplas armas | 💎 Power-ups | 👾 Inimigos inteligentes | 💥 Explosões épicas!<br>
+            🎵 <strong>NOVO:</strong> Sons dinâmicos | ⚛️ Inimigos com átomos orbitantes | 🔊 M: Ligar/Desligar Sons
+        </div>
+    </div>
+
+    <!-- === CONTROLES MÓVEIS PARA CELULAR E TABLET === -->
+    <div id="mobileControls" class="mobile-controls-new">
+        <!-- === CONTROLES DE DIREÇÃO (ESQUERDA) === -->
+        <div class="controls-left">
+            <div class="direction-controls">
+                <button id="leftBtn" class="control-btn direction-btn left-btn" data-direction="left">
+                    <span class="btn-icon">←</span>
+                </button>
+                <button id="rightBtn" class="control-btn direction-btn right-btn" data-direction="right">
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- === CONTROLES DE AÇÃO (DIREITA) === -->
+        <div class="controls-right">
+            <div class="action-controls">
+                <button id="jumpBtn" class="control-btn action-btn jump-btn" data-action="jump">
+                    <span class="btn-icon">⬆</span>
+                    <span class="btn-label">PULO</span>
+                </button>
+                <button id="shootBtn" class="control-btn action-btn shoot-btn" data-action="shoot">
+                    <span class="btn-icon">🎯</span>
+                    <span class="btn-label">TIRO</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- === CONTROLES ESPECIAIS (SUPERIOR) === -->
+        <div class="controls-top">
+            <button id="mobileFullscreenBtn" class="control-btn special-btn fullscreen-btn" data-action="fullscreen" title="Tela Cheia">
+                <span class="btn-icon">📺</span>
+                <span class="btn-label">TELA</span>
+            </button>
+        </div>
+        
+        <!-- === BOTÃO TOGGLE CONTROLES === -->
+        <button id="controlsToggle" class="controls-toggle">
+            📱
+        </button>
+    </div>
+
+    <!-- === SISTEMA DE JOYSTICK VIRTUAL === -->
+    <div id="joystickControls" class="joystick-controls">
+        <!-- === JOYSTICK VIRTUAL (ESQUERDA) === -->
+        <div class="virtual-joystick">
+            <div class="joystick-base"></div>
+            
+            <!-- Setas Direcionais -->
+            <button id="arrowUp" class="joystick-arrow arrow-up">↑</button>
+            <button id="arrowDown" class="joystick-arrow arrow-down">↓</button>
+            <button id="arrowLeft" class="joystick-arrow arrow-left">←</button>
+            <button id="arrowRight" class="joystick-arrow arrow-right">→</button>
+        </div>
+        
+        <!-- === BOTÕES DE AÇÃO CENTRALIZADOS === -->
+        <div class="action-buttons">
+            <button id="joystickShootBtn" class="action-button shoot-btn">
+                <span class="btn-icon">🎯</span>
+                <span class="btn-label">TIRO</span>
+            </button>
+            <button id="joystickJumpBtn" class="action-button jump-btn">
+                <span class="btn-icon">⬆</span>
+                <span class="btn-label">PULO</span>
+            </button>
+        </div>
+        
+        <!-- === BOTÃO DE TELA CHEIA === -->
+        <button id="joystickFullscreenBtn" class="fullscreen-control" title="Tela Cheia">
+            📺
+        </button>
+        
+        <!-- === SELETOR DE ARMAS RECOLHÍVEL === -->
+        <div class="weapon-selector">
+            <button id="weaponSelectorBtn" class="weapon-selector-btn">
+                <span class="weapon-icon">🔫</span>
+                <span class="weapon-label">ARMAS</span>
+            </button>
+            
+            <div id="weaponList" class="weapon-list">
+                <div class="weapon-item selected" data-weapon="normal">
+                    <div class="weapon-item-icon">🔫</div>
+                    <div class="weapon-item-info">
+                        <div class="weapon-item-name">Normal</div>
+                        <div class="weapon-item-desc">Tiro básico</div>
+                        <div class="weapon-item-stats">
+                            <span class="weapon-stat">DMG: 20</span>
+                            <span class="weapon-stat">VEL: 8</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="weapon-item" data-weapon="spread">
+                    <div class="weapon-item-icon">💥</div>
+                    <div class="weapon-item-info">
+                        <div class="weapon-item-name">Spread</div>
+                        <div class="weapon-item-desc">Tiro triplo</div>
+                        <div class="weapon-item-stats">
+                            <span class="weapon-stat">DMG: 18</span>
+                            <span class="weapon-stat">VEL: 9</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="weapon-item" data-weapon="laser">
+                    <div class="weapon-item-icon">⚡</div>
+                    <div class="weapon-item-info">
+                        <div class="weapon-item-name">Laser</div>
+                        <div class="weapon-item-desc">Penetrante</div>
+                        <div class="weapon-item-stats">
+                            <span class="weapon-stat">DMG: 35</span>
+                            <span class="weapon-stat">VEL: 14</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="weapon-item" data-weapon="machine">
+                    <div class="weapon-item-icon">🔥</div>
+                    <div class="weapon-item-info">
+                        <div class="weapon-item-name">Machine</div>
+                        <div class="weapon-item-desc">Rápida</div>
+                        <div class="weapon-item-stats">
+                            <span class="weapon-stat">DMG: 15</span>
+                            <span class="weapon-stat">VEL: 12</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="weapon-item" data-weapon="plasma">
+                    <div class="weapon-item-icon">🌟</div>
+                    <div class="weapon-item-info">
+                        <div class="weapon-item-name">Plasma</div>
+                        <div class="weapon-item-desc">Devastador</div>
+                        <div class="weapon-item-stats">
+                            <span class="weapon-stat">DMG: 45</span>
+                            <span class="weapon-stat">VEL: 16</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="weapon-item" data-weapon="storm">
+                    <div class="weapon-item-icon">⛈️</div>
+                    <div class="weapon-item-info">
+                        <div class="weapon-item-name">Storm</div>
+                        <div class="weapon-item-desc">Tempestade</div>
+                        <div class="weapon-item-stats">
+                            <span class="weapon-stat">DMG: 25</span>
+                            <span class="weapon-stat">VEL: 11</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="weapon-item" data-weapon="nuclear">
+                    <div class="weapon-item-icon">☢️</div>
+                    <div class="weapon-item-info">
+                        <div class="weapon-item-name">Nuclear</div>
+                        <div class="weapon-item-desc">Atômico</div>
+                        <div class="weapon-item-stats">
+                            <span class="weapon-stat">DMG: 80</span>
+                            <span class="weapon-stat">VEL: 10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- === BOTÃO TOGGLE === -->
+        <button id="joystickToggle" class="controls-toggle">
+            🕹️
+        </button>
+    </div>
+
+    <script src="game.js"></script>
+    <script src="debug_fix.js"></script>
+    
+    <!-- === PWA SERVICE WORKER === -->
+    <script>
+        // =====================================================
+        // PWA INITIALIZATION AND SERVICE WORKER REGISTRATION
+        // =====================================================
+        
+        let pwaState = {
+            isInstallable: false,
+            isInstalled: false,
+            swRegistration: null,
+            installPrompt: null
+        };
+        
+        // === REGISTRAR SERVICE WORKER ===
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('./sw.js');
+                    pwaState.swRegistration = registration;
+                    
+                    console.log('🚀 Service Worker registrado com sucesso:', registration.scope);
+                    
+                    // Verificar atualizações
+                    registration.addEventListener('updatefound', () => {
+                        console.log('🔄 Nova versão do Service Worker disponível!');
+                        const newWorker = registration.installing;
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateAvailable();
+                            }
+                        });
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Falha ao registrar Service Worker:', error);
+                }
+            });
+        }
+        
+        // === DETECTAR SE PWA PODE SER INSTALADA ===
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('📱 PWA pode ser instalada!');
+            e.preventDefault();
+            pwaState.installPrompt = e;
+            pwaState.isInstallable = true;
+            showInstallButton();
+        });
+        
+        // === DETECTAR QUANDO PWA FOI INSTALADA ===
+        window.addEventListener('appinstalled', (e) => {
+            console.log('✅ PWA instalada com sucesso!');
+            pwaState.isInstalled = true;
+            pwaState.installPrompt = null;
+            hideInstallButton();
+            
+            // Mostrar mensagem de sucesso
+            showNotification('🎉 Juliette 2D instalado! Agora você pode jogar offline!', 'success');
+        });
+        
+        // === FUNÇÃO PARA INSTALAR PWA ===
+        async function installPWA() {
+            if (!pwaState.installPrompt) {
+                console.log('❌ Prompt de instalação não disponível');
+                return;
+            }
+            
+            try {
+                const result = await pwaState.installPrompt.prompt();
+                console.log('📱 Resultado da instalação:', result.outcome);
+                
+                if (result.outcome === 'accepted') {
+                    console.log('✅ Usuário aceitou a instalação');
+                } else {
+                    console.log('❌ Usuário cancelou a instalação');
+                }
+                
+                pwaState.installPrompt = null;
+            } catch (error) {
+                console.error('❌ Erro durante instalação:', error);
+            }
+        }
+        
+        // === MOSTRAR BOTÃO DE INSTALAÇÃO ===
+        function showInstallButton() {
+            let installBtn = document.getElementById('pwaInstallBtn');
+            
+            if (!installBtn) {
+                installBtn = document.createElement('button');
+                installBtn.id = 'pwaInstallBtn';
+                installBtn.className = 'pwa-install-btn';
+                installBtn.innerHTML = '📱 INSTALAR JOGO';
+                installBtn.title = 'Instalar como aplicativo no celular/desktop';
+                
+                installBtn.addEventListener('click', installPWA);
+                
+                // Adicionar ao container do jogo
+                const gameContainer = document.getElementById('gameContainer');
+                if (gameContainer) {
+                    gameContainer.appendChild(installBtn);
+                }
+            }
+            
+            installBtn.style.display = 'block';
+            
+            // Animação de entrada
+            setTimeout(() => {
+                installBtn.classList.add('show');
+            }, 100);
+        }
+        
+        // === OCULTAR BOTÃO DE INSTALAÇÃO ===
+        function hideInstallButton() {
+            const installBtn = document.getElementById('pwaInstallBtn');
+            if (installBtn) {
+                installBtn.classList.remove('show');
+                setTimeout(() => {
+                    installBtn.style.display = 'none';
+                }, 300);
+            }
+        }
+        
+        // === MOSTRAR NOTIFICAÇÃO DE ATUALIZAÇÃO ===
+        function showUpdateAvailable() {
+            const notification = document.createElement('div');
+            notification.className = 'pwa-update-notification';
+            notification.innerHTML = `
+                <div class="pwa-update-content">
+                    <span>🔄 Nova versão disponível!</span>
+                    <button onclick="updatePWA()" class="pwa-update-btn">ATUALIZAR</button>
+                    <button onclick="closeUpdateNotification()" class="pwa-close-btn">✕</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Mostrar com animação
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+        }
+        
+        // === ATUALIZAR PWA ===
+        function updatePWA() {
+            if (pwaState.swRegistration && pwaState.swRegistration.waiting) {
+                pwaState.swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                window.location.reload();
+            }
+        }
+        
+        // === FECHAR NOTIFICAÇÃO DE ATUALIZAÇÃO ===
+        function closeUpdateNotification() {
+            const notification = document.querySelector('.pwa-update-notification');
+            if (notification) {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }
+        }
+        
+        // === MOSTRAR NOTIFICAÇÕES GERAIS ===
+        function showNotification(message, type = 'info', duration = 4000) {
+            const notification = document.createElement('div');
+            notification.className = `pwa-notification pwa-notification-${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Mostrar com animação
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Ocultar automaticamente
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        // === DETECTAR SE ESTÁ EXECUTANDO COMO PWA ===
+        function isPWAMode() {
+            return window.matchMedia('(display-mode: standalone)').matches || 
+                   window.navigator.standalone === true;
+        }
+        
+        // === INICIALIZAÇÃO PWA ===
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isPWAMode()) {
+                console.log('🎮 Executando em modo PWA!');
+                document.body.classList.add('pwa-mode');
+                pwaState.isInstalled = true;
+            } else {
+                console.log('🌐 Executando no navegador');
+            }
+            
+            // Verificar suporte a recursos PWA
+            if ('serviceWorker' in navigator) {
+                console.log('✅ Service Worker suportado');
+            }
+            
+            if ('BeforeInstallPromptEvent' in window) {
+                console.log('✅ Instalação PWA suportada');
+            }
+            
+            // Debug: informações do PWA
+            setTimeout(() => {
+                console.log('📊 Estado PWA:', pwaState);
+            }, 2000);
+        });
+        
+        // === EXPOR FUNÇÕES GLOBAIS ===
+        window.pwaState = pwaState;
+        window.installPWA = installPWA;
+        window.updatePWA = updatePWA;
+        window.showNotification = showNotification;
+        
+    </script>
+    <script src="js/mobile-controls-new.js"></script>
+    <script src="js/joystick-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+/* === CONTROLES MÓVEIS BÁSICOS === */
+.mobile-controls {
+    display: none; /* Controls start hidden by default */
+}
+

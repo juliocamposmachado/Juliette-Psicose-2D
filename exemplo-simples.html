@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplo Simples - Emulador NES</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .emulator-container {
+            background: #2c3e50;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        #game {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 3px solid #34495e;
+            background: #000;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: #2980b9;
+        }
+        
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            background: #ecf0f1;
+        }
+        
+        .upload-area:hover {
+            background: #d5dbdb;
+        }
+        
+        #romInput {
+            margin: 10px;
+        }
+        
+        .info {
+            background: #e8f6f3;
+            border-left: 4px solid #1abc9c;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .warning {
+            background: #fef9e7;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Exemplo Simples - Emulador NES</h1>
+        
+        <div class="info">
+            <strong>📋 Como usar:</strong><br>
+            1. Carregue um arquivo ROM de NES (.nes) usando o botão abaixo<br>
+            2. O jogo será carregado automaticamente no emulador<br>
+            3. Use os controles on-screen ou teclas do teclado para jogar
+        </div>
+        
+        <div class="upload-area">
+            <h3>📁 Carregar ROM do NES</h3>
+            <input type="file" id="romInput" accept=".nes,.fds,.unif,.unf" />
+            <p>Formatos suportados: .nes, .fds, .unif, .unf</p>
+        </div>
+        
+        <div class="emulator-container">
+            <div style="width:640px;height:480px;margin:0 auto;max-width:100%">
+                <div id="game" style="height: 100%;">
+                    <iframe id="ejs-content-frame" 
+                            width="100%" 
+                            height="100%" 
+                            border="0" 
+                            frameborder="no" 
+                            style="width: 100%; height: 100%; margin: 0px; padding: 0px; user-select: none;" 
+                            scrolling="no" 
+                            allowfullscreen="true" 
+                            webkitallowfullscreen="true" 
+                            mozallowfullscreen="true" 
+                            allow="microphone" 
+                            src="https://www.emulatorjs.com/embed/content.html">
+                    </iframe>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="control-btn" onclick="playGame()">▶ Play</button>
+                <button class="control-btn" onclick="pauseGame()">⏸ Pause</button>
+                <button class="control-btn" onclick="resetGame()">🔄 Reset</button>
+                <button class="control-btn" onclick="toggleFullscreen()">⛶ Tela Cheia</button>
+            </div>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Aviso Legal:</strong><br>
+            Este emulador é apenas para fins educacionais. Certifique-se de possuir legalmente os jogos que você executar.
+            As ROMs devem ser obtidas de seus próprios cartuchos originais.
+        </div>
+        
+        <div class="info">
+            <strong>🎯 Controles do Teclado:</strong><br>
+            • <code>Setas</code> - Direcionais<br>
+            • <code>Z</code> - Botão A<br>
+            • <code>X</code> - Botão B<br>
+            • <code>Enter</code> - Start<br>
+            • <code>Space</code> - Select
+        </div>
+    </div>
+
+    <script>
+        // Configuração do EmulatorJS
+        EJS_player = '#game';
+        EJS_core = 'nes';
+        EJS_gameUrl = ''; // Será definido quando carregar ROM
+        EJS_biosUrl = ''; // BIOS não necessário para a maioria dos jogos NES
+        EJS_lightgun = false;
+        EJS_mouse = false;
+        EJS_multitap = false;
+        EJS_softPatching = true;
+        EJS_cheats = false;
+        EJS_fullscreenOnDoubleClick = true;
+        
+        // Carregar o loader do EmulatorJS
+        const script = document.createElement('script');
+        script.src = 'https://www.emulatorjs.com/loader.js';
+        script.crossOrigin = 'anonymous';
+        document.head.appendChild(script);
+        
+        // Gerenciar upload de ROM
+        document.getElementById('romInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const fileName = file.name;
+            const fileExtension = '.' + fileName.split('.').pop().toLowerCase();
+            const supportedExtensions = ['.nes', '.fds', '.unif', '.unf'];
+            
+            if (!supportedExtensions.includes(fileExtension)) {
+                alert('Arquivo não suportado! Use arquivos: ' + supportedExtensions.join(', '));
+                return;
+            }
+            
+            // Criar URL para o arquivo
+            const fileUrl = URL.createObjectURL(file);
+            
+            // Configurar EmulatorJS com o novo jogo
+            EJS_gameUrl = fileUrl;
+            
+            // Recarregar o emulador
+            const iframe = document.getElementById('ejs-content-frame');
+            if (iframe) {
+                iframe.src = 'https://www.emulatorjs.com/embed/content.html';
+            }
+            
+            // Recarregar script do EmulatorJS
+            const newScript = document.createElement('script');
+            newScript.src = 'https://www.emulatorjs.com/loader.js';
+            newScript.crossOrigin = 'anonymous';
+            document.body.appendChild(newScript);
+            
+            console.log('Jogo carregado:', fileName);
+            showNotification('Jogo carregado: ' + fileName, 'success');
+        });
+        
+        // Funções de controle
+        function playGame() {
+            try {
+                if (window.EJS_emulator && window.EJS_emulator.play) {
+                    window.EJS_emulator.play();
+                }
+            } catch (error) {
+                console.log('Função play não disponível');
+            }
+        }
+        
+        function pauseGame() {
+            try {
+                if (window.EJS_emulator && window.EJS_emulator.pause) {
+                    window.EJS_emulator.pause();
+                }
+            } catch (error) {
+                console.log('Função pause não disponível');
+            }
+        }
+        
+        function resetGame() {
+            try {
+                if (window.EJS_emulator && window.EJS_emulator.restart) {
+                    window.EJS_emulator.restart();
+                } else {
+                    // Alternativa: recarregar iframe
+                    const iframe = document.getElementById('ejs-content-frame');
+                    if (iframe) {
+                        iframe.src = iframe.src;
+                    }
+                }
+            } catch (error) {
+                console.log('Função restart não disponível, recarregando...');
+                const iframe = document.getElementById('ejs-content-frame');
+                if (iframe) {
+                    iframe.src = iframe.src;
+                }
+            }
+        }
+        
+        function toggleFullscreen() {
+            const gameContainer = document.getElementById('game');
+            if (gameContainer) {
+                if (gameContainer.requestFullscreen) {
+                    gameContainer.requestFullscreen();
+                } else if (gameContainer.webkitRequestFullscreen) {
+                    gameContainer.webkitRequestFullscreen();
+                } else if (gameContainer.msRequestFullscreen) {
+                    gameContainer.msRequestFullscreen();
+                }
+            }
+        }
+        
+        // Sistema de notificações
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                font-weight: bold;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        console.log('Exemplo Simples do Emulador NES inicializado');
+    </script>
+</body>
+</html>
