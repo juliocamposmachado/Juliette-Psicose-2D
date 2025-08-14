@@ -756,10 +756,6 @@ let backgroundSpeed = 2.5; // Velocidade aumentada
 let backgroundScrolling = false;
 let parallaxOffset = 0; // Para efeito parallax
 
-// === SISTEMA DE PAINEL DE CONTROLES RECOLHÍVEL ===
-let controlsPanelVisible = true;
-let controlsPanelToggleTimer = 0;
-const CONTROLS_PANEL_TOGGLE_COOLDOWN = 30; // 30 frames = 0.5 segundos
 
 // === SISTEMA DE HUD SUPERIOR RECOLHÍVEL ===
 let hudVisible = true;
@@ -1045,11 +1041,23 @@ document.addEventListener('keydown', e => {
     }
     
     if (e.code === 'KeyH') {
-        // Alternar visibilidade do painel de controles
-        if (controlsPanelToggleTimer === 0) {
-            controlsPanelVisible = !controlsPanelVisible;
-            controlsPanelToggleTimer = CONTROLS_PANEL_TOGGLE_COOLDOWN;
-            console.log('Painel de controles:', controlsPanelVisible ? 'Visível' : 'Oculto');
+        // Alternar visibilidade do HUD
+        if (hudToggleTimer === 0) {
+            if (hudVisible && !hudMinimized) {
+                // HUD completo -> HUD minimizado
+                hudMinimized = true;
+            } else if (hudMinimized) {
+                // HUD minimizado -> HUD oculto
+                hudVisible = false;
+                hudMinimized = false;
+            } else {
+                // HUD oculto -> HUD completo
+                hudVisible = true;
+                hudMinimized = false;
+            }
+            
+            hudToggleTimer = HUD_TOGGLE_COOLDOWN;
+            console.log('HUD Estado:', hudVisible ? (hudMinimized ? 'Minimizado' : 'Completo') : 'Oculto');
         }
     }
     
@@ -2178,8 +2186,6 @@ function updateSpecialAnimations() {
     if (shootingUpTimer > 0) shootingUpTimer--;
     if (celebrationTimer > 0) celebrationTimer--;
     
-    // Atualizar cooldown do painel de controles
-    if (controlsPanelToggleTimer > 0) controlsPanelToggleTimer--;
 }
 
 // === FUNÇÃO AVANÇADA PARA DESENHAR O JOGADOR COM MELHORIAS ===
@@ -4022,191 +4028,9 @@ function drawHUD() {
     // Resetar alinhamento para outros elementos
     ctx.textAlign = 'left';
     
-    // === PAINEL DE INSTRUÇÕES ===
-    drawControlsPanel();
+    // === PAINEL DE CONTROLES REMOVIDO ===
 }
 
-// === PAINEL DE CONTROLES MELHORADO COM TODAS AS FUNCIONALIDADES ===
-function drawControlsPanel() {
-    if (!controlsPanelVisible) {
-        // Painel oculto - apenas mostrar indicador de toggle
-        const indicatorY = CANVAS_HEIGHT - 30;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, indicatorY, CANVAS_WIDTH, 30);
-        
-        ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('💡 Pressione H para mostrar/ocultar GUIA COMPLETO DE CONTROLES', CANVAS_WIDTH/2, indicatorY + 20);
-        return;
-    }
-    
-    const panelHeight = 180; // Aumentado para mais informações
-    const panelY = CANVAS_HEIGHT - panelHeight;
-    
-    // Fundo do painel de controles com bordas
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-    ctx.fillRect(0, panelY, CANVAS_WIDTH, panelHeight);
-    
-    // Borda superior dourada
-    ctx.fillStyle = '#FFD700';
-    ctx.fillRect(0, panelY, CANVAS_WIDTH, 3);
-    
-    // Título principal
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 16px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText('🎮 GUIA COMPLETO - JULIETTE 2D (Contra Style)', 15, panelY + 20);
-    
-    // Subtitle
-    ctx.fillStyle = '#87CEEB';
-    ctx.font = '12px Arial';
-    ctx.fillText('🚀 Sistema de Combate Avançado | 🔊 Sons de Laser Futuristas | ⚡ Animações Melhoradas', 15, panelY + 35);
-    
-    // Calcular layout baseado na largura da tela
-    const numCols = CANVAS_WIDTH > 1600 ? 5 : (CANVAS_WIDTH > 1200 ? 4 : (CANVAS_WIDTH > 900 ? 3 : 2));
-    const colWidth = Math.floor((CANVAS_WIDTH - 60) / numCols); // Margem de 30px cada lado
-    const fontSize = CANVAS_WIDTH > 1400 ? '11px' : '10px';
-    const lineHeight = CANVAS_WIDTH > 1400 ? 15 : 13;
-    
-    ctx.font = fontSize + ' Arial';
-    const startY = panelY + 55;
-    
-    // === COLUNA 1: MOVIMENTO BÁSICO ===
-    let colIndex = 0;
-    ctx.fillStyle = '#98FB98'; // Verde claro
-    ctx.fillText('🏃 MOVIMENTO:', 15 + colIndex * colWidth, startY);
-    ctx.fillStyle = 'white';
-    ctx.fillText('⬅️➡️ Mover (com partículas)', 15 + colIndex * colWidth, startY + lineHeight);
-    ctx.fillText('Z/⬆️ Pular', 15 + colIndex * colWidth, startY + lineHeight * 2);
-    ctx.fillText('⬇️ Agachar', 15 + colIndex * colWidth, startY + lineHeight * 3);
-    ctx.fillText('🚶‍♀️ Caminhada fluida automática', 15 + colIndex * colWidth, startY + lineHeight * 4);
-    ctx.fillText('💨 Rastro de movimento', 15 + colIndex * colWidth, startY + lineHeight * 5);
-    
-    // === COLUNA 2: SISTEMA DE TIRO ===
-    colIndex++;
-    ctx.fillStyle = '#FFB347'; // Laranja
-    ctx.fillText('🎯 TIRO DIRECIONAL:', 15 + colIndex * colWidth, startY);
-    ctx.fillStyle = 'white';
-    ctx.fillText('X/SPACE: Atirar', 15 + colIndex * colWidth, startY + lineHeight);
-    ctx.fillText('⬆️+X: Tiro para cima', 15 + colIndex * colWidth, startY + lineHeight * 2);
-    ctx.fillText('⬇️+X: Tiro para baixo', 15 + colIndex * colWidth, startY + lineHeight * 3);
-    ctx.fillText('↗️↖️↘️↙️ + X: Diagonais', 15 + colIndex * colWidth, startY + lineHeight * 4);
-    ctx.fillText('🔊 Sons de laser únicos!', 15 + colIndex * colWidth, startY + lineHeight * 5);
-    
-    // === COLUNA 3: ARMAS (sempre mostrar) ===
-    colIndex++;
-    ctx.fillStyle = '#DDA0DD'; // Roxo claro
-    ctx.fillText('⚔️ SISTEMA DE ARMAS:', 15 + colIndex * colWidth, startY);
-    ctx.fillStyle = '#FFFF99';
-    ctx.fillText('1🔫 Normal | 2🔫🔫🔫 Spread', 15 + colIndex * colWidth, startY + lineHeight);
-    ctx.fillText('3⚡ Laser | 4🔥 Machine', 15 + colIndex * colWidth, startY + lineHeight * 2);
-    ctx.fillStyle = '#FF6B6B';
-    ctx.fillText('5💜 Plasma | 6🌪️ Storm', 15 + colIndex * colWidth, startY + lineHeight * 3);
-    ctx.fillText('7☢️ Nuclear (ÉPICO!)', 15 + colIndex * colWidth, startY + lineHeight * 4);
-    ctx.fillStyle = 'white';
-    ctx.fillText('🎵 Cada arma = som único', 15 + colIndex * colWidth, startY + lineHeight * 5);
-    
-    // === COLUNA 4: ATAQUES ESPECIAIS (se houver espaço) ===
-    if (numCols >= 4) {
-        colIndex++;
-        ctx.fillStyle = '#FF6B6B'; // Vermelho claro
-        ctx.fillText('💥 ATAQUES ESPECIAIS:', 15 + colIndex * colWidth, startY);
-        ctx.fillStyle = 'white';
-        ctx.fillText('A: ⛓️ Corrente (1 Mão)', 15 + colIndex * colWidth, startY + lineHeight);
-        ctx.fillText('S: ⛓️⛓️ Corrente (2 Mãos)', 15 + colIndex * colWidth, startY + lineHeight * 2);
-        ctx.fillText('B: 💣 Bomba (destrói tudo)', 15 + colIndex * colWidth, startY + lineHeight * 3);
-        ctx.fillText('D: 🛡️ Escudo Energético', 15 + colIndex * colWidth, startY + lineHeight * 4);
-        ctx.fillText('L: 🌋 Disco de Lava', 15 + colIndex * colWidth, startY + lineHeight * 5);
-    }
-    
-    // === COLUNA 5: SISTEMA E EXTRAS (se houver espaço) ===
-    if (numCols >= 5) {
-        colIndex++;
-        ctx.fillStyle = '#87CEEB'; // Azul claro
-        ctx.fillText('⚙️ SISTEMA & EXTRAS:', 15 + colIndex * colWidth, startY);
-        ctx.fillStyle = 'white';
-        ctx.fillText('H: Mostrar/Ocultar Guia', 15 + colIndex * colWidth, startY + lineHeight);
-        ctx.fillText('M: Ligar/Desligar Som', 15 + colIndex * colWidth, startY + lineHeight * 2);
-        ctx.fillText('P: Pausar | F11: Tela Cheia', 15 + colIndex * colWidth, startY + lineHeight * 3);
-        ctx.fillText('C: 🎉 Celebração', 15 + colIndex * colWidth, startY + lineHeight * 4);
-        ctx.fillText('R: Reiniciar (Game Over)', 15 + colIndex * colWidth, startY + lineHeight * 5);
-    }
-    
-    // === SEÇÃO INFERIOR: STATUS E DICAS ===
-    const bottomY = startY + lineHeight * 6.5;
-    
-    // Linha de separação
-    ctx.fillStyle = '#444444';
-    ctx.fillRect(15, bottomY - 5, CANVAS_WIDTH - 30, 1);
-    
-    // Status atual do jogo
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold ' + fontSize + ' Arial';
-    ctx.fillText('📊 STATUS:', 15, bottomY + 10);
-    
-    ctx.fillStyle = '#87CEEB';
-    ctx.font = fontSize + ' Arial';
-    let statusX = 80;
-    
-    // Status da animação
-    const statusText = isInSpecialAnim ? `🎭 ${animations[currentAnim].description}` : '🎭 Modo Normal';
-    ctx.fillText(statusText, statusX, bottomY + 10);
-    statusX += 200;
-    
-    // Status do som
-    ctx.fillStyle = gameAudio.enabled ? '#00FF00' : '#FF4444';
-    const soundStatus = gameAudio.enabled ? '🔊 SOM ATIVO' : '🔇 SOM DESLIGADO';
-    ctx.fillText(soundStatus, statusX, bottomY + 10);
-    statusX += 150;
-    
-    // Status da arma atual
-    if (weaponType !== 'none') {
-        ctx.fillStyle = '#98FB98';
-        const currentWeaponDesc = weapons[weaponType].description;
-        ctx.fillText(`🔫 ${currentWeaponDesc}`, statusX, bottomY + 10);
-        statusX += 200;
-    }
-    
-    // Cooldowns ativos
-    let cooldownTexts = [];
-    if (chainAttackCooldown > 0) {
-        cooldownTexts.push(`⛓️ ${Math.ceil(chainAttackCooldown/60)}s`);
-    }
-    if (bombCooldown > 0) {
-        cooldownTexts.push(`💣 ${Math.ceil(bombCooldown/60)}s`);
-    }
-    if (shootCooldown > 0 && weaponType !== 'none') {
-        const reloadPercent = Math.floor((1 - shootCooldown / weapons[weaponType].cooldown) * 100);
-        cooldownTexts.push(`🔄 ${reloadPercent}%`);
-    }
-    
-    if (cooldownTexts.length > 0) {
-        ctx.fillStyle = '#FF6B6B';
-        ctx.fillText(`⏱️ COOLDOWNS: ${cooldownTexts.join(' | ')}`, statusX, bottomY + 10);
-    }
-    
-    // === LINHA FINAL: DICAS ESPECIAIS ===
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold ' + (parseInt(fontSize) - 1) + 'px Arial';
-    ctx.textAlign = 'center';
-    
-    const tips = [
-        '💡 DICA: Combine teclas direcionais com X para tiros precisos!',
-        '🎯 DICA: Cada arma tem som de laser único - experimente todas!', 
-        '⚡ DICA: Use correntes (A/S) para ataques de área devastadores!',
-        '🛡️ DICA: Escudo inicial (dourado) dura 60 segundos - use bem!',
-        '🌋 DICA: Disco de Lava (L) segue você e causa dano contínuo!',
-        '💣 DICA: Bomba (B) destrói TUDO na tela - use em emergências!',
-        '🎮 DICA: Animação de caminhada agora tem partículas e efeitos!'
-    ];
-    
-    const currentTip = tips[Math.floor(Date.now() / 3000) % tips.length]; // Muda a cada 3 segundos
-    ctx.fillText(currentTip, CANVAS_WIDTH / 2, bottomY + 25);
-    
-    // Resetar alinhamento
-    ctx.textAlign = 'left';
-}
 
 // Sistema de spawn de inimigos
 let enemySpawnTimer = 0;
