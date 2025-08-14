@@ -512,8 +512,7 @@
 .weapon-selector {
     position: absolute;
     right: 30px;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 140px;
     pointer-events: auto;
     z-index: 1002;
 }

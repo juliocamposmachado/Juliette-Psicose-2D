@@ -96,7 +96,8 @@ function setupJoystickArrows() {
 function setupActionButtons() {
     const actions = {
         'joystickShootBtn': 'shoot',
-        'joystickJumpBtn': 'jump'
+        'joystickJumpBtn': 'jump',
+        'joystickWeaponBtn': 'weapon'
     };
     
     Object.entries(actions).forEach(([id, action]) => {
@@ -229,9 +230,21 @@ function handleActionPress(action, isPressed, event) {
                 break;
                 
             case 'jump':
-                // Integração com sistema de pulo
+                // Integração with sistema de pulo
                 if (typeof jump === 'function') {
                     jump();
+                }
+                break;
+                
+            case 'weapon':
+                // Trocar arma
+                if (typeof switchWeapon === 'function') {
+                    switchWeapon();
+                } else if (typeof cycleWeapon === 'function') {
+                    cycleWeapon();
+                } else {
+                    // Fallback global
+                    handleWeaponSwitch();
                 }
                 break;
         }

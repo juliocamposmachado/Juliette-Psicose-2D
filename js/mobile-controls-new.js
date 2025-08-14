@@ -89,6 +89,7 @@ function setupDirectionControls() {
 function setupActionControls() {
     const jumpBtn = document.getElementById('jumpBtn');
     const shootBtn = document.getElementById('shootBtn');
+    const weaponBtn = document.getElementById('weaponSwitchBtn');
     
     if (jumpBtn) {
         setupButtonEvents(jumpBtn, 'jump', handleActionPress);
@@ -96,6 +97,10 @@ function setupActionControls() {
     
     if (shootBtn) {
         setupButtonEvents(shootBtn, 'shoot', handleActionPress);
+    }
+    
+    if (weaponBtn) {
+        setupButtonEvents(weaponBtn, 'weapon', handleActionPress);
     }
 }
 
@@ -200,6 +205,16 @@ function handleActionPress(action, isPressed, event) {
                 // Integração com sistema de pulo
                 if (typeof jump === 'function') {
                     jump();
+                }
+                break;
+                
+            case 'weapon':
+                // Trocar arma
+                if (typeof switchWeapon === 'function') {
+                    switchWeapon();
+                } else {
+                    // Fallback para trocar arma manualmente
+                    cycleWeapon();
                 }
                 break;
         }
