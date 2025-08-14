@@ -73,27 +73,3 @@
     font-style: italic;
 }
 
-/* Mobile guide toggle button */
-.mobile-guide-fab {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
-    height: 40px;
-    background: rgba(0, 255, 0, 0.8);
-    border: none;
-    border-radius: 50%;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    z-index: 1001;
-    display: none; /* Hidden by default */
-}
-
-/* Show fab only on mobile */
-@media (max-width: 768px) {
-    .mobile-guide-fab {
-        display: block;
-    }
-}

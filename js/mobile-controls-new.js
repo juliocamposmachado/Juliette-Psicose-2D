@@ -2,20 +2,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎮 Estrutura básica dos controles móveis carregada...');
 
-    // === GERENCIAMENTO DE VISIBILIDADE DOS CONTROLES ===
-    const controlsToggle = document.getElementById('controlsToggle');
+    // === ESTRUTURA DE CONTROLES ===
     const mobileControls = document.getElementById('mobileControls');
-
-    if (controlsToggle && mobileControls) {
-        // Iniciar com controles ocultos
-        mobileControls.style.display = 'none';
-
-        controlsToggle.addEventListener('click', function() {
-            const isVisible = mobileControls.style.display === 'block';
-            mobileControls.style.display = isVisible ? 'none' : 'block';
-            this.textContent = isVisible ? '📱' : '❌';
-            console.log('Controles móveis:', isVisible ? 'ocultos' : 'visíveis');
-        });
+    
+    if (mobileControls) {
+        // Iniciar com controles visíveis por padrão
+        mobileControls.style.display = 'block';
     }
 
     // === DETECÇÃO DE DISPOSITIVO MÓVEL ===
