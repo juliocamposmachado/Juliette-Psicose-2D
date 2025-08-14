@@ -1,0 +1,243 @@
+/* === NOVOS CONTROLES MÓVEIS REORGANIZADOS === */
+.mobile-controls-new {
+    display: none;
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.mobile-controls-new > * {
+    pointer-events: auto;
+}
+
+/* === CONTROLES DE MOVIMENTO (ESQUERDA) === */
+.movement-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #00ff00;
+    border-radius: 15px;
+    padding: 15px;
+    min-width: 180px;
+}
+
+.movement-zone h4 {
+    color: #00ff00;
+    margin: 0 0 10px 0;
+    text-align: center;
+    font-size: 14px;
+    text-shadow: 0 0 5px #00ff00;
+}
+
+.dpad-new {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 5px;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 10px;
+}
+
+.move-btn {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 255, 0, 0.3);
+}
+
+.move-up { grid-column: 2; grid-row: 1; }
+.move-left { grid-column: 1; grid-row: 2; }
+.move-right { grid-column: 3; grid-row: 2; }
+.move-down { grid-column: 2; grid-row: 3; }
+
+.move-btn:active {
+    background: linear-gradient(145deg, #00ff00, #00cc00);
+    transform: scale(0.95);
+    box-shadow: 0 1px 3px rgba(0, 255, 0, 0.6);
+}
+
+.jump-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(145deg, #4a4a00, #3a3a00);
+    border: 2px solid #ffff00;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(255, 255, 0, 0.3);
+}
+
+.jump-btn:active {
+    background: linear-gradient(145deg, #ffff00, #cccc00);
+    color: #000;
+    transform: scale(0.95);
+}
+
+/* === CONTROLES ESPECIAIS (CENTRO) === */
+.special-controls-center {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #ff8800;
+    border-radius: 15px;
+    padding: 15px;
+    min-width: 250px;
+}
+
+.special-controls-center h4 {
+    color: #ff8800;
+    margin: 0 0 10px 0;
+    text-align: center;
+    font-size: 14px;
+    text-shadow: 0 0 5px #ff8800;
+}
+
+.special-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+.special-btn {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border: 2px solid #ff8800;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(255, 136, 0, 0.3);
+}
+
+.special-btn:active {
+    background: linear-gradient(145deg, #ff8800, #cc6600);
+    transform: scale(0.9);
+    box-shadow: 0 1px 3px rgba(255, 136, 0, 0.6);
+}
+
+/* === CONTROLES DE TIRO (DIREITA) === */
+.shooting-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #ff0000;
+    border-radius: 15px;
+    padding: 15px;
+    min-width: 180px;
+}
+
+.shooting-zone h4 {
+    color: #ff0000;
+    margin: 0 0 10px 0;
+    text-align: center;
+    font-size: 14px;
+    text-shadow: 0 0 5px #ff0000;
+}
+
+.primary-shoot {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(145deg, #4a0000, #3a0000);
+    border: 2px solid #ff0000;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 10px;
+    box-shadow: 0 3px 8px rgba(255, 0, 0, 0.4);
+}
+
+.primary-shoot:active {
+    background: linear-gradient(145deg, #ff0000, #cc0000);
+    transform: scale(0.95);
+    box-shadow: 0 1px 3px rgba(255, 0, 0, 0.6);
+}
+
+.chain-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.chain-btn {
+    padding: 10px 8px;
+    background: linear-gradient(145deg, #2a2a00, #1a1a00);
+    border: 2px solid #ffaa00;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(255, 170, 0, 0.3);
+}
+
+.chain-btn:active {
+    background: linear-gradient(145deg, #ffaa00, #cc8800);
+    color: #000;
+    transform: scale(0.95);
+}
+
+/* === RESPONSIVIDADE === */
+@media (max-width: 768px) {
+    .mobile-controls-new {
+        display: block; /* Visível em dispositivos móveis */
+    }
+}
+
+@media (max-width: 480px) {
+    .movement-controls,
+    .shooting-controls {
+        min-width: 160px;
+    }
+    
+    .special-controls-center {
+        min-width: 220px;
+    }
+    
+    .dpad-new {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .move-btn {
+        font-size: 18px;
+    }
+    
+    .special-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+}
+
+/* === BOTÃO DE ALTERNÂNCIA DOS CONTROLES === */
+.controls-toggle {
+    z-index: 1050; /* Garante que fique acima dos controles */
+}

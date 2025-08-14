@@ -6,6 +6,7 @@
     
     <!-- === ESTILOS === -->
     <link rel="stylesheet" href="css/mobile-controls.css">
+    <link rel="stylesheet" href="css/mobile-controls-new.css">
     <link rel="stylesheet" href="css/guide-styles.css">
     
     <!-- === METADADOS PWA === -->
@@ -52,48 +53,45 @@
         </div>
     </div>
 
-    <!-- === CONTROLES TOUCH PARA MOBILE === -->
-    <div id="mobileControls" class="mobile-controls">
-        <!-- D-Pad (Controles Direcionais) -->
-        <div class="controls-left">
-            <div class="dpad">
-                <div class="dpad-button dpad-up" data-direction="up">▲</div>
-                <div class="dpad-button dpad-down" data-direction="down">▼</div>
-                <div class="dpad-button dpad-left" data-direction="left">◀</div>
-                <div class="dpad-button dpad-right" data-direction="right">▶</div>
-                <div class="dpad-center">🎮</div>
+    <!-- === NOVOS CONTROLES TOUCH REORGANIZADOS === -->
+    <div id="mobileControls" class="mobile-controls-new">
+        <!-- === CONTROLES DE MOVIMENTO (ESQUERDA) === -->
+        <div class="movement-controls">
+            <div class="movement-zone">
+                <h4>🏃 MOVIMENTO</h4>
+                <div class="dpad-new">
+                    <button class="move-btn move-up" id="moveUp" data-action="up">⬆️</button>
+                    <button class="move-btn move-left" id="moveLeft" data-action="left">⬅️</button>
+                    <button class="move-btn move-right" id="moveRight" data-action="right">➡️</button>
+                    <button class="move-btn move-down" id="moveDown" data-action="down">⬇️</button>
+                </div>
+                <button class="jump-btn" id="jumpBtn" data-action="jump">🦘 PULAR</button>
             </div>
         </div>
 
-        <!-- Botões de Ação -->
-        <div class="controls-right">
-            <div class="action-buttons">
-                <!-- Linha Superior -->
-                <div class="button-row top-row">
-                    <button class="action-button secondary" id="chainBothBtn" data-action="chainBoth">⛓️⛓️</button>
-                    <button class="action-button secondary" id="jumpBtn" data-action="jump">⬆️</button>
-                </div>
-                <!-- Linha Inferior -->
-                <div class="button-row bottom-row">
-                    <button class="action-button secondary" id="chainLeftBtn" data-action="chainLeft">⛓️</button>
-                    <button class="action-button primary" id="shootBtn" data-action="shoot">🎯</button>
-                </div>
+        <!-- === CONTROLES ESPECIAIS (CENTRO) === -->
+        <div class="special-controls-center">
+            <h4>⚡ ESPECIAIS</h4>
+            <div class="special-buttons-grid">
+                <button class="special-btn" id="bombBtn" data-action="bomb">💣</button>
+                <button class="special-btn" id="shieldBtn" data-action="shield">🛡️</button>
+                <button class="special-btn" id="lavaBtn" data-action="lava">🌋</button>
+                <button class="special-btn" id="pauseBtn" data-action="pause">⏸️</button>
+                <button class="special-btn" id="soundBtn" data-action="sound">🔊</button>
             </div>
         </div>
 
-        <!-- Botões Especiais (Topo) -->
-        <div class="special-controls">
-            <button class="special-button" id="bombBtn" data-action="bomb">💣</button>
-            <button class="special-button" id="shieldBtn" data-action="shield">🛡️</button>
-            <button class="special-button" id="lavaBtn" data-action="lava">🌋</button>
-            <button class="special-button" id="pauseBtn" data-action="pause">⏸️</button>
-            <button class="special-button" id="soundBtn" data-action="sound">🔊</button>
+        <!-- === CONTROLES DE TIRO (DIREITA) === -->
+        <div class="shooting-controls">
+            <div class="shooting-zone">
+                <h4>⚔️ COMBATE</h4>
+                <button class="shoot-btn primary-shoot" id="shootBtn" data-action="shoot">🎯 ATIRAR</button>
+                <div class="chain-buttons">
+                    <button class="chain-btn" id="chainLeftBtn" data-action="chainLeft">⛓️ ESQ</button>
+                    <button class="chain-btn" id="chainBothBtn" data-action="chainBoth">⛓️ AMBAS</button>
+                </div>
+            </div>
         </div>
-
-        <!-- === NOVO: BOTÃO FECHAR GUIA (MOBILE ONLY) === -->
-        <button id="mobileCloseGuideBtn" class="mobile-close-guide-btn mobile-only" title="Fechar Guia Completo">
-            ❌ FECHAR GUIA
-        </button>
     </div>
 
     <!-- Botão para mostrar/ocultar controles -->
@@ -375,6 +373,7 @@
     </script>
     <script src="js/mobile-guide.js"></script>
     <script src="js/mobile-controls.js"></script>
+    <script src="js/mobile-controls-new.js"></script>
     <script src="js/complete-guide.js"></script>
     <script src="js/guide-handler.js"></script>
 </body>
