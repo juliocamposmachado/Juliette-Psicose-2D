@@ -49,10 +49,38 @@
         </div>
     </div>
 
-    <!-- === ESTRUTURA BÁSICA DOS CONTROLES MÓVEIS === -->
+    <!-- === CONTROLES MÓVEIS PARA CELULAR E TABLET === -->
     <div id="mobileControls" class="mobile-controls-new">
-        <!-- === ÁREA DOS CONTROLES === -->
-        <!-- Controles serão adicionados aqui -->
+        <!-- === CONTROLES DE DIREÇÃO (ESQUERDA) === -->
+        <div class="controls-left">
+            <div class="direction-controls">
+                <button id="leftBtn" class="control-btn direction-btn left-btn" data-direction="left">
+                    <span class="btn-icon">←</span>
+                </button>
+                <button id="rightBtn" class="control-btn direction-btn right-btn" data-direction="right">
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- === CONTROLES DE AÇÃO (DIREITA) === -->
+        <div class="controls-right">
+            <div class="action-controls">
+                <button id="jumpBtn" class="control-btn action-btn jump-btn" data-action="jump">
+                    <span class="btn-icon">⬆</span>
+                    <span class="btn-label">PULO</span>
+                </button>
+                <button id="shootBtn" class="control-btn action-btn shoot-btn" data-action="shoot">
+                    <span class="btn-icon">🎯</span>
+                    <span class="btn-label">TIRO</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- === BOTÃO TOGGLE CONTROLES === -->
+        <button id="controlsToggle" class="controls-toggle">
+            📱
+        </button>
     </div>
 
 

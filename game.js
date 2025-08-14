@@ -4247,7 +4247,10 @@ function gameLoop() {
     // Desenha HUD
     drawHUD();
     
-    // === CONTROLES TOUCH REMOVIDOS ===
+    // === ATUALIZAR CONTROLES MÓVEIS ===
+    if (typeof updateMobileControls === 'function') {
+        updateMobileControls();
+    }
     
     requestAnimationFrame(gameLoop);
 }
