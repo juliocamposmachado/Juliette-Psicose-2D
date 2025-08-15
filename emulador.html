@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emulador de Jogos Retro</title>
+    <link rel="stylesheet" href="emulator-styles.css">
+</head>
+<body>
+    <div class="container doc-container">
+        <ul class="docs-nav" id="menu-left">
+            <li><strong>Consoles</strong></li>
+            <li><a href="#" data-console="nes" class="console-link">NES | Famicom Disk System</a></li>
+            <li><a href="#" data-console="snes" class="console-link">SNES</a></li>
+            <li><a href="#" data-console="gb" class="console-link">Game Boy | Color</a></li>
+            <li><a href="#" data-console="gba" class="console-link">Game Boy Advance</a></li>
+            <li><a href="#" data-console="vb" class="console-link">Virtual Boy</a></li>
+            <li><a href="#" data-console="n64" class="console-link">Nintendo 64</a></li>
+            <li><a href="#" data-console="nds" class="console-link">Nintendo DS</a></li>
+            <li><a href="#" data-console="segams" class="console-link">Sega Master System</a></li>
+            <li><a href="#" data-console="segagg" class="console-link">Sega Game Gear</a></li>
+            <li><a href="#" data-console="segamd" class="console-link">Sega Mega Drive</a></li>
+            <li><a href="#" data-console="sega32x" class="console-link">Sega 32X</a></li>
+            <li><a href="#" data-console="segasaturn" class="console-link">Sega Saturn</a></li>
+            <li><a href="#" data-console="segacd" class="console-link">Sega CD</a></li>
+            <li><a href="#" data-console="a2600" class="console-link">Atari 2600</a></li>
+            <li><a href="#" data-console="a5200" class="console-link">Atari 5200</a></li>
+            <li><a href="#" data-console="a7800" class="console-link">Atari 7800</a></li>
+            <li><a href="#" data-console="lynx" class="console-link">Atari Lynx</a></li>
+            <li><a href="#" data-console="jaguar" class="console-link">Atari Jaguar</a></li>
+            <li><a href="#" data-console="atari8bit" class="console-link">Atari 8bit</a></li>
+            <li><a href="#" data-console="wanderswan" class="console-link">Wanderswan | Color</a></li>
+            <li><a href="#" data-console="msx" class="console-link">MSX</a></li>
+            <li><a href="#" data-console="ngp" class="console-link">Neo Geo Pocket</a></li>
+            <li><a href="#" data-console="neocd" class="console-link">Neo Geo CD</a></li>
+            <li><a href="#" data-console="tg16" class="console-link">TurboGrafx-16 | PC Engine</a></li>
+            <li><a href="#" data-console="pcfx" class="console-link">PC-FX</a></li>
+            <li><a href="#" data-console="3do" class="console-link">3DO</a></li>
+            <li><a href="#" data-console="psx" class="console-link">PlayStation</a></li>
+            <li><a href="#" data-console="arcade" class="console-link">Arcade</a></li>
+            <li><a href="#" data-console="cdi" class="console-link">Philips CD-i</a></li>
+            <li><a href="#" data-console="odyssey2" class="console-link">Magnavox - Odyssey2 / Philips Videopac+</a></li>
+            <li class="separator"></li>
+            
+            <li><strong>Computers</strong></li>
+            <li><a href="#" data-console="atarist" class="console-link">Atari ST</a></li>
+            <li><a href="#" data-console="colecovision" class="console-link">ColecoVision</a></li>
+            <li><a href="#" data-console="sharpx1" class="console-link">Sharp - X1</a></li>
+            <li><a href="#" data-console="px68k" class="console-link">Sharp - X68000</a></li>
+            <li><a href="#" data-console="amiga" class="console-link">Amiga</a></li>
+            <li><a href="#" data-console="pc88" class="console-link">NEC - PC-8000 / PC-8800</a></li>
+            <li><a href="#" data-console="pc98" class="console-link">NEC - PC98</a></li>
+            <li><a href="#" data-console="dos" class="console-link">MS-DOS</a></li>
+            <li><a href="#" data-console="apple" class="console-link">Apple Computer</a></li>
+            <li><a href="#" data-console="zx81" class="console-link">Sinclair - ZX 81</a></li>
+            <li><a href="#" data-console="zxspectrum" class="console-link">Sinclair - ZX Spectrum</a></li>
+            <li><a href="#" data-console="theodore" class="console-link">Thomson - MO/TO</a></li>
+            <li class="separator"></li>
+            
+            <li><strong>Others</strong></li>
+            <li><a href="#" data-console="zeldaclassic" class="console-link">Zelda Classic</a></li>
+            <li><a href="#" data-console="openbor" class="console-link">OpenBOR</a></li>
+            
+            <li class="separator"></li>
+            <li><strong>Upload ROM</strong></li>
+            <li><input type="file" id="romUpload" accept=".nes,.smc,.gb,.gbc,.gba,.n64,.md,.bin,.iso,.zip,.7z" /></li>
+        </ul>
+        
+        <div class="docs-content">
+            <h2 id="console-title">NES | Famicom Disk System</h2>
+            
+            <div id="emulator-container">
+                <div style="width:640px;height:480px;margin:0 auto;max-width:100%">
+                    <div id="game" style="height: 100%;">
+                        <iframe id="ejs-content-frame" 
+                                width="100%" 
+                                height="100%" 
+                                border="0" 
+                                frameborder="no" 
+                                style="width: 100%; height: 100%; margin: 0px; padding: 0px; user-select: none;" 
+                                scrolling="no" 
+                                allowfullscreen="true" 
+                                webkitallowfullscreen="true" 
+                                mozallowfullscreen="true" 
+                                allow="microphone" 
+                                src="https://www.emulatorjs.com/embed/content.html">
+                        </iframe>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button id="playBtn" class="control-btn">▶ Play</button>
+                    <button id="pauseBtn" class="control-btn">⏸ Pause</button>
+                    <button id="resetBtn" class="control-btn">🔄 Reset</button>
+                    <button id="fullscreenBtn" class="control-btn">⛶ Fullscreen</button>
+                    <button id="saveStateBtn" class="control-btn">💾 Save State</button>
+                    <button id="loadStateBtn" class="control-btn">📁 Load State</button>
+                </div>
+            </div>
+            
+            <script>
+                EJS_player = '#game';
+                EJS_gameUrl = '/roms/nes/alter_ego.7z';
+                EJS_core = 'nes';
+            </script>
+            <script src="https://www.emulatorjs.com/loader.js" crossorigin="anonymous"></script>
+            
+            <h3>Code Example</h3>
+            <pre class="prettyprint prettyprinted">
+<span class="tag">&lt;div</span><span class="pln"> </span><span class="atn">style</span><span class="pun">=</span><span class="atv">"width:640px;height:480px;max-width:100%"</span><span class="tag">&gt;</span><span class="pln">
+  </span><span class="tag">&lt;div</span><span class="pln"> </span><span class="atn">id</span><span class="pun">=</span><span class="atv">"game"</span><span class="tag">&gt;&lt;/div&gt;</span><span class="pln">
+</span><span class="tag">&lt;/div&gt;</span><span class="pln">
+</span><span class="tag">&lt;script</span><span class="pln"> </span><span class="atn">type</span><span class="pun">=</span><span class="atv">"text/javascript"</span><span class="tag">&gt;</span><span class="pln">
+    EJS_player </span><span class="pun">=</span><span class="pln"> </span><span class="str">'#game'</span><span class="pun">;</span><span class="pln">
+    EJS_biosUrl </span><span class="pun">=</span><span class="pln"> </span><span class="str">''</span><span class="pun">;</span><span class="pln"> </span><span class="com">// Url to Famicom Disk System bios</span><span class="pln">
+    EJS_gameUrl </span><span class="pun">=</span><span class="pln"> </span><span class="str">'https://www.emulatorjs.com/roms/mega_mountain.nes'</span><span class="pun">;</span><span class="pln"> </span><span class="com">// Url to Game rom</span><span class="pln">
+    EJS_core </span><span class="pun">=</span><span class="pln"> </span><span class="str">'nes'</span><span class="pun">;</span><span class="pln"> </span><span class="com">// Optional core: mesen, nestopia</span><span class="pln">
+    EJS_lightgun </span><span class="pun">=</span><span class="pln"> </span><span class="kwd">false</span><span class="pun">;</span><span class="pln"> </span><span class="com">// Lightgun</span><span class="pln">
+</span><span class="tag">&lt;/script&gt;</span><span class="pln">
+</span><span class="tag">&lt;script</span><span class="pln"> </span><span class="atn">src</span><span class="pun">=</span><span class="atv">"https://www.emulatorjs.com/loader.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+            </pre>
+            
+            <h3>Extensions</h3>
+            <div id="extensions-info">
+                Content that can be loaded by this core have the following file extensions:<br>
+                <ul id="file-extensions">
+                    <li>.fds</li>
+                    <li>.nes</li>
+                    <li>.unif</li>
+                    <li>.unf</li>
+                </ul>
+            </div>
+            
+            <h3>Bios</h3>
+            <p id="bios-info">disksys.rom (MD5 sum: ca30b50f880eb660a320674ed365ef7a)</p>
+        </div>
+    </div>
+
+    <script src="emulator.js"></script>
+</body>
+</html>

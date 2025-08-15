@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Carregamento de Imagens</title>
+</head>
+<body>
+    <h1>Teste de Carregamento de Imagens - Juliette 2D</h1>
+    <div id="status"></div>
+    <div id="images"></div>
+    
+    <script>
+        const images = [
+            'assets/cena01.png',
+            'assets/fundo 2d melhor.png', 
+            'assets/fundo2d.png',
+            'assets/fundo 2d fase 2.png',
+            'assets/Juliette_sprites.png',
+            'assets/02 corrente mão esquerda.png',
+            'assets/02 corrente duas mãos.png',
+            'assets/02 mãos para cima.png',
+            'assets/02 arma para cima.png',
+            'assets/03 arma para cima disparando 60 graus.png',
+            'assets/03 arma disparando para frente.png',
+            'assets/03 arma para cima disparando 60 graus para baixo.png',
+            'assets/03 arma para cima disparando 90 graus.png'
+        ];
+        
+        let loadedCount = 0;
+        const statusDiv = document.getElementById('status');
+        const imagesDiv = document.getElementById('images');
+        
+        function updateStatus() {
+            statusDiv.innerHTML = `Carregadas: ${loadedCount}/${images.length}`;
+            if (loadedCount === images.length) {
+                statusDiv.innerHTML += ' - ✅ TODAS AS IMAGENS CARREGADAS!';
+                statusDiv.style.color = 'green';
+            }
+        }
+        
+        images.forEach((src, index) => {
+            const img = new Image();
+            const div = document.createElement('div');
+            div.innerHTML = `${index + 1}. ${src}: `;
+            
+            img.onload = function() {
+                loadedCount++;
+                div.innerHTML += `✅ Carregada (${this.width}x${this.height})`;
+                div.style.color = 'green';
+                updateStatus();
+            };
+            
+            img.onerror = function() {
+                div.innerHTML += `❌ ERRO - Arquivo não encontrado`;
+                div.style.color = 'red';
+            };
+            
+            img.src = src;
+            imagesDiv.appendChild(div);
+        });
+        
+        updateStatus();
+    </script>
+</body>
+</html>
