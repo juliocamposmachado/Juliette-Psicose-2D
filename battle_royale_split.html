@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juliette 2D - Battle Royale: Juliette vs IA Suprema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(45deg, #0f0f23, #1a1a2e, #16213e, #2d1b69);
+            background-size: 400% 400%;
+            animation: gradientShift 10s ease infinite;
+            font-family: 'Courier New', monospace;
+            color: white;
+            overflow: hidden;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            position: relative;
+        }
+        
+        .game-panel {
+            width: 50%;
+            height: 100vh;
+            position: relative;
+            border: 2px solid;
+            overflow: hidden;
+        }
+        
+        .juliette-panel {
+            border-color: #ff6b6b;
+            box-shadow: inset 0 0 50px rgba(255, 107, 107, 0.2);
+        }
+        
+        .ai-panel {
+            border-color: #4ecdc4;
+            box-shadow: inset 0 0 50px rgba(76, 205, 196, 0.2);
+        }
+        
+        .game-panel canvas {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #111 0%, #000 100%);
+            image-rendering: pixelated;
+        }
+        
+        .panel-header {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+            background: linear-gradient(45deg, rgba(0,0,0,0.9), rgba(20,20,40,0.9));
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            border: 2px solid;
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .juliette-panel .panel-header {
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+        }
+        
+        .ai-panel .panel-header {
+            color: #4ecdc4;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 20px rgba(76, 205, 196, 0.5);
+        }
+        
+        .divider {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 6px;
+            height: 100vh;
+            background: linear-gradient(to bottom, 
+                #ff6b6b 0%, 
+                #ffffff 25%,
+                #4ecdc4 50%,
+                #ffffff 75%,
+                #ff6b6b 100%);
+            transform: translateX(-50%);
+            z-index: 200;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+            animation: dividerPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes dividerPulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.8); }
+            50% { box-shadow: 0 0 60px rgba(255, 255, 255, 1); }
+        }
+        
+        .divider::before {
+            content: "⚔️\AVS";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #000, #333);
+            color: #fff;
+            padding: 15px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 14px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            animation: vsRotate 4s linear infinite;
+            text-align: center;
+        }
+        
+        @keyframes vsRotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        .stats-panel {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            background: linear-gradient(45deg, rgba(0,0,0,0.9), rgba(20,20,40,0.9));
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .controls-info {
+            position: absolute;
+            top: 70px;
+            left: 15px;
+            background: linear-gradient(45deg, rgba(0,0,0,0.8), rgba(20,20,40,0.8));
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-width: 200px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .battle-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: flex;
+            gap: 20px;
+            background: linear-gradient(45deg, rgba(0,0,0,0.9), rgba(20,20,40,0.9));
+            padding: 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .control-btn {
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.2));
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px currentColor;
+            min-width: 100px;
+        }
+        
+        .control-btn:hover {
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+        }
+        
+        .control-btn.active {
+            background: linear-gradient(45deg, #4ecdc4, #45b7b8);
+            border-color: #4ecdc4;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(76, 205, 196, 0.6);
+        }
+        
+        .war-mode {
+            background: linear-gradient(45deg, #e74c3c, #c0392b) !important;
+            border-color: #e74c3c !important;
+            animation: warPulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes warPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.6); }
+            50% { box-shadow: 0 0 40px rgba(231, 76, 60, 1); }
+        }
+        
+        .performance-meter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, rgba(0,0,0,0.9), rgba(20,20,40,0.9));
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 300;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 12px;
+            min-width: 150px;
+        }
+        
+        .meter-bar {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+        
+        .meter-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .fps-fill { background: linear-gradient(to right, #e74c3c, #f39c12, #2ecc71); }
+        .ai-fill { background: linear-gradient(to right, #3498db, #9b59b6, #e91e63); }
+        .battle-fill { background: linear-gradient(to right, #ff6b6b, #4ecdc4); }
+        
+        /* Responsivo */
+        @media (max-width: 768px) {
+            #gameContainer { flex-direction: column; }
+            .game-panel { width: 100%; height: 50vh; }
+            .divider { left: 0; top: 50%; width: 100vw; height: 6px; transform: translateY(-50%); }
+            .divider::before { left: 50%; top: 50%; }
+            .battle-controls { 
+                bottom: 10px; 
+                padding: 15px; 
+                gap: 10px;
+                flex-wrap: wrap;
+                max-width: 90vw;
+            }
+            .control-btn { 
+                padding: 10px 12px; 
+                font-size: 11px; 
+                min-width: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Painel da Juliette -->
+        <div class="game-panel juliette-panel">
+            <div class="panel-header">
+                🎮 JULIETTE PSICOSE WARFARE
+            </div>
+            <div class="controls-info">
+                <strong>🏃 MOVIMENTO</strong><br>
+                WASD/Setas: Mover<br>
+                🎯 Espaço: Atirar<br>
+                🦘 Z: Pular<br>
+                ⚡ C: Super Poder<br>
+                🔄 R: Reiniciar<br><br>
+                <strong>🎯 ESPECIAIS</strong><br>
+                X: Bomba<br>
+                V: Escudo
+            </div>
+            <canvas id="julietteCanvas" width="800" height="600"></canvas>
+            <div class="stats-panel">
+                <div class="stat-item">
+                    <span>❤️ VIDA</span>
+                    <span class="stat-value" id="julietteHealth">100</span>
+                </div>
+                <div class="stat-item">
+                    <span>⭐ SCORE</span>
+                    <span class="stat-value" id="julietteScore">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>🎯 LEVEL</span>
+                    <span class="stat-value" id="julietteLevel">1</span>
+                </div>
+                <div class="stat-item">
+                    <span>🔫 ARMA</span>
+                    <span class="stat-value" id="julietteWeapon">Normal</span>
+                </div>
+                <div class="stat-item">
+                    <span>💀 KILLS</span>
+                    <span class="stat-value" id="julietteKills">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Painel Battle Royale IA -->
+        <div class="game-panel ai-panel">
+            <div class="panel-header">
+                🤖 IA BATTLE ROYALE SUPREMA
+            </div>
+            <div class="controls-info">
+                <strong>🧠 IA AVANÇADA</strong><br>
+                Auto-Aim Preciso<br>
+                Estratégia Adaptiva<br>
+                Formações de Guerra<br>
+                Evolução Dinâmica<br><br>
+                <strong>⚔️ TIPOS</strong><br>
+                🏃 Soldier: Rápido<br>
+                🤖 Robot: Preciso<br>
+                🚁 Drone: Aéreo<br>
+                🛡️ Tank: Tanque<br>
+                👑 Boss: Supremo
+            </div>
+            <canvas id="aiCanvas" width="800" height="600"></canvas>
+            <div class="stats-panel">
+                <div class="stat-item">
+                    <span>🤖 ATIVOS</span>
+                    <span class="stat-value" id="enemyCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>💀 MORTOS</span>
+                    <span class="stat-value" id="enemyKills">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>🧠 IA LEVEL</span>
+                    <span class="stat-value" id="aiLevel">1</span>
+                </div>
+                <div class="stat-item">
+                    <span>⚡ DPS</span>
+                    <span class="stat-value" id="aiDPS">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>🏆 WINNER</span>
+                    <span class="stat-value" id="aiWinner">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="divider"></div>
+    </div>
+    
+    <!-- Medidor de Performance -->
+    <div class="performance-meter">
+        <div><strong>⚡ PERFORMANCE</strong></div>
+        <div>FPS: <span id="fpsCounter">60</span></div>
+        <div class="meter-bar"><div class="meter-fill fps-fill" id="fpsMeter"></div></div>
+        
+        <div>IA CPU: <span id="aiCpu">0%</span></div>
+        <div class="meter-bar"><div class="meter-fill ai-fill" id="aiMeter"></div></div>
+        
+        <div>Battle: <span id="battleIntensity">LOW</span></div>
+        <div class="meter-bar"><div class="meter-fill battle-fill" id="battleMeter"></div></div>
+    </div>
+    
+    <!-- Controles de Batalha -->
+    <div class="battle-controls">
+        <button class="control-btn" id="pauseBtn">⏸️ PAUSE</button>
+        <button class="control-btn" id="restartBtn">🔄 RESTART</button>
+        <button class="control-btn" id="speedBtn">⚡ TURBO</button>
+        <button class="control-btn" id="aiWarBtn">🔥 WAR MODE</button>
+        <button class="control-btn" id="ultimateBtn">💥 ULTIMATE</button>
+    </div>
+    
+    <script>
+        // ====================================
+        // SISTEMA BATTLE ROYALE AVANÇADO
+        // ====================================
+        
+        class BattleRoyaleGame {
+            constructor() {
+                this.julietteCanvas = document.getElementById('julietteCanvas');
+                this.aiCanvas = document.getElementById('aiCanvas');
+                this.julietteCtx = this.julietteCanvas.getContext('2d');
+                this.aiCtx = this.aiCanvas.getContext('2d');
+                
+                this.gameSpeed = 1;
+                this.isPaused = false;
+                this.warMode = false;
+                this.ultimateMode = false;
+                
+                this.performanceMetrics = {
+                    fps: 60,
+                    frameCount: 0,
+                    lastTime: performance.now(),
+                    aiCpu: 0,
+                    battleIntensity: 0
+                };
+                
+                this.initializeGames();
+                this.setupEventListeners();
+                this.startGameLoops();
+                this.startPerformanceMonitoring();
+                
+                console.log('⚔️ Sistema Battle Royale inicializado!');
+            }
+            
+            initializeGames() {
+                this.julietteGame = new AdvancedJulietteGame(this.julietteCanvas, this.julietteCtx);
+                this.aiGame = new SupremeAIGame(this.aiCanvas, this.aiCtx);
+                this.resizeCanvases();
+            }
+            
+            resizeCanvases() {
+                const updateCanvas = (canvas) => {
+                    const rect = canvas.getBoundingClientRect();
+                    canvas.width = Math.floor(rect.width);
+                    canvas.height = Math.floor(rect.height);
+                };
+                
+                updateCanvas(this.julietteCanvas);
+                updateCanvas(this.aiCanvas);
+            }
+            
+            setupEventListeners() {
+                document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
+                document.getElementById('restartBtn').addEventListener('click', () => this.restart());
+                document.getElementById('speedBtn').addEventListener('click', () => this.toggleTurbo());
+                document.getElementById('aiWarBtn').addEventListener('click', () => this.toggleWarMode());
+                document.getElementById('ultimateBtn').addEventListener('click', () => this.activateUltimate());
+                
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                window.addEventListener('resize', () => this.resizeCanvases());
+            }
+            
+            handleKeyDown(e) {
+                switch(e.key.toLowerCase()) {
+                    case 'p': this.togglePause(); break;
+                    case 'r': this.restart(); break;
+                    case '1': this.toggleTurbo(); break;
+                    case '2': this.toggleWarMode(); break;
+                    case '3': this.activateUltimate(); break;
+                }
+                
+                this.julietteGame.handleKeyDown(e);
+            }
+            
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                const btn = document.getElementById('pauseBtn');
+                btn.innerHTML = this.isPaused ? '▶️ PLAY' : '⏸️ PAUSE';
+                btn.classList.toggle('active', this.isPaused);
+            }
+            
+            restart() {
+                this.julietteGame.restart();
+                this.aiGame.restart();
+                this.warMode = false;
+                this.ultimateMode = false;
+                this.updateButtonStates();
+                
+                const btn = document.getElementById('restartBtn');
+                btn.classList.add('active');
+                setTimeout(() => btn.classList.remove('active'), 300);
+            }
+            
+            toggleTurbo() {
+                this.gameSpeed = this.gameSpeed === 1 ? 3 : 1;
+                const btn = document.getElementById('speedBtn');
+                btn.innerHTML = this.gameSpeed === 3 ? '🏃 TURBO' : '⚡ TURBO';
+                btn.classList.toggle('active', this.gameSpeed === 3);
+            }
+            
+            toggleWarMode() {
+                this.warMode = !this.warMode;
+                this.aiGame.setWarMode(this.warMode);
+                const btn = document.getElementById('aiWarBtn');
+                btn.innerHTML = this.warMode ? '🔥 WAR ON!' : '🔥 WAR MODE';
+                btn.classList.toggle('war-mode', this.warMode);
+            }
+            
+            activateUltimate() {
+                if (!this.ultimateMode) {
+                    this.ultimateMode = true;
+                    this.julietteGame.activateUltimate();
+                    this.aiGame.activateUltimate();
+                    
+                    const btn = document.getElementById('ultimateBtn');
+                    btn.innerHTML = '💥 ULTIMATE!';
+                    btn.classList.add('active');
+                    
+                    setTimeout(() => {
+                        this.ultimateMode = false;
+                        btn.innerHTML = '💥 ULTIMATE';
+                        btn.classList.remove('active');
+                    }, 10000);
+                }
+            }
+            
+            updateButtonStates() {
+                document.querySelectorAll('.control-btn').forEach(btn => {
+                    if (!btn.id.includes('pauseBtn')) {
+                        btn.classList.remove('active', 'war-mode');
+                    }
+                });
+            }
+            
+            startGameLoops() {
+                const gameLoop = (currentTime) => {
+                    if (!this.isPaused) {
+                        const iterations = Math.floor(this.gameSpeed);
+                        for (let i = 0; i < iterations; i++) {
+                            this.julietteGame.update();
+                            this.aiGame.update();
+                        }
+                        
+                        this.julietteGame.draw();
+                        this.aiGame.draw();
+                        this.updateStats();
+                        this.updatePerformanceMetrics(currentTime);
+                    }
+                    
+                    requestAnimationFrame(gameLoop);
+                };
+                
+                gameLoop(performance.now());
+            }
+            
+            startPerformanceMonitoring() {
+                setInterval(() => {
+                    this.updatePerformanceDisplay();
+                }, 1000);
+            }
+            
+            updatePerformanceMetrics(currentTime) {
+                const deltaTime = currentTime - this.performanceMetrics.lastTime;
+                this.performanceMetrics.frameCount++;
+                
+                if (deltaTime >= 1000) {
+                    this.performanceMetrics.fps = Math.round((this.performanceMetrics.frameCount * 1000) / deltaTime);
+                    this.performanceMetrics.frameCount = 0;
+                    this.performanceMetrics.lastTime = currentTime;
+                }
+                
+                // Calcular intensidade da batalha
+                const totalEntities = this.julietteGame.getTotalEntities() + this.aiGame.getTotalEntities();
+                this.performanceMetrics.battleIntensity = Math.min(100, totalEntities * 2);
+                
+                // Simular carga de CPU da IA
+                this.performanceMetrics.aiCpu = Math.min(100, this.aiGame.enemies.length * 3 + (this.warMode ? 20 : 0));
+            }
+            
+            updatePerformanceDisplay() {
+                const metrics = this.performanceMetrics;
+                
+                document.getElementById('fpsCounter').textContent = metrics.fps;
+                document.getElementById('fpsMeter').style.width = Math.min(100, (metrics.fps / 60) * 100) + '%';
+                
+                document.getElementById('aiCpu').textContent = metrics.aiCpu + '%';
+                document.getElementById('aiMeter').style.width = metrics.aiCpu + '%';
+                
+                const intensityText = metrics.battleIntensity > 70 ? 'EXTREME' : 
+                                     metrics.battleIntensity > 40 ? 'HIGH' : 
+                                     metrics.battleIntensity > 20 ? 'MEDIUM' : 'LOW';
+                document.getElementById('battleIntensity').textContent = intensityText;
+                document.getElementById('battleMeter').style.width = metrics.battleIntensity + '%';
+            }
+            
+            updateStats() {
+                // Stats da Juliette
+                document.getElementById('julietteHealth').textContent = this.julietteGame.player.health;
+                document.getElementById('julietteScore').textContent = this.julietteGame.score;
+                document.getElementById('julietteLevel').textContent = this.julietteGame.level;
+                document.getElementById('julietteWeapon').textContent = this.julietteGame.player.weapon;
+                document.getElementById('julietteKills').textContent = this.julietteGame.kills;
+                
+                // Stats da IA
+                document.getElementById('enemyCount').textContent = this.aiGame.enemies.length;
+                document.getElementById('enemyKills').textContent = this.aiGame.totalKills;
+                document.getElementById('aiLevel').textContent = this.aiGame.difficultyLevel;
+                document.getElementById('aiDPS').textContent = Math.round(this.aiGame.dps);
+                document.getElementById('aiWinner').textContent = this.aiGame.lastWinner || '-';
+            }
+        }
+        
+        // ====================================
+        // JOGO AVANÇADO DA JULIETTE
+        // ====================================
+        
+        class AdvancedJulietteGame {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.player = new SuperJuliette(canvas.width / 2, canvas.height - 100);
+                this.bullets = [];
+                this.enemies = [];
+                this.particles = [];
+                this.powerups = [];
+                this.explosions = [];
+                this.score = 0;
+                this.level = 1;
+                this.kills = 0;
+                this.keys = {};
+                this.ultimateActive = false;
+                this.backgroundEffects = new BackgroundEffects();
+            }
+            
+            handleKeyDown(e) {
+                this.keys[e.key.toLowerCase()] = true;
+                this.keys[e.code.toLowerCase()] = true;
+            }
+            
+            activateUltimate() {
+                this.ultimateActive = true;
+                this.player.activateUltimate();
+                setTimeout(() => {
+                    this.ultimateActive = false;
+                    this.player.deactivateUltimate();
+                }, 10000);
+            }
+            
+            update() {
+                this.handleInput();
+                this.player.update();
+                this.updateBullets();
+                this.updateEnemies();
+                this.updateParticles();
+                this.updateExplosions();
+                this.updatePowerups();
+                this.spawnEnemies();
+                this.checkCollisions();
+                this.backgroundEffects.update();
+                
+                // Limpar keys após frame
+                setTimeout(() => this.keys = {}, 16);
+            }
+            
+            handleInput() {
+                const player = this.player;
+                
+                if (this.keys['a'] || this.keys['arrowleft']) player.moveLeft();
+                if (this.keys['d'] || this.keys['arrowright']) player.moveRight();
+                if (this.keys['w'] || this.keys['arrowup']) player.aimUp();
+                if (this.keys['s'] || this.keys['arrowdown']) player.aimDown();
+                if (this.keys[' '] || this.keys['space']) this.shoot();
+                if (this.keys['z']) player.jump();
+                if (this.keys['c']) player.useSpecialPower();
+                if (this.keys['x']) player.useBomb();
+                if (this.keys['v']) player.activateShield();
+            }
+            
+            shoot() {
+                const bullets = this.player.shoot();
+                if (bullets) {
+                    this.bullets.push(...(Array.isArray(bullets) ? bullets : [bullets]));
+                }
+            }
+            
+            spawnEnemies() {
+                if (Math.random() < 0.02 + this.level * 0.001) {
+                    const enemy = new BasicEnemy(
+                        Math.random() * this.canvas.width,
+                        -50,
+                        'soldier'
+                    );
+                    this.enemies.push(enemy);
+                }
+            }
+            
+            updateBullets() {
+                this.bullets = this.bullets.filter(bullet => {
+                    bullet.update();
+                    return bullet.isAlive() && this.isInBounds(bullet);
+                });
+            }
+            
+            updateEnemies() {
+                this.enemies = this.enemies.filter(enemy => {
+                    enemy.update(this.player);
+                    return enemy.health > 0 && this.isInBounds(enemy);
+                });
+            }
+            
+            updateParticles() {
+                this.particles = this.particles.filter(particle => {
+                    particle.update();
+                    return particle.life > 0;
+                });
+            }
+            
+            updateExplosions() {
+                this.explosions = this.explosions.filter(explosion => {
+                    explosion.update();
+                    return explosion.life > 0;
+                });
+            }
+            
+            updatePowerups() {
+                this.powerups = this.powerups.filter(powerup => {
+                    powerup.update();
+                    return powerup.life > 0;
+                });
+            }
+            
+            checkCollisions() {
+                // Bullet-enemy collisions
+                this.bullets.forEach((bullet, bIndex) => {
+                    this.enemies.forEach((enemy, eIndex) => {
+                        if (this.collision(bullet, enemy)) {
+                            this.createExplosion(enemy.x, enemy.y, '#ff6b6b');
+                            enemy.takeDamage(bullet.damage);
+                            this.bullets.splice(bIndex, 1);
+                            if (enemy.health <= 0) {
+                                this.score += enemy.scoreValue;
+                                this.kills++;
+                                this.enemies.splice(eIndex, 1);
+                                this.spawnPowerup(enemy.x, enemy.y);
+                            }
+                        }
+                    });
+                });
+                
+                // Player-enemy collisions
+                this.enemies.forEach(enemy => {
+                    if (this.collision(this.player, enemy) && !this.player.isInvulnerable()) {
+                        this.player.takeDamage(enemy.damage);
+                        this.createExplosion(this.player.x, this.player.y, '#ffff00');
+                    }
+                });
+                
+                // Player-powerup collisions
+                this.powerups.forEach((powerup, index) => {
+                    if (this.collision(this.player, powerup)) {
+                        this.player.applyPowerup(powerup.type);
+                        this.powerups.splice(index, 1);
+                    }
+                });
+            }
+            
+            collision(obj1, obj2) {
+                return obj1.x < obj2.x + obj2.width &&
+                       obj1.x + obj1.width > obj2.x &&
+                       obj1.y < obj2.y + obj2.height &&
+                       obj1.y + obj1.height > obj2.y;
+            }
+            
+            isInBounds(obj) {
+                return obj.x > -100 && obj.x < this.canvas.width + 100 &&
+                       obj.y > -100 && obj.y < this.canvas.height + 100;
+            }
+            
+            createExplosion(x, y, color, intensity = 1) {
+                for (let i = 0; i < 8 * intensity; i++) {
+                    this.particles.push(new AdvancedParticle(x, y, color, intensity));
+                }
+                this.explosions.push(new Explosion(x, y, intensity));
+            }
+            
+            spawnPowerup(x, y) {
+                if (Math.random() < 0.3) {
+                    const types = ['health', 'weapon', 'shield', 'speed'];
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    this.powerups.push(new Powerup(x, y, type));
+                }
+            }
+            
+            getTotalEntities() {
+                return this.bullets.length + this.enemies.length + this.particles.length + this.explosions.length;
+            }
+            
+            draw() {
+                // Clear with gradient
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                gradient.addColorStop(0, '#001122');
+                gradient.addColorStop(1, '#000411');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Background effects
+                this.backgroundEffects.draw(this.ctx);
+                
+                // Ultimate mode overlay
+                if (this.ultimateActive) {
+                    this.ctx.fillStyle = 'rgba(255, 107, 107, 0.1)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+                
+                // Draw game entities
+                this.explosions.forEach(explosion => explosion.draw(this.ctx));
+                this.particles.forEach(particle => particle.draw(this.ctx));
+                this.powerups.forEach(powerup => powerup.draw(this.ctx));
+                this.bullets.forEach(bullet => bullet.draw(this.ctx));
+                this.enemies.forEach(enemy => enemy.draw(this.ctx));
+                this.player.draw(this.ctx);
+            }
+            
+            restart() {
+                this.player = new SuperJuliette(this.canvas.width / 2, this.canvas.height - 100);
+                this.bullets = [];
+                this.enemies = [];
+                this.particles = [];
+                this.powerups = [];
+                this.explosions = [];
+                this.score = 0;
+                this.level = 1;
+                this.kills = 0;
+                this.ultimateActive = false;
+            }
+        }
+        
+        // ====================================
+        // JOGO IA SUPREMA
+        // ====================================
+        
+        class SupremeAIGame {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.enemies = [];
+                this.bullets = [];
+                this.particles = [];
+                this.explosions = [];
+                this.totalKills = 0;
+                this.difficultyLevel = 1;
+                this.warMode = false;
+                this.ultimateActive = false;
+                this.dps = 0;
+                this.lastWinner = null;
+                this.backgroundEffects = new AIBackgroundEffects();
+                this.battleManager = new BattleManager();
+            }
+            
+            setWarMode(active) {
+                this.warMode = active;
+                this.enemies.forEach(enemy => enemy.setWarMode(active));
+            }
+            
+            activateUltimate() {
+                this.ultimateActive = true;
+                this.enemies.forEach(enemy => enemy.activateUltimate());
+                setTimeout(() => {
+                    this.ultimateActive = false;
+                    this.enemies.forEach(enemy => enemy.deactivateUltimate());
+                }, 10000);
+            }
+            
+            update() {
+                this.spawnSupremeEnemies();
+                this.updateEnemies();
+                this.updateBullets();
+                this.updateParticles();
+                this.updateExplosions();
+                this.checkSupremeCollisions();
+                this.manageBattleFormations();
+                this.calculateDPS();
+                this.backgroundEffects.update();
+                this.battleManager.update(this.enemies);
+            }
+            
+            spawnSupremeEnemies() {
+                const spawnRate = this.warMode ? 0.1 : 0.05;
+                const maxEnemies = this.warMode ? 25 : 15;
+                
+                if (Math.random() < spawnRate && this.enemies.length < maxEnemies) {
+                    const types = ['soldier', 'robot', 'drone', 'tank', 'boss'];
+                    const weights = [40, 30, 20, 15, 5];
+                    const type = this.weightedChoice(types, weights);
+                    
+                    const enemy = new SupremeAIEnemy(
+                        Math.random() * this.canvas.width,
+                        Math.random() * 100 - 50,
+                        type,
+                        this.difficultyLevel
+                    );
+                    
+                    if (this.warMode) enemy.setWarMode(true);
+                    if (this.ultimateActive) enemy.activateUltimate();
+                    
+                    this.enemies.push(enemy);
+                }
+            }
+            
+            weightedChoice(choices, weights) {
+                const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+                let random = Math.random() * totalWeight;
+                
+                for (let i = 0; i < choices.length; i++) {
+                    random -= weights[i];
+                    if (random <= 0) return choices[i];
+                }
+                return choices[0];
+            }
+            
+            updateEnemies() {
+                this.enemies.forEach(enemy => {
+                    enemy.updateSupremeAI(this.enemies);
+                    
+                    if (Math.random() < enemy.getShootProbability()) {
+                        const bullets = enemy.shootSupreme();
+                        if (bullets) {
+                            this.bullets.push(...(Array.isArray(bullets) ? bullets : [bullets]));
+                        }
+                    }
+                });
+                
+                this.enemies = this.enemies.filter(enemy => {
+                    if (enemy.health <= 0) {
+                        this.totalKills++;
+                        this.createExplosion(enemy.x, enemy.y, enemy.color, enemy.explosionIntensity);
+                        this.lastWinner = enemy.killer ? enemy.killer.type : 'Unknown';
+                        return false;
+                    }
+                    return this.isInBounds(enemy);
+                });
+            }
+            
+            updateBullets() {
+                this.bullets = this.bullets.filter(bullet => {
+                    bullet.update();
+                    return bullet.isAlive() && this.isInBounds(bullet);
+                });
+            }
+            
+            updateParticles() {
+                this.particles = this.particles.filter(particle => {
+                    particle.update();
+                    return particle.life > 0;
+                });
+            }
+            
+            updateExplosions() {
+                this.explosions = this.explosions.filter(explosion => {
+                    explosion.update();
+                    return explosion.life > 0;
+                });
+            }
+            
+            checkSupremeCollisions() {
+                // AI vs AI combat
+                this.bullets.forEach((bullet, bIndex) => {
+                    this.enemies.forEach((enemy, eIndex) => {
+                        if (this.collision(bullet, enemy) && bullet.owner !== enemy) {
+                            enemy.takeDamage(bullet.damage);
+                            enemy.killer = bullet.owner;
+                            this.bullets.splice(bIndex, 1);
+                            this.createExplosion(enemy.x, enemy.y, '#4ecdc4', 0.5);
+                        }
+                    });
+                });
+                
+                // Enemy collision avoidance
+                for (let i = 0; i < this.enemies.length; i++) {
+                    for (let j = i + 1; j < this.enemies.length; j++) {
+                        const dist = this.distance(this.enemies[i], this.enemies[j]);
+                        if (dist < 60) {
+                            this.separateEnemies(this.enemies[i], this.enemies[j]);
+                        }
+                    }
+                }
+            }
+            
+            manageBattleFormations() {
+                // Group enemies by type for formation tactics
+                const groups = {};
+                this.enemies.forEach(enemy => {
+                    if (!groups[enemy.type]) groups[enemy.type] = [];
+                    groups[enemy.type].push(enemy);
+                });
+                
+                // Apply formation logic
+                Object.entries(groups).forEach(([type, enemies]) => {
+                    if (enemies.length >= 3) {
+                        this.applyFormation(enemies, type);
+                    }
+                });
+            }
+            
+            applyFormation(enemies, type) {
+                const centerX = enemies.reduce((sum, e) => sum + e.x, 0) / enemies.length;
+                const centerY = enemies.reduce((sum, e) => sum + e.y, 0) / enemies.length;
+                
+                enemies.forEach((enemy, index) => {
+                    const angle = (index / enemies.length) * Math.PI * 2;
+                    const radius = type === 'tank' ? 80 : 50;
+                    enemy.formationTarget = {
+                        x: centerX + Math.cos(angle) * radius,
+                        y: centerY + Math.sin(angle) * radius
+                    };
+                });
+            }
+            
+            calculateDPS() {
+                const recentDamage = this.enemies.reduce((sum, enemy) => sum + (enemy.recentDamage || 0), 0);
+                this.dps = this.dps * 0.9 + recentDamage * 0.1; // Smooth average
+            }
+            
+            collision(obj1, obj2) {
+                return obj1.x < obj2.x + obj2.width &&
+                       obj1.x + obj1.width > obj2.x &&
+                       obj1.y < obj2.y + obj2.height &&
+                       obj1.y + obj1.height > obj2.y;
+            }
+            
+            distance(obj1, obj2) {
+                const dx = obj1.x - obj2.x;
+                const dy = obj1.y - obj2.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+            
+            separateEnemies(enemy1, enemy2) {
+                const dx = enemy2.x - enemy1.x;
+                const dy = enemy2.y - enemy1.y;
+                const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                
+                const separationForce = 2;
+                const pushX = (dx / distance) * separationForce;
+                const pushY = (dy / distance) * separationForce;
+                
+                enemy1.x -= pushX;
+                enemy1.y -= pushY;
+                enemy2.x += pushX;
+                enemy2.y += pushY;
+            }
+            
+            isInBounds(obj) {
+                return obj.x > -100 && obj.x < this.canvas.width + 100 &&
+                       obj.y > -100 && obj.y < this.canvas.height + 100;
+            }
+            
+            createExplosion(x, y, color, intensity = 1) {
+                for (let i = 0; i < 10 * intensity; i++) {
+                    this.particles.push(new AdvancedParticle(x, y, color, intensity));
+                }
+                this.explosions.push(new Explosion(x, y, intensity));
+            }
+            
+            getTotalEntities() {
+                return this.bullets.length + this.enemies.length + this.particles.length + this.explosions.length;
+            }
+            
+            draw() {
+                // Clear with AI-themed gradient
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                gradient.addColorStop(0, '#001100');
+                gradient.addColorStop(1, '#000800');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Background effects
+                this.backgroundEffects.draw(this.ctx);
+                
+                // War mode overlay
+                if (this.warMode) {
+                    this.ctx.fillStyle = 'rgba(231, 76, 60, 0.1)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+                
+                // Ultimate mode overlay
+                if (this.ultimateActive) {
+                    this.ctx.fillStyle = 'rgba(76, 205, 196, 0.15)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+                
+                // Draw battle formations
+                this.battleManager.drawFormations(this.ctx);
+                
+                // Draw game entities
+                this.explosions.forEach(explosion => explosion.draw(this.ctx));
+                this.particles.forEach(particle => particle.draw(this.ctx));
+                this.bullets.forEach(bullet => bullet.draw(this.ctx));
+                this.enemies.forEach(enemy => enemy.draw(this.ctx));
+            }
+            
+            restart() {
+                this.enemies = [];
+                this.bullets = [];
+                this.particles = [];
+                this.explosions = [];
+                this.totalKills = 0;
+                this.difficultyLevel = 1;
+                this.warMode = false;
+                this.ultimateActive = false;
+                this.dps = 0;
+                this.lastWinner = null;
+            }
+        }
+        
+        // ====================================
+        // CLASSES AUXILIARES
+        // ====================================
+        
+        class BackgroundEffects {
+            constructor() {
+                this.stars = Array.from({length: 100}, () => ({
+                    x: Math.random() * 800,
+                    y: Math.random() * 600,
+                    speed: Math.random() * 2 + 0.5,
+                    size: Math.random() * 2 + 1
+                }));
+            }
+            
+            update() {
+                this.stars.forEach(star => {
+                    star.y += star.speed;
+                    if (star.y > 600) {
+                        star.y = -10;
+                        star.x = Math.random() * 800;
+                    }
+                });
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                this.stars.forEach(star => {
+                    ctx.fillRect(star.x, star.y, star.size, star.size);
+                });
+            }
+        }
+        
+        class AIBackgroundEffects extends BackgroundEffects {
+            constructor() {
+                super();
+                this.gridOffset = 0;
+            }
+            
+            update() {
+                super.update();
+                this.gridOffset += 0.5;
+            }
+            
+            draw(ctx) {
+                super.draw(ctx);
+                
+                // Draw AI grid
+                ctx.strokeStyle = 'rgba(76, 205, 196, 0.1)';
+                ctx.lineWidth = 0.5;
+                
+                const gridSize = 50;
+                for (let x = -gridSize; x < 800 + gridSize; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + (this.gridOffset % gridSize), 0);
+                    ctx.lineTo(x + (this.gridOffset % gridSize), 600);
+                    ctx.stroke();
+                }
+                
+                for (let y = -gridSize; y < 600 + gridSize; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y + (this.gridOffset % gridSize));
+                    ctx.lineTo(800, y + (this.gridOffset % gridSize));
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        class BattleManager {
+            constructor() {
+                this.formations = [];
+            }
+            
+            update(enemies) {
+                // Update formation logic here
+                this.formations = this.detectFormations(enemies);
+            }
+            
+            detectFormations(enemies) {
+                // Implement formation detection
+                return [];
+            }
+            
+            drawFormations(ctx) {
+                // Draw formation indicators
+                this.formations.forEach(formation => {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                    // Draw formation lines
+                });
+            }
+        }
+        
+        // ====================================
+        // CLASSES DE PERSONAGENS AVANÇADAS
+        // ====================================
+        
+        class SuperJuliette {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 60;
+                this.health = 100;
+                this.maxHealth = 100;
+                this.weapon = 'Normal';
+                this.speed = 6;
+                this.jumpForce = 0;
+                this.onGround = true;
+                this.aimAngle = 0;
+                this.shootCooldown = 0;
+                this.specialPower = 100;
+                this.ultimateMode = false;
+                this.invulnerableTime = 0;
+                this.shield = false;
+                this.bombs = 3;
+            }
+            
+            activateUltimate() {
+                this.ultimateMode = true;
+                this.speed *= 2;
+                this.shootCooldown = Math.floor(this.shootCooldown / 3);
+            }
+            
+            deactivateUltimate() {
+                this.ultimateMode = false;
+                this.speed /= 2;
+            }
+            
+            moveLeft() {
+                this.x = Math.max(0, this.x - this.speed);
+            }
+            
+            moveRight() {
+                this.x = Math.min(800 - this.width, this.x + this.speed);
+            }
+            
+            aimUp() {
+                this.aimAngle = Math.max(-Math.PI/2, this.aimAngle - 0.1);
+            }
+            
+            aimDown() {
+                this.aimAngle = Math.min(Math.PI/2, this.aimAngle + 0.1);
+            }
+            
+            jump() {
+                if (this.onGround) {
+                    this.jumpForce = -18;
+                    this.onGround = false;
+                }
+            }
+            
+            shoot() {
+                if (this.shootCooldown <= 0) {
+                    this.shootCooldown = this.ultimateMode ? 5 : 8;
+                    
+                    const bullets = [];
+                    const baseVel = 12;
+                    
+                    if (this.weapon === 'spread' || this.ultimateMode) {
+                        // Multiple bullets
+                        for (let i = -1; i <= 1; i++) {
+                            const angle = this.aimAngle + i * 0.3;
+                            bullets.push(new AdvancedBullet(
+                                this.x + this.width/2,
+                                this.y + this.height/2,
+                                Math.cos(angle) * baseVel,
+                                Math.sin(angle) * baseVel,
+                                '#ff6b6b',
+                                35,
+                                this
+                            ));
+                        }
+                    } else {
+                        bullets.push(new AdvancedBullet(
+                            this.x + this.width/2,
+                            this.y + this.height/2,
+                            Math.cos(this.aimAngle) * baseVel,
+                            Math.sin(this.aimAngle) * baseVel,
+                            '#ff6b6b',
+                            25,
+                            this
+                        ));
+                    }
+                    
+                    return bullets;
+                }
+                return null;
+            }
+            
+            useSpecialPower() {
+                if (this.specialPower >= 50) {
+                    this.specialPower -= 50;
+                    this.invulnerableTime = 120;
+                    return true;
+                }
+                return false;
+            }
+            
+            useBomb() {
+                if (this.bombs > 0) {
+                    this.bombs--;
+                    return { type: 'bomb', x: this.x, y: this.y };
+                }
+                return null;
+            }
+            
+            activateShield() {
+                if (this.specialPower >= 30) {
+                    this.specialPower -= 30;
+                    this.shield = true;
+                    setTimeout(() => this.shield = false, 5000);
+                }
+            }
+            
+            takeDamage(damage) {
+                if (this.isInvulnerable()) return;
+                
+                this.health = Math.max(0, this.health - (this.shield ? damage / 2 : damage));
+                this.invulnerableTime = 60;
+            }
+            
+            isInvulnerable() {
+                return this.invulnerableTime > 0 || this.ultimateMode;
+            }
+            
+            applyPowerup(type) {
+                switch(type) {
+                    case 'health':
+                        this.health = Math.min(this.maxHealth, this.health + 25);
+                        break;
+                    case 'weapon':
+                        this.weapon = 'spread';
+                        break;
+                    case 'shield':
+                        this.activateShield();
+                        break;
+                    case 'speed':
+                        this.speed += 1;
+                        break;
+                }
+            }
+            
+            update() {
+                // Physics
+                if (!this.onGround) {
+                    this.jumpForce += 0.8;
+                    this.y += this.jumpForce;
+                    
+                    if (this.y >= 540) {
+                        this.y = 540;
+                        this.onGround = true;
+                        this.jumpForce = 0;
+                    }
+                }
+                
+                // Cooldowns
+                if (this.shootCooldown > 0) this.shootCooldown--;
+                if (this.invulnerableTime > 0) this.invulnerableTime--;
+                if (this.specialPower < 100) this.specialPower += 0.3;
+            }
+            
+            draw(ctx) {
+                // Enhanced Juliette rendering
+                const isFlashing = this.invulnerableTime > 0 && Math.floor(Date.now() / 100) % 2;
+                
+                if (!isFlashing) {
+                    // Body
+                    ctx.fillStyle = this.ultimateMode ? '#ff4444' : '#ff6b6b';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Details
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(this.x + 10, this.y + 10, 8, 8);
+                    ctx.fillRect(this.x + 22, this.y + 10, 8, 8);
+                    
+                    // Hair
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(this.x - 5, this.y - 10, this.width + 10, 15);
+                    
+                    // Shield effect
+                    if (this.shield) {
+                        ctx.strokeStyle = '#4ecdc4';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width, Date.now() * 0.01, Date.now() * 0.01 + Math.PI * 1.8);
+                        ctx.stroke();
+                    }
+                    
+                    // Ultimate mode aura
+                    if (this.ultimateMode) {
+                        ctx.strokeStyle = '#ffaa00';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width + 10, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+                
+                // Weapon aim
+                ctx.strokeStyle = this.ultimateMode ? '#ffaa00' : '#ff9999';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width/2, this.y + this.height/2);
+                ctx.lineTo(
+                    this.x + this.width/2 + Math.cos(this.aimAngle) * 35,
+                    this.y + this.height/2 + Math.sin(this.aimAngle) * 35
+                );
+                ctx.stroke();
+                
+                // Health bar
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.x, this.y - 25, this.width, 6);
+                const healthColor = this.health > 60 ? '#4CAF50' : this.health > 30 ? '#FFA500' : '#F44336';
+                ctx.fillStyle = healthColor;
+                ctx.fillRect(this.x, this.y - 25, (this.width * this.health) / this.maxHealth, 6);
+                
+                // Special power bar
+                ctx.fillStyle = '#222';
+                ctx.fillRect(this.x, this.y - 15, this.width, 4);
+                ctx.fillStyle = '#9b59b6';
+                ctx.fillRect(this.x, this.y - 15, (this.width * this.specialPower) / 100, 4);
+            }
+        }
+        
+        class SupremeAIEnemy {
+            constructor(x, y, type, level) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.level = level;
+                this.width = this.getSize().width;
+                this.height = this.getSize().height;
+                this.health = this.getMaxHealth();
+                this.maxHealth = this.health;
+                this.speed = this.getSpeed();
+                this.damage = this.getDamage();
+                this.scoreValue = this.getScoreValue();
+                this.explosionIntensity = this.getExplosionIntensity();
+                this.target = null;
+                this.shootCooldown = 0;
+                this.aiTimer = 0;
+                this.warMode = false;
+                this.ultimateMode = false;
+                this.formationTarget = null;
+                this.recentDamage = 0;
+                this.killer = null;
+                this.color = this.getTypeColor();
+            }
+            
+            getSize() {
+                const sizes = {
+                    soldier: {width: 25, height: 35},
+                    robot: {width: 30, height: 40},
+                    drone: {width: 35, height: 25},
+                    tank: {width: 45, height: 50},
+                    boss: {width: 60, height: 80}
+                };
+                return sizes[this.type] || sizes.soldier;
+            }
+            
+            getMaxHealth() {
+                const baseHealth = {
+                    soldier: 40,
+                    robot: 60,
+                    drone: 35,
+                    tank: 100,
+                    boss: 200
+                };
+                return (baseHealth[this.type] || 40) + this.level * 10;
+            }
+            
+            getSpeed() {
+                const baseSpeed = {
+                    soldier: 3,
+                    robot: 2,
+                    drone: 4,
+                    tank: 1,
+                    boss: 2
+                };
+                return (baseSpeed[this.type] || 2) + this.level * 0.2;
+            }
+            
+            getDamage() {
+                const baseDamage = {
+                    soldier: 15,
+                    robot: 25,
+                    drone: 20,
+                    tank: 35,
+                    boss: 50
+                };
+                return (baseDamage[this.type] || 15) + this.level * 2;
+            }
+            
+            getScoreValue() {
+                const baseScore = {
+                    soldier: 100,
+                    robot: 150,
+                    drone: 125,
+                    tank: 200,
+                    boss: 500
+                };
+                return (baseScore[this.type] || 100) * this.level;
+            }
+            
+            getExplosionIntensity() {
+                const intensity = {
+                    soldier: 1,
+                    robot: 1.5,
+                    drone: 1.2,
+                    tank: 2,
+                    boss: 3
+                };
+                return intensity[this.type] || 1;
+            }
+            
+            getTypeColor() {
+                const colors = {
+                    soldier: '#4ecdc4',
+                    robot: '#95a5a6',
+                    drone: '#9b59b6',
+                    tank: '#e74c3c',
+                    boss: '#f39c12'
+                };
+                return colors[this.type] || '#4ecdc4';
+            }
+            
+            setWarMode(active) {
+                this.warMode = active;
+                if (active) {
+                    this.speed *= 1.5;
+                    this.damage *= 1.3;
+                }
+            }
+            
+            activateUltimate() {
+                this.ultimateMode = true;
+                this.speed *= 2;
+                this.damage *= 1.5;
+            }
+            
+            deactivateUltimate() {
+                this.ultimateMode = false;
+            }
+            
+            getShootProbability() {
+                let baseProb = 0.02;
+                if (this.warMode) baseProb *= 2;
+                if (this.ultimateMode) baseProb *= 1.5;
+                if (this.type === 'boss') baseProb *= 1.5;
+                return baseProb + this.level * 0.002;
+            }
+            
+            updateSupremeAI(allEnemies) {
+                this.aiTimer++;
+                this.recentDamage = 0;
+                
+                // Advanced AI behavior based on type
+                switch(this.type) {
+                    case 'soldier':
+                        this.soldierSupremeAI(allEnemies);
+                        break;
+                    case 'robot':
+                        this.robotSupremeAI(allEnemies);
+                        break;
+                    case 'drone':
+                        this.droneSupremeAI(allEnemies);
+                        break;
+                    case 'tank':
+                        this.tankSupremeAI(allEnemies);
+                        break;
+                    case 'boss':
+                        this.bossSupremeAI(allEnemies);
+                        break;
+                }
+                
+                // Formation following
+                if (this.formationTarget) {
+                    this.moveTowards(this.formationTarget.x, this.formationTarget.y, 0.3);
+                }
+                
+                // Boundary checking
+                this.x = Math.max(0, Math.min(800 - this.width, this.x));
+                this.y = Math.max(0, Math.min(600 - this.height, this.y));
+                
+                if (this.shootCooldown > 0) this.shootCooldown--;
+            }
+            
+            soldierSupremeAI(allEnemies) {
+                this.findNearestTarget(allEnemies);
+                if (this.target) {
+                    this.moveTowards(this.target.x, this.target.y, 0.5);
+                } else {
+                    this.randomMovement();
+                }
+            }
+            
+            robotSupremeAI(allEnemies) {
+                this.findNearestTarget(allEnemies);
+                if (this.target) {
+                    const distance = this.distanceTo(this.target);
+                    if (distance > 100) {
+                        this.moveTowards(this.target.x, this.target.y, 0.7);
+                    } else {
+                        // Maintain optimal distance
+                        this.moveAway(this.target.x, this.target.y, 0.3);
+                    }
+                }
+            }
+            
+            droneSupremeAI(allEnemies) {
+                // Aerial movement pattern
+                this.y += Math.sin(this.aiTimer * 0.05) * 2;
+                this.x += Math.cos(this.aiTimer * 0.03) * 3;
+                this.findNearestTarget(allEnemies);
+            }
+            
+            tankSupremeAI(allEnemies) {
+                this.findNearestTarget(allEnemies);
+                if (this.target) {
+                    this.moveTowards(this.target.x, this.target.y, 0.4);
+                }
+            }
+            
+            bossSupremeAI(allEnemies) {
+                // Boss has complex behavior
+                this.findMultipleTargets(allEnemies, 3);
+                if (this.targets && this.targets.length > 0) {
+                    const centerX = this.targets.reduce((sum, t) => sum + t.x, 0) / this.targets.length;
+                    const centerY = this.targets.reduce((sum, t) => sum + t.y, 0) / this.targets.length;
+                    this.moveTowards(centerX, centerY, 0.6);
+                }
+            }
+            
+            findNearestTarget(allEnemies) {
+                let nearest = null;
+                let nearestDistance = Infinity;
+                
+                allEnemies.forEach(enemy => {
+                    if (enemy !== this && enemy.type !== this.type) {
+                        const distance = this.distanceTo(enemy);
+                        if (distance < nearestDistance) {
+                            nearest = enemy;
+                            nearestDistance = distance;
+                        }
+                    }
+                });
+                
+                this.target = nearest;
+            }
+            
+            findMultipleTargets(allEnemies, maxTargets) {
+                const targets = allEnemies
+                    .filter(enemy => enemy !== this && enemy.type !== this.type)
+                    .map(enemy => ({...enemy, distance: this.distanceTo(enemy)}))
+                    .sort((a, b) => a.distance - b.distance)
+                    .slice(0, maxTargets);
+                
+                this.targets = targets;
+            }
+            
+            moveTowards(targetX, targetY, speed) {
+                const dx = targetX - this.x;
+                const dy = targetY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                
+                this.x += (dx / distance) * this.speed * speed;
+                this.y += (dy / distance) * this.speed * speed;
+            }
+            
+            moveAway(targetX, targetY, speed) {
+                const dx = this.x - targetX;
+                const dy = this.y - targetY;
+                const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                
+                this.x += (dx / distance) * this.speed * speed;
+                this.y += (dy / distance) * this.speed * speed;
+            }
+            
+            randomMovement() {
+                this.x += (Math.random() - 0.5) * this.speed;
+                this.y += (Math.random() - 0.5) * this.speed;
+            }
+            
+            distanceTo(other) {
+                const dx = other.x - this.x;
+                const dy = other.y - this.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+            
+            shootSupreme() {
+                if (this.shootCooldown <= 0 && this.target) {
+                    this.shootCooldown = this.getShootCooldown();
+                    
+                    const bullets = [];
+                    const bulletCount = this.getBulletCount();
+                    
+                    for (let i = 0; i < bulletCount; i++) {
+                        const angle = this.getShootAngle(i, bulletCount);
+                        const speed = this.getBulletSpeed();
+                        
+                        bullets.push(new AdvancedBullet(
+                            this.x + this.width/2,
+                            this.y + this.height/2,
+                            Math.cos(angle) * speed,
+                            Math.sin(angle) * speed,
+                            this.color,
+                            this.damage,
+                            this
+                        ));
+                    }
+                    
+                    return bullets;
+                }
+                return null;
+            }
+            
+            getShootCooldown() {
+                const baseCooldown = {
+                    soldier: 45,
+                    robot: 30,
+                    drone: 40,
+                    tank: 60,
+                    boss: 20
+                };
+                let cooldown = baseCooldown[this.type] || 40;
+                if (this.warMode) cooldown *= 0.7;
+                if (this.ultimateMode) cooldown *= 0.5;
+                return Math.floor(cooldown);
+            }
+            
+            getBulletCount() {
+                if (this.ultimateMode) {
+                    return this.type === 'boss' ? 5 : 3;
+                }
+                return this.type === 'boss' ? 3 : 1;
+            }
+            
+            getShootAngle(bulletIndex, totalBullets) {
+                if (totalBullets === 1) {
+                    const dx = this.target.x - this.x;
+                    const dy = this.target.y - this.y;
+                    return Math.atan2(dy, dx);
+                } else {
+                    const baseAngle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+                    const spread = Math.PI / 6; // 30 degrees spread
+                    return baseAngle + (bulletIndex - (totalBullets - 1) / 2) * (spread / (totalBullets - 1));
+                }
+            }
+            
+            getBulletSpeed() {
+                const baseSpeed = {
+                    soldier: 7,
+                    robot: 9,
+                    drone: 8,
+                    tank: 6,
+                    boss: 10
+                };
+                let speed = baseSpeed[this.type] || 7;
+                if (this.ultimateMode) speed *= 1.5;
+                return speed;
+            }
+            
+            takeDamage(damage) {
+                this.health -= damage;
+                this.recentDamage = damage;
+            }
+            
+            draw(ctx) {
+                // Enhanced rendering with effects
+                const isFlashing = this.health < this.maxHealth * 0.3 && Math.floor(Date.now() / 150) % 2;
+                
+                if (!isFlashing) {
+                    // Main body
+                    ctx.fillStyle = this.ultimateMode ? this.brightenColor(this.color) : this.color;
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Type-specific details
+                    ctx.fillStyle = '#fff';
+                    this.drawTypeDetails(ctx);
+                    
+                    // War mode indicator
+                    if (this.warMode) {
+                        ctx.strokeStyle = '#e74c3c';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+                    }
+                    
+                    // Ultimate mode aura
+                    if (this.ultimateMode) {
+                        ctx.strokeStyle = '#ffaa00';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width/2 + 8, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    
+                    // Target indicator
+                    if (this.target) {
+                        ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + this.width/2, this.y + this.height/2);
+                        ctx.lineTo(this.target.x + this.target.width/2, this.target.y + this.target.height/2);
+                        ctx.stroke();
+                    }
+                }
+                
+                // Health bar
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.x, this.y - 12, this.width, 4);
+                ctx.fillStyle = this.health > this.maxHealth * 0.6 ? '#4CAF50' : 
+                              this.health > this.maxHealth * 0.3 ? '#FFA500' : '#F44336';
+                ctx.fillRect(this.x, this.y - 12, (this.width * this.health) / this.maxHealth, 4);
+                
+                // Level indicator
+                if (this.level > 1) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.level.toString(), this.x + this.width/2, this.y - 15);
+                }
+            }
+            
+            drawTypeDetails(ctx) {
+                switch(this.type) {
+                    case 'soldier':
+                        ctx.fillRect(this.x + 6, this.y + 6, 4, 4);
+                        ctx.fillRect(this.x + 15, this.y + 6, 4, 4);
+                        break;
+                    case 'robot':
+                        ctx.fillRect(this.x + 8, this.y + 8, 6, 6);
+                        ctx.fillRect(this.x + 16, this.y + 8, 6, 6);
+                        break;
+                    case 'drone':
+                        ctx.fillRect(this.x + 10, this.y + 8, 15, 5);
+                        ctx.fillRect(this.x + 5, this.y + 18, 25, 2);
+                        break;
+                    case 'tank':
+                        ctx.fillRect(this.x, this.y - 8, this.width, 8);
+                        ctx.fillRect(this.x + 10, this.y + 10, this.width - 20, 8);
+                        break;
+                    case 'boss':
+                        ctx.fillRect(this.x + 15, this.y + 15, 10, 10);
+                        ctx.fillRect(this.x + 35, this.y + 15, 10, 10);
+                        ctx.fillRect(this.x + 25, this.y + 35, 10, 15);
+                        break;
+                }
+            }
+            
+            brightenColor(color) {
+                // Simple color brightening
+                return color.replace(/[0-9a-f]/g, char => {
+                    const val = parseInt(char, 16);
+                    return Math.min(15, val + 3).toString(16);
+                });
+            }
+        }
+        
+        class BasicEnemy {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.width = 25;
+                this.height = 35;
+                this.health = 30;
+                this.maxHealth = 30;
+                this.speed = 2;
+                this.damage = 15;
+                this.scoreValue = 50;
+            }
+            
+            update(player) {
+                this.y += this.speed;
+            }
+            
+            takeDamage(damage) {
+                this.health -= damage;
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(this.x + 6, this.y + 6, 3, 3);
+                ctx.fillRect(this.x + 16, this.y + 6, 3, 3);
+                
+                // Health bar
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.x, this.y - 8, this.width, 3);
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(this.x, this.y - 8, (this.width * this.health) / this.maxHealth, 3);
+            }
+        }
+        
+        class AdvancedBullet {
+            constructor(x, y, vx, vy, color, damage, owner = null) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.damage = damage;
+                this.owner = owner;
+                this.width = 8;
+                this.height = 8;
+                this.life = 300;
+                this.trail = [];
+            }
+            
+            update() {
+                this.trail.push({x: this.x, y: this.y});
+                if (this.trail.length > 5) this.trail.shift();
+                
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+            }
+            
+            isAlive() {
+                return this.life > 0;
+            }
+            
+            draw(ctx) {
+                // Draw trail
+                this.trail.forEach((point, index) => {
+                    const alpha = index / this.trail.length;
+                    ctx.fillStyle = this.color + Math.floor(alpha * 100).toString(16).padStart(2, '0');
+                    const size = (this.width * alpha);
+                    ctx.fillRect(point.x - size/2, point.y - size/2, size, size);
+                });
+                
+                // Draw bullet
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+                
+                // Glow effect
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 5;
+                ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        class AdvancedParticle {
+            constructor(x, y, color, intensity = 1) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 12 * intensity;
+                this.vy = (Math.random() - 0.5) * 12 * intensity;
+                this.color = color;
+                this.life = 40 + Math.random() * 40 * intensity;
+                this.maxLife = this.life;
+                this.size = (2 + Math.random() * 6) * intensity;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.3;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.rotation += this.rotationSpeed;
+                this.life--;
+            }
+            
+            draw(ctx) {
+                const alpha = this.life / this.maxLife;
+                const currentSize = this.size * alpha;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                ctx.fillRect(-currentSize/2, -currentSize/2, currentSize, currentSize);
+                ctx.restore();
+            }
+        }
+        
+        class Explosion {
+            constructor(x, y, intensity = 1) {
+                this.x = x;
+                this.y = y;
+                this.intensity = intensity;
+                this.life = 30 * intensity;
+                this.maxLife = this.life;
+                this.radius = 0;
+                this.maxRadius = 40 * intensity;
+            }
+            
+            update() {
+                this.radius = (1 - this.life / this.maxLife) * this.maxRadius;
+                this.life--;
+            }
+            
+            draw(ctx) {
+                const alpha = this.life / this.maxLife;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Outer ring
+                ctx.strokeStyle = `rgba(255, 107, 107, ${alpha * 0.8})`;
+                ctx.lineWidth = 3 * this.intensity;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Inner glow
+                ctx.fillStyle = `rgba(255, 200, 100, ${alpha * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+        
+        class Powerup {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.width = 20;
+                this.height = 20;
+                this.life = 600;
+                this.bounce = 0;
+            }
+            
+            update() {
+                this.bounce += 0.1;
+                this.life--;
+            }
+            
+            draw(ctx) {
+                const yOffset = Math.sin(this.bounce) * 3;
+                const alpha = this.life < 120 ? (this.life % 20) / 20 : 1;
+                
+                ctx.globalAlpha = alpha;
+                
+                const colors = {
+                    health: '#4CAF50',
+                    weapon: '#FF9800',
+                    shield: '#2196F3',
+                    speed: '#9C27B0'
+                };
+                
+                ctx.fillStyle = colors[this.type] || '#fff';
+                ctx.fillRect(this.x, this.y + yOffset, this.width, this.height);
+                
+                // Icon
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px monospace';
+                ctx.textAlign = 'center';
+                const icons = {
+                    health: '❤',
+                    weapon: '🔫',
+                    shield: '🛡',
+                    speed: '⚡'
+                };
+                ctx.fillText(icons[this.type] || '?', this.x + this.width/2, this.y + this.height/2 + yOffset + 4);
+                
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // ====================================
+        // INICIALIZAÇÃO
+        // ====================================
+        
+        window.addEventListener('load', () => {
+            console.log('⚔️ Iniciando Battle Royale System...');
+            new BattleRoyaleGame();
+        });
+        
+        // Anti-zoom mobile
+        document.addEventListener('touchstart', function (event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        });
+        
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>

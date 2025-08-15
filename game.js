@@ -2068,11 +2068,6 @@ function updateEnemies() {
             enemies.splice(i, 1);
         }
     }
-    
-    // === ATUALIZAR INIMIGOS DO SISTEMA DE IA ===
-    if (typeof updateAIEnemies === 'function') {
-        updateAIEnemies();
-    }
 }
 
 // === NOVA FUNÇÃO: ATUALIZAR ÁTOMOS ORBITANTES ===
@@ -4532,16 +4527,6 @@ function gameLoop() {
     updateLavaDisc(); // NOVO: Atualizar disco de lava
     updatePlayerAtoms(); // NOVO: Atualizar átomos orbitantes da Juliette
     
-    // === ATUALIZAR SISTEMA DE IA ===
-    if (typeof updateAISystem === 'function') {
-        updateAISystem();
-    }
-    
-    // === ATUALIZAR SISTEMA PROCEDURAL ===
-    if (typeof updateProceduralSystem === 'function') {
-        updateProceduralSystem();
-    }
-    
     // === ATUALIZAR SISTEMA DE BOMBA ===
     if (bombCooldown > 0) {
         bombCooldown--;
@@ -4591,26 +4576,22 @@ function gameLoop() {
         posX = CANVAS_WIDTH / 2 - (frameWidth * scale) / 2;
     }
     
-    // === DESENHAR ELEMENTOS EM ORDEM DE CAMADAS CORRETA ===
-    // CAMADA 1: Fundo e efeitos básicos (mais atrás)
+    // Desenha todos os elementos
     drawParticles();
     drawExplosions();
-    
-    // CAMADA 2: Efeitos do jogador (atrás do jogador, mas na frente de partículas)
-    drawShield(); // Escudo da Juliette
-    drawLavaDisc(); // Disco de lava da Juliette
-    drawPlayerAtoms(); // Átomos orbitantes da Juliette
-    
-    // CAMADA 3: Power-ups (no meio)
+    drawBullets();
+    drawEnemies();
     drawPowerups();
     
-    // CAMADA 4: Projéteis (acima dos power-ups)
-    drawBullets();
+    // Desenhar escudo (antes do jogador para aparecer atrás)
+    drawShield();
     
-    // CAMADA 5: Inimigos (acima dos projéteis)
-    drawEnemies();
+    // NOVO: Desenhar disco de lava (antes do jogador para aparecer atrás)
+    drawLavaDisc();
     
-    // CAMADA 6: Jogador (mais à frente de tudo)
+    // NOVO: Desenhar átomos orbitantes da Juliette (antes do jogador para aparecer atrás)
+    drawPlayerAtoms();
+    
     // Desenha o jogador com efeito de invulnerabilidade
     if (invulnerable && Math.floor(Date.now() / 100) % 2) {
         // Pisca quando invulnerável
@@ -4694,233 +4675,48 @@ function restartGame() {
     enemySpawnTimer = 0;
 }
 
-// === SISTEMA DE INICIALIZAÇÃO ROBUSTO ===
+// Inicia o jogo quando todas as imagens carregarem
 let imagesLoaded = 0;
-const totalImages = 13; // Total de imagens: 4 de fundo + 9 da Juliette
+const totalImages = 13; // Total de imagens: 4 de fundo (incluindo fase 2) + 9 da Juliette (incluindo novas de tiro)
 let gameStarted = false;
-let gameInitialized = false;
-let gameRunning = false;
 
-// Função para verificar carregamento de imagens
 function checkImagesLoaded() {
     imagesLoaded++;
-    console.log(`📷 Imagem carregada: ${imagesLoaded}/${totalImages}`);
-    
-    // Tentar iniciar quando todas as imagens carregarem
-    if (imagesLoaded >= totalImages && !gameStarted) {
-        console.log('✅ Todas as imagens carregadas, iniciando jogo...');
-        initializeGame();
+    console.log(`Imagem carregada: ${imagesLoaded}/${totalImages}`);
+    if (imagesLoaded === totalImages && !gameStarted) {
+        startGame();
     }
 }
 
-// Função principal de inicialização do jogo
-function initializeGame() {
-    if (gameStarted) {
-        console.log('⚠️ Jogo já foi iniciado, ignorando chamada duplicada');
+function startGame() {
+    if (gameStarted) return;
+    
+    gameStarted = true;
+    frameIndex = animations.idle_noweapon.start;
+    console.log('🎮 Iniciando jogo...');
+    
+    // Garantir que o canvas está configurado corretamente
+    if (!canvas || !ctx) {
+        console.error('❌ Canvas não encontrado!');
         return;
     }
     
-    console.log('🎮 === INICIANDO JULIETTE 2D GAME ===');
-    gameStarted = true;
+    // Inicializar posição do jogador
+    positionPlayerOnGround();
     
-    try {
-        // 1. Verificar elementos essenciais
-        if (!canvas || !ctx) {
-            throw new Error('Canvas ou contexto não encontrado!');
-        }
-        
-        // 2. Configurar canvas e responsividade
-        console.log('📱 Configurando canvas responsivo...');
-        setupResponsiveCanvas();
-        
-        // 3. Inicializar estado do jogo
-        console.log('🎯 Inicializando estado do jogo...');
-        initializeGameState();
-        
-        // 4. Posicionar jogador
-        console.log('👤 Posicionando jogador...');
-        positionPlayerOnGround();
-        
-        // 5. Inicializar sistemas do jogador
-        console.log('⚡ Inicializando sistemas do jogador...');
-        initializePlayerSystems();
-        
-        // 6. Inicializar controles
-        console.log('🎮 Inicializando controles...');
-        initializeControls();
-        
-        // 7. Inicializar sistemas opcionais
-        initializeOptionalSystems();
-        
-        // 8. Marcar como inicializado
-        gameInitialized = true;
-        
-        // 9. Iniciar loop do jogo
-        console.log('🔄 Iniciando loop do jogo...');
-        startGameLoop();
-        
-        console.log('✅ Jogo inicializado com sucesso!');
-        
-    } catch (error) {
-        console.error('❌ Erro durante inicialização do jogo:', error);
-        console.error('Stack trace:', error.stack);
-        
-        // Tentar recuperação
-        setTimeout(() => {
-            console.log('🔄 Tentando recuperação...');
-            gameStarted = false;
-            initializeGame();
-        }, 2000);
-    }
-}
-
-// Inicializar estado básico do jogo
-function initializeGameState() {
-    // Resetar variáveis de estado
-    gameState.gameStartTime = Date.now();
-    gameState.score = 0;
-    gameState.lives = 3;
-    gameState.level = 1;
-    gameState.currentPhase = 1;
-    gameState.paused = false;
-    gameState.gameOver = false;
-    
-    // Resetar jogador
-    playerHealth = 100;
-    weaponType = 'normal';
-    hasWeapon = true;
-    currentAnim = 'idle_weapon';
-    frameIndex = animations[currentAnim].start;
-    frameCounter = 0;
-    
-    // Resetar sistemas de combate
-    shootCooldown = 0;
-    invulnerable = false;
-    invulnerableTime = 0;
-    
-    // Resetar escudos
-    initialShieldActive = true;
-    initialShieldTimer = initialShieldDuration;
-    shieldActive = true;
-    shieldEnergy = 100;
-    shieldCooldown = 0;
-    
-    // Resetar bombas
-    bombCount = 3;
-    bombCooldown = 0;
-    
-    // Limpar arrays
-    bullets.length = 0;
-    enemies.length = 0;
-    powerups.length = 0;
-    explosions.length = 0;
-    particles.length = 0;
-    shieldEffects.length = 0;
-    shieldHitEffects.length = 0;
-    
-    console.log('🎯 Estado do jogo inicializado');
-}
-
-// Inicializar sistemas do jogador
-function initializePlayerSystems() {
-    // Inicializar átomos orbitantes da Juliette
+    // Inicializar átomos da Juliette
     initializePlayerAtoms();
     
-    // Resetar movimento
-    moving = false;
-    attacking = false;
-    facingRight = true;
-    onGround = true;
-    velocityY = 0;
-    
-    // Resetar animações especiais
-    isInSpecialAnim = false;
-    specialAnimTimer = 0;
-    chainAttackCooldown = 0;
-    
-    console.log('⚡ Sistemas do jogador inicializados');
+    gameLoop();
 }
 
-// Inicializar controles
-function initializeControls() {
-    // Resetar estado das teclas
-    Object.keys(keys).forEach(key => {
-        keys[key] = false;
-    });
-    
-    // Inicializar controles mobile se necessário
-    if (mobileAdaptation.isMobile || mobileAdaptation.isTablet) {
-        console.log('📱 Inicializando controles móveis...');
-        // A inicialização mobile já foi feita no DOMContentLoaded
-    }
-    
-    console.log('🎮 Controles inicializados');
-}
-
-// Inicializar sistemas opcionais
-function initializeOptionalSystems() {
-    // Sistema de IA (opcional)
-    if (typeof initializeEnemyAI === 'function') {
-        try {
-            initializeEnemyAI();
-            console.log('🤖 Sistema de IA inicializado');
-        } catch (error) {
-            console.warn('⚠️ Erro ao inicializar IA:', error);
-        }
-    } else {
-        console.log('⚠️ Sistema de IA não disponível');
-    }
-    
-    // Sistema procedural (opcional)
-    if (typeof initializeProceduralSystem === 'function') {
-        try {
-            initializeProceduralSystem();
-            console.log('🎲 Sistema procedural inicializado');
-        } catch (error) {
-            console.warn('⚠️ Erro ao inicializar sistema procedural:', error);
-        }
-    } else {
-        console.log('⚠️ Sistema procedural não disponível');
-    }
-}
-
-// Iniciar loop principal do jogo
-function startGameLoop() {
-    if (gameRunning) {
-        console.log('⚠️ Loop do jogo já está rodando');
-        return;
-    }
-    
-    gameRunning = true;
-    console.log('🔄 Loop do jogo iniciado');
-    
-    // Iniciar o loop usando requestAnimationFrame
-    requestAnimationFrame(gameLoop);
-}
-
-// Função de fallback para inicialização forçada
-function forceGameStart() {
-    console.log('🚨 FORÇANDO INÍCIO DO JOGO...');
-    gameStarted = false;
-    imagesLoaded = totalImages; // Fingir que todas as imagens carregaram
-    initializeGame();
-}
-
-// Timeout de emergência - mais longo para dar tempo
+// Timeout de emergência - se após 10 segundos não carregou, tentar iniciar assim mesmo
 setTimeout(() => {
     if (!gameStarted) {
-        console.log('⏰ Timeout de 8 segundos - forçando início...');
-        forceGameStart();
+        console.log('⚠️ Timeout: Forçando início do jogo sem todas as imagens...');
+        startGame();
     }
-}, 8000);
-
-// Segundo timeout de emergência
-setTimeout(() => {
-    if (!gameRunning) {
-        console.log('🚨 Timeout crítico de 15 segundos - forçando início completo...');
-        forceGameStart();
-    }
-}, 15000);
+}, 10000);
 
 // Carregar imagens de fundo
 sceneImg.onload = checkImagesLoaded;

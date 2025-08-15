@@ -152,38 +152,31 @@ function handleDirectionPress(direction, isPressed, event) {
     
     console.log(`📱 Direção ${direction}: ${isPressed ? 'PRESSIONADO' : 'SOLTO'}`);
     
-    // Integração com o sistema de teclas global
-    if (typeof keys !== 'undefined') {
+    // Integração com o jogo
+    if (typeof window !== 'undefined' && window.keys) {
         if (direction === 'left') {
-            keys['ArrowLeft'] = isPressed;
-        } else if (direction === 'right') {
-            keys['ArrowRight'] = isPressed;
-        }
-    }
-    
-    // Integração direta com as variáveis globais do jogo
-    try {
-        if (direction === 'left') {
-            if (isPressed && (typeof isInSpecialAnim === 'undefined' || !isInSpecialAnim)) {
-                if (typeof moving !== 'undefined') moving = true;
-                if (typeof facingRight !== 'undefined') facingRight = false;
-                if (typeof backgroundScrolling !== 'undefined') backgroundScrolling = true;
+            window.keys['ArrowLeft'] = isPressed;
+            
+            if (isPressed && !isInSpecialAnim) {
+                moving = true;
+                facingRight = false;
+                backgroundScrolling = true;
             } else if (!mobileControlsState.buttonsPressed['right']) {
-                if (typeof moving !== 'undefined') moving = false;
-                if (typeof backgroundScrolling !== 'undefined') backgroundScrolling = false;
+                moving = false;
+                backgroundScrolling = false;
             }
         } else if (direction === 'right') {
-            if (isPressed && (typeof isInSpecialAnim === 'undefined' || !isInSpecialAnim)) {
-                if (typeof moving !== 'undefined') moving = true;
-                if (typeof facingRight !== 'undefined') facingRight = true;
-                if (typeof backgroundScrolling !== 'undefined') backgroundScrolling = true;
+            window.keys['ArrowRight'] = isPressed;
+            
+            if (isPressed && !isInSpecialAnim) {
+                moving = true;
+                facingRight = true;
+                backgroundScrolling = true;
             } else if (!mobileControlsState.buttonsPressed['left']) {
-                if (typeof moving !== 'undefined') moving = false;
-                if (typeof backgroundScrolling !== 'undefined') backgroundScrolling = false;
+                moving = false;
+                backgroundScrolling = false;
             }
         }
-    } catch (error) {
-        console.warn('⚠️ Erro ao atualizar variáveis de movimento:', error);
     }
     
     // Feedback visual
@@ -199,98 +192,36 @@ function handleActionPress(action, isPressed, event) {
     if (isPressed) {
         switch (action) {
             case 'shoot':
-                // Integração com sistema de tiro - múltiplas tentativas
-                try {
-                    if (typeof shoot === 'function') {
-                        shoot();
-                        console.log('✅ Função shoot() chamada com sucesso');
-                    } else if (typeof window.shoot === 'function') {
-                        window.shoot();
-                        console.log('✅ window.shoot() chamada com sucesso');
-                    } else {
-                        console.warn('⚠️ Função shoot() não encontrada');
-                    }
-                    
-                    // Atualizar variável de ataque
-                    if (typeof attacking !== 'undefined') {
+                // Integração com sistema de tiro
+                if (typeof shoot === 'function') {
+                    shoot();
+                    if (typeof window !== 'undefined') {
                         attacking = true;
-                    } else if (typeof window.attacking !== 'undefined') {
-                        window.attacking = true;
                     }
-                    
-                    // Simular tecla Space para compatibilidade
-                    if (typeof keys !== 'undefined') {
-                        keys['Space'] = true;
-                        setTimeout(() => {
-                            if (typeof keys !== 'undefined') {
-                                keys['Space'] = false;
-                            }
-                        }, 100);
-                    }
-                } catch (error) {
-                    console.error('❌ Erro ao executar tiro:', error);
                 }
                 break;
                 
             case 'jump':
-                // Integração com sistema de pulo - múltiplas tentativas
-                try {
-                    if (typeof jump === 'function') {
-                        jump();
-                        console.log('✅ Função jump() chamada com sucesso');
-                    } else if (typeof window.jump === 'function') {
-                        window.jump();
-                        console.log('✅ window.jump() chamada com sucesso');
-                    } else {
-                        console.warn('⚠️ Função jump() não encontrada');
-                    }
-                    
-                    // Simular tecla KeyZ para compatibilidade
-                    if (typeof keys !== 'undefined') {
-                        keys['KeyZ'] = true;
-                        setTimeout(() => {
-                            if (typeof keys !== 'undefined') {
-                                keys['KeyZ'] = false;
-                            }
-                        }, 100);
-                    }
-                } catch (error) {
-                    console.error('❌ Erro ao executar pulo:', error);
+                // Integração com sistema de pulo
+                if (typeof jump === 'function') {
+                    jump();
                 }
                 break;
                 
             case 'weapon':
-                // Trocar arma - múltiplas tentativas
-                try {
-                    if (typeof switchWeapon === 'function') {
-                        switchWeapon();
-                    } else if (typeof window.switchWeapon === 'function') {
-                        window.switchWeapon();
-                    } else if (typeof cycleWeapon === 'function') {
-                        cycleWeapon();
-                    } else if (typeof window.cycleWeapon === 'function') {
-                        window.cycleWeapon();
-                    } else {
-                        // Fallback: ciclar armas manualmente
-                        cycleThroughWeapons();
-                    }
-                } catch (error) {
-                    console.error('❌ Erro ao trocar arma:', error);
+                // Trocar arma
+                if (typeof switchWeapon === 'function') {
+                    switchWeapon();
+                } else {
+                    // Fallback para trocar arma manualmente
+                    cycleWeapon();
                 }
                 break;
         }
     } else {
         // Liberar ações
-        if (action === 'shoot') {
-            try {
-                if (typeof attacking !== 'undefined') {
-                    attacking = false;
-                } else if (typeof window.attacking !== 'undefined') {
-                    window.attacking = false;
-                }
-            } catch (error) {
-                console.warn('⚠️ Erro ao liberar ação de tiro:', error);
-            }
+        if (action === 'shoot' && typeof window !== 'undefined') {
+            attacking = false;
         }
     }
     
@@ -482,87 +413,22 @@ function updateButtonVisualState(button, isPressed) {
     }
 }
 
-// === FUNÇÃO AUXILIAR PARA CICLAR ARMAS ===
-function cycleThroughWeapons() {
-    try {
-        // Lista de armas disponíveis
-        const weapons = ['none', 'normal', 'spread', 'laser', 'machine', 'plasma', 'storm', 'nuclear'];
-        
-        // Obter arma atual
-        let currentWeapon = 'none';
-        if (typeof weaponType !== 'undefined') {
-            currentWeapon = weaponType;
-        } else if (typeof window.weaponType !== 'undefined') {
-            currentWeapon = window.weaponType;
-        }
-        
-        // Encontrar índice atual
-        let currentIndex = weapons.indexOf(currentWeapon);
-        if (currentIndex === -1) currentIndex = 0;
-        
-        // Próxima arma
-        const nextIndex = (currentIndex + 1) % weapons.length;
-        const nextWeapon = weapons[nextIndex];
-        
-        // Atualizar arma
-        if (typeof weaponType !== 'undefined') {
-            weaponType = nextWeapon;
-        } else if (typeof window.weaponType !== 'undefined') {
-            window.weaponType = nextWeapon;
-        }
-        
-        // Atualizar hasWeapon
-        const hasWeaponValue = nextWeapon !== 'none';
-        if (typeof hasWeapon !== 'undefined') {
-            hasWeapon = hasWeaponValue;
-        } else if (typeof window.hasWeapon !== 'undefined') {
-            window.hasWeapon = hasWeaponValue;
-        }
-        
-        console.log(`🔫 Arma alterada para: ${nextWeapon}`);
-        
-        // Feedback háptico
-        if (navigator.vibrate) {
-            navigator.vibrate([100, 50, 100]);
-        }
-        
-    } catch (error) {
-        console.error('❌ Erro ao ciclar armas:', error);
-    }
-}
-
 // === RESETAR TODOS OS ESTADOS DOS BOTÕES ===
 function resetAllButtonStates() {
     // Reset estado interno
     mobileControlsState.buttonsPressed = {};
     
-    // Reset variáveis do jogo - com segurança
-    try {
-        if (typeof moving !== 'undefined') {
-            moving = false;
-        }
-        if (typeof backgroundScrolling !== 'undefined') {
-            backgroundScrolling = false;
-        }
-        if (typeof attacking !== 'undefined') {
-            attacking = false;
-        }
+    // Reset variáveis do jogo
+    if (typeof window !== 'undefined') {
+        moving = false;
+        backgroundScrolling = false;
+        attacking = false;
         
-        // Reset keys - múltiplas tentativas
-        if (typeof keys !== 'undefined') {
-            keys['ArrowLeft'] = false;
-            keys['ArrowRight'] = false;
-            keys['Space'] = false;
-            keys['KeyZ'] = false;
-        }
-        if (typeof window.keys !== 'undefined') {
+        // Reset keys
+        if (window.keys) {
             window.keys['ArrowLeft'] = false;
             window.keys['ArrowRight'] = false;
-            window.keys['Space'] = false;
-            window.keys['KeyZ'] = false;
         }
-    } catch (error) {
-        console.warn('⚠️ Erro ao resetar variáveis do jogo:', error);
     }
     
     // Reset visual dos botões

@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juliette 2D - Tela Dividida: Juliette vs IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+            font-family: 'Courier New', monospace;
+            color: white;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            position: relative;
+        }
+        
+        .game-panel {
+            width: 50%;
+            height: 100vh;
+            position: relative;
+            border: 1px solid #333;
+        }
+        
+        .game-panel canvas {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            image-rendering: pixelated;
+        }
+        
+        .panel-header {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .juliette-panel .panel-header {
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+        }
+        
+        .ai-panel .panel-header {
+            color: #4ecdc4;
+            border: 1px solid #4ecdc4;
+        }
+        
+        .divider {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 4px;
+            height: 100vh;
+            background: linear-gradient(to bottom, #ff6b6b, #4ecdc4);
+            transform: translateX(-50%);
+            z-index: 200;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        
+        .divider::before {
+            content: "VS";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #000;
+            color: #fff;
+            padding: 10px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 12px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+        
+        .stats-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            z-index: 100;
+        }
+        
+        .controls-info {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            max-width: 200px;
+            z-index: 100;
+        }
+        
+        .mobile-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 12px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover, .control-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.05);
+        }
+        
+        /* Responsivo para mobile */
+        @media (max-width: 768px) {
+            #gameContainer {
+                flex-direction: column;
+            }
+            
+            .game-panel {
+                width: 100%;
+                height: 50vh;
+            }
+            
+            .divider {
+                left: 0;
+                top: 50%;
+                width: 100vw;
+                height: 4px;
+                transform: translateY(-50%);
+            }
+            
+            .divider::before {
+                left: 50%;
+                top: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Painel da Juliette (Esquerda/Superior) -->
+        <div class="game-panel juliette-panel">
+            <div class="panel-header">
+                🎮 JULIETTE PSICOSE
+            </div>
+            <div class="controls-info">
+                🏃 WASD/Setas: Mover<br>
+                🎯 Espaço: Atirar<br>
+                🦘 Z: Pular<br>
+                ⚡ C: Poder Especial<br>
+                🔄 R: Reiniciar
+            </div>
+            <canvas id="julietteCanvas" width="800" height="600"></canvas>
+            <div class="stats-panel">
+                <div>❤️ Vida: <span id="julietteHealth">100</span></div>
+                <div>⭐ Score: <span id="julietteScore">0</span></div>
+                <div>🎯 Level: <span id="julietteLevel">1</span></div>
+                <div>🔫 Arma: <span id="julietteWeapon">Normal</span></div>
+            </div>
+        </div>
+        
+        <!-- Painel dos Inimigos IA (Direita/Inferior) -->
+        <div class="game-panel ai-panel">
+            <div class="panel-header">
+                🤖 INIMIGOS IA
+            </div>
+            <div class="controls-info">
+                🧠 IA Autônoma<br>
+                🎯 Auto-Aim<br>
+                🔥 Auto-Attack<br>
+                ⚡ Power-ups<br>
+                📊 Stats Dinâmicas
+            </div>
+            <canvas id="aiCanvas" width="800" height="600"></canvas>
+            <div class="stats-panel">
+                <div>🤖 Inimigos: <span id="enemyCount">0</span></div>
+                <div>💀 Mortos: <span id="enemyKills">0</span></div>
+                <div>🧠 IA Level: <span id="aiLevel">1</span></div>
+                <div>⚡ Status: <span id="aiStatus">Ativo</span></div>
+            </div>
+        </div>
+        
+        <!-- Divisória Central -->
+        <div class="divider"></div>
+    </div>
+    
+    <!-- Controles Mobile -->
+    <div class="mobile-controls">
+        <button class="control-btn" id="pauseBtn">⏸️ PAUSE</button>
+        <button class="control-btn" id="restartBtn">🔄 RESTART</button>
+        <button class="control-btn" id="speedBtn">⚡ SPEED</button>
+        <button class="control-btn" id="aiBoostBtn">🧠 AI BOOST</button>
+    </div>
+    
+    <script>
+        // ====================================
+        // SISTEMA DE TELA DIVIDIDA
+        // ====================================
+        
+        class SplitScreenGame {
+            constructor() {
+                this.julietteCanvas = document.getElementById('julietteCanvas');
+                this.aiCanvas = document.getElementById('aiCanvas');
+                this.julietteCtx = this.julietteCanvas.getContext('2d');
+                this.aiCtx = this.aiCanvas.getContext('2d');
+                
+                this.gameSpeed = 1;
+                this.isPaused = false;
+                this.aiBoostActive = false;
+                
+                this.initializeGames();
+                this.setupEventListeners();
+                this.startGameLoops();
+                
+                console.log('🎮 Sistema de tela dividida inicializado!');
+            }
+            
+            initializeGames() {
+                // Inicializar jogo da Juliette
+                this.julietteGame = new JulietteGame(this.julietteCanvas, this.julietteCtx);
+                
+                // Inicializar jogo dos inimigos IA
+                this.aiGame = new AIEnemyGame(this.aiCanvas, this.aiCtx);
+                
+                this.resizeCanvases();
+            }
+            
+            resizeCanvases() {
+                const updateCanvas = (canvas) => {
+                    const rect = canvas.getBoundingClientRect();
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+                };
+                
+                updateCanvas(this.julietteCanvas);
+                updateCanvas(this.aiCanvas);
+            }
+            
+            setupEventListeners() {
+                // Controles mobile
+                document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
+                document.getElementById('restartBtn').addEventListener('click', () => this.restart());
+                document.getElementById('speedBtn').addEventListener('click', () => this.toggleSpeed());
+                document.getElementById('aiBoostBtn').addEventListener('click', () => this.toggleAIBoost());
+                
+                // Controles de teclado
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                
+                // Redimensionamento
+                window.addEventListener('resize', () => this.resizeCanvases());
+            }
+            
+            handleKeyDown(e) {
+                switch(e.key) {
+                    case 'p':
+                    case 'P':
+                        this.togglePause();
+                        break;
+                    case 'r':
+                    case 'R':
+                        this.restart();
+                        break;
+                    case '1':
+                        this.toggleSpeed();
+                        break;
+                    case '2':
+                        this.toggleAIBoost();
+                        break;
+                }
+                
+                // Passar teclas para o jogo da Juliette
+                this.julietteGame.handleKeyDown(e);
+            }
+            
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                const btn = document.getElementById('pauseBtn');
+                btn.innerHTML = this.isPaused ? '▶️ PLAY' : '⏸️ PAUSE';
+                btn.classList.toggle('active', this.isPaused);
+            }
+            
+            restart() {
+                this.julietteGame.restart();
+                this.aiGame.restart();
+                document.getElementById('restartBtn').classList.add('active');
+                setTimeout(() => {
+                    document.getElementById('restartBtn').classList.remove('active');
+                }, 200);
+            }
+            
+            toggleSpeed() {
+                this.gameSpeed = this.gameSpeed === 1 ? 2 : 1;
+                const btn = document.getElementById('speedBtn');
+                btn.innerHTML = this.gameSpeed === 2 ? '⚡ FAST' : '⚡ SPEED';
+                btn.classList.toggle('active', this.gameSpeed === 2);
+            }
+            
+            toggleAIBoost() {
+                this.aiBoostActive = !this.aiBoostActive;
+                this.aiGame.setBoostMode(this.aiBoostActive);
+                const btn = document.getElementById('aiBoostBtn');
+                btn.innerHTML = this.aiBoostActive ? '🧠 BOOSTED' : '🧠 AI BOOST';
+                btn.classList.toggle('active', this.aiBoostActive);
+            }
+            
+            startGameLoops() {
+                const gameLoop = () => {
+                    if (!this.isPaused) {
+                        // Atualizar jogos com velocidade ajustada
+                        for (let i = 0; i < this.gameSpeed; i++) {
+                            this.julietteGame.update();
+                            this.aiGame.update();
+                        }
+                        
+                        // Desenhar jogos
+                        this.julietteGame.draw();
+                        this.aiGame.draw();
+                        
+                        // Atualizar estatísticas
+                        this.updateStats();
+                    }
+                    
+                    requestAnimationFrame(gameLoop);
+                };
+                
+                gameLoop();
+            }
+            
+            updateStats() {
+                // Estatísticas da Juliette
+                document.getElementById('julietteHealth').textContent = this.julietteGame.player.health;
+                document.getElementById('julietteScore').textContent = this.julietteGame.score;
+                document.getElementById('julietteLevel').textContent = this.julietteGame.level;
+                document.getElementById('julietteWeapon').textContent = this.julietteGame.player.weapon;
+                
+                // Estatísticas da IA
+                document.getElementById('enemyCount').textContent = this.aiGame.enemies.length;
+                document.getElementById('enemyKills').textContent = this.aiGame.killCount;
+                document.getElementById('aiLevel').textContent = this.aiGame.difficultyLevel;
+                document.getElementById('aiStatus').textContent = this.aiGame.isActive ? 'Ativo' : 'Pausado';
+            }
+        }
+        
+        // ====================================
+        // JOGO DA JULIETTE
+        // ====================================
+        
+        class JulietteGame {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.player = new JuliettePlayer(canvas.width / 2, canvas.height - 100);
+                this.bullets = [];
+                this.enemies = [];
+                this.particles = [];
+                this.powerups = [];
+                this.score = 0;
+                this.level = 1;
+                this.enemySpawnTimer = 0;
+                this.backgroundOffset = 0;
+                this.keys = {};
+            }
+            
+            handleKeyDown(e) {
+                this.keys[e.key.toLowerCase()] = true;
+                this.keys[e.code] = true;
+            }
+            
+            update() {
+                // Atualizar jogador baseado nas teclas
+                this.updatePlayerInput();
+                this.player.update();
+                
+                // Atualizar elementos do jogo
+                this.updateBullets();
+                this.updateEnemies();
+                this.updateParticles();
+                this.spawnEnemies();
+                this.checkCollisions();
+                
+                // Limpar teclas
+                setTimeout(() => {
+                    this.keys = {};
+                }, 50);
+                
+                this.backgroundOffset += 0.5;
+            }
+            
+            updatePlayerInput() {
+                const player = this.player;
+                
+                // Movimento
+                if (this.keys['a'] || this.keys['arrowleft']) {
+                    player.moveLeft();
+                }
+                if (this.keys['d'] || this.keys['arrowright']) {
+                    player.moveRight();
+                }
+                if (this.keys['w'] || this.keys['arrowup']) {
+                    player.aimUp();
+                }
+                if (this.keys['s'] || this.keys['arrowdown']) {
+                    player.aimDown();
+                }
+                
+                // Ações
+                if (this.keys[' '] || this.keys['space']) {
+                    this.shoot();
+                }
+                if (this.keys['z']) {
+                    player.jump();
+                }
+                if (this.keys['c']) {
+                    player.useSpecialPower();
+                }
+            }
+            
+            shoot() {
+                const bullet = this.player.shoot();
+                if (bullet) {
+                    this.bullets.push(bullet);
+                }
+            }
+            
+            updateBullets() {
+                this.bullets = this.bullets.filter(bullet => {
+                    bullet.update();
+                    return bullet.y > 0 && bullet.y < this.canvas.height && 
+                           bullet.x > 0 && bullet.x < this.canvas.width;
+                });
+            }
+            
+            updateEnemies() {
+                this.enemies.forEach(enemy => enemy.update(this.player));
+                this.enemies = this.enemies.filter(enemy => enemy.health > 0);
+            }
+            
+            updateParticles() {
+                this.particles = this.particles.filter(particle => {
+                    particle.update();
+                    return particle.life > 0;
+                });
+            }
+            
+            spawnEnemies() {
+                this.enemySpawnTimer++;
+                if (this.enemySpawnTimer > 120 - this.level * 10) {
+                    this.enemySpawnTimer = 0;
+                    const enemy = new Enemy(
+                        Math.random() * this.canvas.width,
+                        -50,
+                        'soldier'
+                    );
+                    this.enemies.push(enemy);
+                }
+            }
+            
+            checkCollisions() {
+                // Colisões bullet-enemy
+                this.bullets.forEach((bullet, bIndex) => {
+                    this.enemies.forEach((enemy, eIndex) => {
+                        if (this.collision(bullet, enemy)) {
+                            // Criar partículas de explosão
+                            this.createExplosion(enemy.x, enemy.y, '#ff6b6b');
+                            enemy.takeDamage(bullet.damage);
+                            this.bullets.splice(bIndex, 1);
+                            if (enemy.health <= 0) {
+                                this.score += 100;
+                                this.enemies.splice(eIndex, 1);
+                            }
+                        }
+                    });
+                });
+                
+                // Colisões player-enemy
+                this.enemies.forEach(enemy => {
+                    if (this.collision(this.player, enemy)) {
+                        this.player.takeDamage(20);
+                        this.createExplosion(this.player.x, this.player.y, '#ffff00');
+                    }
+                });
+            }
+            
+            collision(obj1, obj2) {
+                return obj1.x < obj2.x + obj2.width &&
+                       obj1.x + obj1.width > obj2.x &&
+                       obj1.y < obj2.y + obj2.height &&
+                       obj1.y + obj1.height > obj2.y;
+            }
+            
+            createExplosion(x, y, color) {
+                for (let i = 0; i < 8; i++) {
+                    this.particles.push(new Particle(x, y, color));
+                }
+            }
+            
+            draw() {
+                // Limpar tela
+                this.ctx.fillStyle = 'linear-gradient(to bottom, #000428, #004e92)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Desenhar fundo animado
+                this.drawBackground();
+                
+                // Desenhar elementos
+                this.player.draw(this.ctx);
+                this.bullets.forEach(bullet => bullet.draw(this.ctx));
+                this.enemies.forEach(enemy => enemy.draw(this.ctx));
+                this.particles.forEach(particle => particle.draw(this.ctx));
+                this.powerups.forEach(powerup => powerup.draw(this.ctx));
+            }
+            
+            drawBackground() {
+                this.ctx.fillStyle = '#001122';
+                for (let i = 0; i < 50; i++) {
+                    const x = (i * 20 + this.backgroundOffset) % this.canvas.width;
+                    const y = (i * 15) % this.canvas.height;
+                    this.ctx.fillRect(x, y, 2, 2);
+                }
+            }
+            
+            restart() {
+                this.player = new JuliettePlayer(this.canvas.width / 2, this.canvas.height - 100);
+                this.bullets = [];
+                this.enemies = [];
+                this.particles = [];
+                this.powerups = [];
+                this.score = 0;
+                this.level = 1;
+            }
+        }
+        
+        // ====================================
+        // JOGO DOS INIMIGOS IA
+        // ====================================
+        
+        class AIEnemyGame {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.enemies = [];
+                this.bullets = [];
+                this.particles = [];
+                this.killCount = 0;
+                this.difficultyLevel = 1;
+                this.isActive = true;
+                this.spawnTimer = 0;
+                this.boostMode = false;
+                this.backgroundOffset = 0;
+            }
+            
+            setBoostMode(active) {
+                this.boostMode = active;
+            }
+            
+            update() {
+                if (!this.isActive) return;
+                
+                this.spawnAIEnemies();
+                this.updateEnemies();
+                this.updateBullets();
+                this.updateParticles();
+                this.checkAICollisions();
+                this.increaseDifficulty();
+                
+                this.backgroundOffset += 0.8;
+            }
+            
+            spawnAIEnemies() {
+                this.spawnTimer++;
+                const spawnRate = this.boostMode ? 30 : 60 - this.difficultyLevel * 5;
+                
+                if (this.spawnTimer > spawnRate && this.enemies.length < 15) {
+                    this.spawnTimer = 0;
+                    
+                    const enemyTypes = ['soldier', 'robot', 'drone', 'tank'];
+                    const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+                    
+                    const enemy = new AIEnemy(
+                        Math.random() * this.canvas.width,
+                        Math.random() * 100 - 50,
+                        type,
+                        this.difficultyLevel
+                    );
+                    
+                    this.enemies.push(enemy);
+                }
+            }
+            
+            updateEnemies() {
+                this.enemies.forEach(enemy => {
+                    enemy.updateAI(this.enemies);
+                    
+                    // IA atira automaticamente
+                    if (Math.random() < 0.02 + this.difficultyLevel * 0.005) {
+                        const bullet = enemy.shoot();
+                        if (bullet) this.bullets.push(bullet);
+                    }
+                });
+                
+                // Remover inimigos destruídos
+                this.enemies = this.enemies.filter(enemy => {
+                    if (enemy.health <= 0) {
+                        this.killCount++;
+                        this.createExplosion(enemy.x, enemy.y, '#4ecdc4');
+                        return false;
+                    }
+                    return true;
+                });
+            }
+            
+            updateBullets() {
+                this.bullets = this.bullets.filter(bullet => {
+                    bullet.update();
+                    return bullet.y > -50 && bullet.y < this.canvas.height + 50 && 
+                           bullet.x > -50 && bullet.x < this.canvas.width + 50;
+                });
+            }
+            
+            updateParticles() {
+                this.particles = this.particles.filter(particle => {
+                    particle.update();
+                    return particle.life > 0;
+                });
+            }
+            
+            checkAICollisions() {
+                // IA vs IA combat
+                this.bullets.forEach((bullet, bIndex) => {
+                    this.enemies.forEach((enemy, eIndex) => {
+                        if (this.collision(bullet, enemy) && bullet.owner !== enemy) {
+                            enemy.takeDamage(bullet.damage);
+                            this.bullets.splice(bIndex, 1);
+                            this.createExplosion(enemy.x, enemy.y, '#ff9999');
+                        }
+                    });
+                });
+                
+                // Colisões entre inimigos
+                for (let i = 0; i < this.enemies.length; i++) {
+                    for (let j = i + 1; j < this.enemies.length; j++) {
+                        if (this.collision(this.enemies[i], this.enemies[j])) {
+                            // Separar inimigos que colidem
+                            const dx = this.enemies[j].x - this.enemies[i].x;
+                            const dy = this.enemies[j].y - this.enemies[i].y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < 50) {
+                                this.enemies[i].x -= dx * 0.1;
+                                this.enemies[i].y -= dy * 0.1;
+                                this.enemies[j].x += dx * 0.1;
+                                this.enemies[j].y += dy * 0.1;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            collision(obj1, obj2) {
+                return obj1.x < obj2.x + obj2.width &&
+                       obj1.x + obj1.width > obj2.x &&
+                       obj1.y < obj2.y + obj2.height &&
+                       obj1.y + obj1.height > obj2.y;
+            }
+            
+            increaseDifficulty() {
+                if (this.killCount > 0 && this.killCount % 10 === 0) {
+                    this.difficultyLevel = Math.min(10, Math.floor(this.killCount / 10) + 1);
+                }
+            }
+            
+            createExplosion(x, y, color) {
+                for (let i = 0; i < 6; i++) {
+                    this.particles.push(new Particle(x, y, color));
+                }
+            }
+            
+            draw() {
+                // Fundo diferenciado para IA
+                this.ctx.fillStyle = '#001100';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Fundo animado IA
+                this.drawAIBackground();
+                
+                // Desenhar elementos
+                this.enemies.forEach(enemy => enemy.draw(this.ctx));
+                this.bullets.forEach(bullet => bullet.draw(this.ctx));
+                this.particles.forEach(particle => particle.draw(this.ctx));
+                
+                // Overlay de boost
+                if (this.boostMode) {
+                    this.ctx.fillStyle = 'rgba(76, 205, 196, 0.1)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+            }
+            
+            drawAIBackground() {
+                this.ctx.fillStyle = '#004400';
+                for (let i = 0; i < 30; i++) {
+                    const x = (i * 30 + this.backgroundOffset) % this.canvas.width;
+                    const y = (i * 25) % this.canvas.height;
+                    this.ctx.fillRect(x, y, 1, 1);
+                }
+                
+                // Grid pattern
+                this.ctx.strokeStyle = 'rgba(76, 205, 196, 0.1)';
+                this.ctx.lineWidth = 0.5;
+                for (let x = 0; x < this.canvas.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y < this.canvas.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+            }
+            
+            restart() {
+                this.enemies = [];
+                this.bullets = [];
+                this.particles = [];
+                this.killCount = 0;
+                this.difficultyLevel = 1;
+                this.spawnTimer = 0;
+            }
+        }
+        
+        // ====================================
+        // CLASSES DE PERSONAGENS
+        // ====================================
+        
+        class JuliettePlayer {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 60;
+                this.health = 100;
+                this.maxHealth = 100;
+                this.weapon = 'Normal';
+                this.speed = 5;
+                this.jumpForce = 0;
+                this.onGround = true;
+                this.aimAngle = 0;
+                this.shootCooldown = 0;
+                this.specialPower = 100;
+            }
+            
+            moveLeft() {
+                this.x = Math.max(0, this.x - this.speed);
+            }
+            
+            moveRight() {
+                this.x = Math.min(800 - this.width, this.x + this.speed);
+            }
+            
+            aimUp() {
+                this.aimAngle = Math.max(-Math.PI/2, this.aimAngle - 0.1);
+            }
+            
+            aimDown() {
+                this.aimAngle = Math.min(Math.PI/2, this.aimAngle + 0.1);
+            }
+            
+            jump() {
+                if (this.onGround) {
+                    this.jumpForce = -15;
+                    this.onGround = false;
+                }
+            }
+            
+            shoot() {
+                if (this.shootCooldown <= 0) {
+                    this.shootCooldown = 10;
+                    return new Bullet(
+                        this.x + this.width/2,
+                        this.y + this.height/2,
+                        Math.cos(this.aimAngle) * 10,
+                        Math.sin(this.aimAngle) * 10,
+                        '#ff6b6b',
+                        25
+                    );
+                }
+                return null;
+            }
+            
+            useSpecialPower() {
+                if (this.specialPower >= 50) {
+                    this.specialPower -= 50;
+                    // Implementar poder especial
+                    return true;
+                }
+                return false;
+            }
+            
+            takeDamage(damage) {
+                this.health = Math.max(0, this.health - damage);
+            }
+            
+            update() {
+                // Gravidade e física
+                if (!this.onGround) {
+                    this.jumpForce += 0.8; // gravidade
+                    this.y += this.jumpForce;
+                    
+                    if (this.y >= 540) { // chão
+                        this.y = 540;
+                        this.onGround = true;
+                        this.jumpForce = 0;
+                    }
+                }
+                
+                // Cooldowns
+                if (this.shootCooldown > 0) this.shootCooldown--;
+                if (this.specialPower < 100) this.specialPower += 0.2;
+            }
+            
+            draw(ctx) {
+                // Corpo da Juliette
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Detalhes
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(this.x + 10, this.y + 10, 8, 8); // olho esquerdo
+                ctx.fillRect(this.x + 22, this.y + 10, 8, 8); // olho direito
+                
+                // Cabelo
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(this.x - 5, this.y - 10, this.width + 10, 15);
+                
+                // Arma (indicador de mira)
+                ctx.strokeStyle = '#ff9999';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width/2, this.y + this.height/2);
+                ctx.lineTo(
+                    this.x + this.width/2 + Math.cos(this.aimAngle) * 30,
+                    this.y + this.height/2 + Math.sin(this.aimAngle) * 30
+                );
+                ctx.stroke();
+                
+                // Barra de vida
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.x, this.y - 20, this.width, 5);
+                ctx.fillStyle = this.health > 50 ? '#4CAF50' : this.health > 25 ? '#FFA500' : '#F44336';
+                ctx.fillRect(this.x, this.y - 20, (this.width * this.health) / this.maxHealth, 5);
+            }
+        }
+        
+        class AIEnemy {
+            constructor(x, y, type, level) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.level = level;
+                this.width = 30;
+                this.height = 40;
+                this.health = 50 + level * 10;
+                this.maxHealth = this.health;
+                this.speed = 2 + level * 0.5;
+                this.target = null;
+                this.shootCooldown = 0;
+                this.aiTimer = 0;
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.color = this.getTypeColor();
+            }
+            
+            getTypeColor() {
+                const colors = {
+                    soldier: '#4ecdc4',
+                    robot: '#95a5a6',
+                    drone: '#9b59b6',
+                    tank: '#e74c3c'
+                };
+                return colors[this.type] || '#4ecdc4';
+            }
+            
+            updateAI(allEnemies) {
+                this.aiTimer++;
+                
+                // Comportamento baseado no tipo
+                switch(this.type) {
+                    case 'soldier':
+                        this.soldierAI(allEnemies);
+                        break;
+                    case 'robot':
+                        this.robotAI(allEnemies);
+                        break;
+                    case 'drone':
+                        this.droneAI(allEnemies);
+                        break;
+                    case 'tank':
+                        this.tankAI(allEnemies);
+                        break;
+                }
+                
+                // Manter dentro dos limites
+                this.x = Math.max(0, Math.min(800 - this.width, this.x));
+                this.y = Math.max(0, Math.min(600 - this.height, this.y));
+                
+                if (this.shootCooldown > 0) this.shootCooldown--;
+            }
+            
+            soldierAI(allEnemies) {
+                // Movimento padrão
+                this.x += this.direction * this.speed;
+                
+                // Mudar direção nas bordas ou ocasionalmente
+                if (this.x <= 0 || this.x >= 800 - this.width || Math.random() < 0.01) {
+                    this.direction *= -1;
+                }
+                
+                // Buscar alvo próximo
+                this.findNearestTarget(allEnemies);
+            }
+            
+            robotAI(allEnemies) {
+                // Movimento mais preciso
+                const centerX = 400;
+                const centerY = 300;
+                
+                if (this.x < centerX) this.x += this.speed * 0.8;
+                if (this.x > centerX) this.x -= this.speed * 0.8;
+                if (this.y < centerY) this.y += this.speed * 0.6;
+                if (this.y > centerY) this.y -= this.speed * 0.6;
+                
+                this.findNearestTarget(allEnemies);
+            }
+            
+            droneAI(allEnemies) {
+                // Movimento aéreo
+                this.y += Math.sin(this.aiTimer * 0.1) * 2;
+                this.x += Math.cos(this.aiTimer * 0.05) * 3;
+                
+                this.findNearestTarget(allEnemies);
+            }
+            
+            tankAI(allEnemies) {
+                // Movimento lento mas poderoso
+                this.x += this.direction * (this.speed * 0.5);
+                
+                if (this.x <= 0 || this.x >= 800 - this.width) {
+                    this.direction *= -1;
+                }
+                
+                this.findNearestTarget(allEnemies);
+            }
+            
+            findNearestTarget(allEnemies) {
+                let nearest = null;
+                let nearestDistance = Infinity;
+                
+                allEnemies.forEach(enemy => {
+                    if (enemy !== this && enemy.type !== this.type) {
+                        const distance = Math.sqrt(
+                            (enemy.x - this.x) ** 2 + (enemy.y - this.y) ** 2
+                        );
+                        if (distance < nearestDistance) {
+                            nearest = enemy;
+                            nearestDistance = distance;
+                        }
+                    }
+                });
+                
+                this.target = nearest;
+            }
+            
+            shoot() {
+                if (this.shootCooldown <= 0 && this.target) {
+                    this.shootCooldown = 30 + Math.random() * 30;
+                    
+                    const dx = this.target.x - this.x;
+                    const dy = this.target.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    return new Bullet(
+                        this.x + this.width/2,
+                        this.y + this.height/2,
+                        (dx / distance) * 6,
+                        (dy / distance) * 6,
+                        this.color,
+                        20,
+                        this
+                    );
+                }
+                return null;
+            }
+            
+            takeDamage(damage) {
+                this.health -= damage;
+            }
+            
+            draw(ctx) {
+                // Corpo do inimigo
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Detalhes baseados no tipo
+                ctx.fillStyle = '#fff';
+                switch(this.type) {
+                    case 'soldier':
+                        ctx.fillRect(this.x + 8, this.y + 5, 4, 4);
+                        ctx.fillRect(this.x + 18, this.y + 5, 4, 4);
+                        break;
+                    case 'robot':
+                        ctx.fillRect(this.x + 6, this.y + 4, 6, 6);
+                        ctx.fillRect(this.x + 18, this.y + 4, 6, 6);
+                        break;
+                    case 'drone':
+                        ctx.fillRect(this.x + 10, this.y + 8, 10, 4);
+                        break;
+                    case 'tank':
+                        ctx.fillRect(this.x, this.y - 5, this.width, 5);
+                        break;
+                }
+                
+                // Indicador de alvo
+                if (this.target) {
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y + this.height/2);
+                    ctx.lineTo(this.target.x + this.target.width/2, this.target.y + this.target.height/2);
+                    ctx.stroke();
+                }
+                
+                // Barra de vida
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.x, this.y - 10, this.width, 3);
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(this.x, this.y - 10, (this.width * this.health) / this.maxHealth, 3);
+            }
+        }
+        
+        class Enemy extends AIEnemy {
+            constructor(x, y, type) {
+                super(x, y, type, 1);
+            }
+            
+            update(player) {
+                this.y += this.speed;
+                this.target = player;
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(this.x + 8, this.y + 8, 4, 4);
+                ctx.fillRect(this.x + 18, this.y + 8, 4, 4);
+                
+                // Barra de vida
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.x, this.y - 8, this.width, 3);
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(this.x, this.y - 8, (this.width * this.health) / this.maxHealth, 3);
+            }
+        }
+        
+        class Bullet {
+            constructor(x, y, vx, vy, color, damage, owner = null) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.damage = damage;
+                this.owner = owner;
+                this.width = 6;
+                this.height = 6;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+                
+                // Efeito de rastro
+                ctx.fillStyle = this.color + '66';
+                ctx.fillRect(this.x - this.vx - this.width/2, this.y - this.vy - this.height/2, this.width, this.height);
+            }
+        }
+        
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.color = color;
+                this.life = 30 + Math.random() * 30;
+                this.maxLife = this.life;
+                this.size = 2 + Math.random() * 4;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.life--;
+            }
+            
+            draw(ctx) {
+                const alpha = this.life / this.maxLife;
+                ctx.fillStyle = this.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+            }
+        }
+        
+        // ====================================
+        // INICIALIZAÇÃO
+        // ====================================
+        
+        window.addEventListener('load', () => {
+            console.log('🎮 Iniciando sistema de tela dividida...');
+            new SplitScreenGame();
+        });
+        
+        // Prevenir zoom em dispositivos móveis
+        document.addEventListener('touchstart', function (event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        });
+        
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>
