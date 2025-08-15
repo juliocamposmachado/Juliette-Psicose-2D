@@ -4537,6 +4537,11 @@ function gameLoop() {
         updateAISystem();
     }
     
+    // === ATUALIZAR SISTEMA PROCEDURAL ===
+    if (typeof updateProceduralSystem === 'function') {
+        updateProceduralSystem();
+    }
+    
     // === ATUALIZAR SISTEMA DE BOMBA ===
     if (bombCooldown > 0) {
         bombCooldown--;
@@ -4729,6 +4734,21 @@ function startGame() {
             if (typeof initializeEnemyAI === 'function') {
                 initializeEnemyAI();
                 console.log('✅ Sistema de IA carregado com atraso!');
+            }
+        }, 2000);
+    }
+    
+    // === INICIALIZAR SISTEMA PROCEDURAL ===
+    console.log('🎲 Inicializando sistema procedural...');
+    if (typeof initializeProceduralSystem === 'function') {
+        initializeProceduralSystem();
+        console.log('✅ Sistema procedural inicializado!');
+    } else {
+        console.warn('⚠️ Sistema procedural não encontrado - aguardando carregamento...');
+        setTimeout(() => {
+            if (typeof initializeProceduralSystem === 'function') {
+                initializeProceduralSystem();
+                console.log('✅ Sistema procedural carregado com atraso!');
             }
         }, 2000);
     }
