@@ -2068,6 +2068,11 @@ function updateEnemies() {
             enemies.splice(i, 1);
         }
     }
+    
+    // === ATUALIZAR INIMIGOS DO SISTEMA DE IA ===
+    if (typeof updateAIEnemies === 'function') {
+        updateAIEnemies();
+    }
 }
 
 // === NOVA FUNÇÃO: ATUALIZAR ÁTOMOS ORBITANTES ===
@@ -4527,6 +4532,11 @@ function gameLoop() {
     updateLavaDisc(); // NOVO: Atualizar disco de lava
     updatePlayerAtoms(); // NOVO: Atualizar átomos orbitantes da Juliette
     
+    // === ATUALIZAR SISTEMA DE IA ===
+    if (typeof updateAISystem === 'function') {
+        updateAISystem();
+    }
+    
     // === ATUALIZAR SISTEMA DE BOMBA ===
     if (bombCooldown > 0) {
         bombCooldown--;
@@ -4706,6 +4716,22 @@ function startGame() {
     
     // Inicializar átomos da Juliette
     initializePlayerAtoms();
+    
+    // === INICIALIZAR SISTEMA DE IA ===
+    console.log('🤖 Inicializando sistema de IA...');
+    if (typeof initializeEnemyAI === 'function') {
+        initializeEnemyAI();
+        console.log('✅ Sistema de IA inicializado!');
+    } else {
+        console.warn('⚠️ Sistema de IA não encontrado - aguardando carregamento...');
+        // Tentar novamente após 2 segundos
+        setTimeout(() => {
+            if (typeof initializeEnemyAI === 'function') {
+                initializeEnemyAI();
+                console.log('✅ Sistema de IA carregado com atraso!');
+            }
+        }, 2000);
+    }
     
     gameLoop();
 }
