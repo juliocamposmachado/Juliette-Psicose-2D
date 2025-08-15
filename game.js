@@ -208,6 +208,7 @@ function adaptCanvasForMobile() {
     CANVAS_WIDTH = mobileAdaptation.viewportWidth;
     CANVAS_HEIGHT = mobileAdaptation.viewportHeight;
     
+<<<<<<< HEAD
     // Configurar canvas com alta DPI
     const devicePixelRatio = window.devicePixelRatio || 1;
     canvas.width = CANVAS_WIDTH * devicePixelRatio;
@@ -218,6 +219,11 @@ function adaptCanvasForMobile() {
     ctx.scale(devicePixelRatio, devicePixelRatio);
     
     // Configurar estilos CSS
+=======
+    // Configurar canvas
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
     canvas.style.width = '100vw';
     canvas.style.height = '100vh';
     canvas.style.display = 'block';
@@ -225,7 +231,10 @@ function adaptCanvasForMobile() {
     canvas.style.top = '0';
     canvas.style.left = '0';
     canvas.style.zIndex = '1';
+<<<<<<< HEAD
     canvas.style.imageRendering = 'pixelated';
+=======
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
     
     // Configurar container
     gameContainer.style.width = '100vw';
@@ -236,7 +245,11 @@ function adaptCanvasForMobile() {
     gameContainer.style.margin = '0';
     gameContainer.style.padding = '0';
     
+<<<<<<< HEAD
     console.log(`🎮 Canvas mobile adaptado: ${CANVAS_WIDTH}x${CANVAS_HEIGHT} (DPR: ${devicePixelRatio})`);
+=======
+    console.log(`🎮 Canvas adaptado: ${CANVAS_WIDTH}x${CANVAS_HEIGHT}`);
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
 }
 
 // === OCULTAR ELEMENTOS DESKTOP ===
@@ -2062,6 +2075,7 @@ function updateEnemies() {
         // === ATUALIZAR ÁTOMOS ORBITANTES ===
         updateEnemyAtoms(enemy, time);
         
+<<<<<<< HEAD
         // === APLICAR IA AVANÇADA DO GEMINI ===
         // Usar IA avançada ocasionalmente para não sobrecarregar a API
         if (Math.random() < 0.1) { // 10% de chance por frame
@@ -2097,6 +2111,14 @@ function updateEnemies() {
                 createEnemyBullet(enemy.x, enemy.y + enemy.size/2, -5, 0);
             }
             
+=======
+        // IA básica do inimigo
+        if (enemy.shootCooldown > 0) enemy.shootCooldown--;
+        
+        // Inimigo atira ocasionalmente
+        if (Math.random() < enemy.shootChance && enemy.shootCooldown === 0) {
+            createEnemyBullet(enemy.x, enemy.y + enemy.size/2, -5, 0);
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
             enemy.shootCooldown = 60;
         }
         
@@ -3196,13 +3218,18 @@ function drawEnemies() {
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
+<<<<<<< HEAD
         // === INIMIGOS EM FORMA DE TRIÂNGULO ===
+=======
+        // Corpo do inimigo com efeito piscante
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
         const baseAlpha = pulseIntensity;
         if (enemy.type === 'robot') {
             ctx.fillStyle = `rgba(0, 0, ${Math.floor(255 * glowIntensity)}, ${baseAlpha})`;
         } else {
             ctx.fillStyle = `rgba(${Math.floor(255 * glowIntensity)}, 0, 0, ${baseAlpha})`;
         }
+<<<<<<< HEAD
         
         // Desenhar triângulo ao invés de quadrado
         const centerX = enemy.x + enemy.size / 2;
@@ -3243,6 +3270,21 @@ function drawEnemies() {
         ctx.closePath();
         ctx.fill();
         
+=======
+        ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+        
+        // Linhas de energia nos inimigos
+        for (let i = 0; i < enemy.size; i += 8) {
+            const lineIntensity = Math.sin(time * 3 + i * 0.2) * 0.4 + 0.6;
+            if (enemy.type === 'robot') {
+                ctx.fillStyle = `rgba(0, 100, ${Math.floor(255 * lineIntensity)}, ${lineIntensity})`;
+            } else {
+                ctx.fillStyle = `rgba(${Math.floor(255 * lineIntensity)}, 100, 0, ${lineIntensity})`;
+            }
+            ctx.fillRect(enemy.x + i, enemy.y + 2, 2, enemy.size - 4);
+        }
+        
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
         ctx.restore();
         
         // Barra de vida do inimigo com efeito cyberpunk
@@ -3257,13 +3299,18 @@ function drawEnemies() {
         ctx.fillStyle = `rgba(0, ${Math.floor(255 * healthGlow)}, 0, ${healthGlow})`;
         ctx.fillRect(enemy.x, enemy.y - 8, (enemy.size * healthPercent), 4);
         
+<<<<<<< HEAD
         // === OLHOS CYBERPUNK ADAPTADOS PARA TRIÂNGULO ===
+=======
+        // Olhos cyberpunk piscantes
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
         const eyeGlow = Math.sin(time * 6 + enemy.x * 0.02) * 0.4 + 0.6;
         if (enemy.type === 'robot') {
             ctx.fillStyle = `rgba(0, 255, 255, ${eyeGlow})`;
         } else {
             ctx.fillStyle = `rgba(255, 255, 0, ${eyeGlow})`;
         }
+<<<<<<< HEAD
         
         // Posicionar olhos no terço superior do triângulo
         const eyeY = centerY - triangleSize * 0.15;
@@ -3278,6 +3325,10 @@ function drawEnemies() {
         ctx.beginPath();
         ctx.arc(centerX + eyeSpacing, eyeY, 3, 0, Math.PI * 2);
         ctx.fill();
+=======
+        ctx.fillRect(enemy.x + 3, enemy.y + 3, 4, 4);
+        ctx.fillRect(enemy.x + enemy.size - 7, enemy.y + 3, 4, 4);
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
         
         // Partículas de energia flutuando ao redor dos inimigos
         for (let i = 0; i < 2; i++) {
@@ -4611,6 +4662,7 @@ function gameLoop() {
     // Spawn de inimigos
     spawnEnemies();
     
+<<<<<<< HEAD
     // === NOVO: GERAÇÃO PROCEDURAL COM GEMINI ===
     if (Math.random() < 0.1) { // 10% de chance por frame
         generateProceduralContent().catch(error => {
@@ -4625,6 +4677,10 @@ function gameLoop() {
     // Verificar colisões
     checkCollisions();
     checkProceduralObstacleCollisions(); // NOVO: Colisões com obstáculos procedurais
+=======
+    // Verificar colisões
+    checkCollisions();
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
     
     // Atualiza animações especiais
     updateSpecialAnimations();
@@ -5097,6 +5153,7 @@ window.addEventListener('orientationchange', () => {
     setTimeout(resizeCanvas, 100); // Pequeno delay para orientação mudar completamente
 });
 
+<<<<<<< HEAD
 // === FUNÇÃO PARA REDIMENSIONAMENTO CHAMADA PELO FULLSCREEN-HANDLER ===
 function resizeCanvas(width, height, pixelRatio) {
     // Atualizar variáveis globais do canvas
@@ -5122,6 +5179,8 @@ function resizeCanvas(width, height, pixelRatio) {
     console.log(`🎮 Canvas redimensionado: ${CANVAS_WIDTH}x${CANVAS_HEIGHT} (DPR: ${dpr})`);
 }
 
+=======
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
 // Inicializar botão de tela cheia e redimensionamento quando DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
     const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -6912,6 +6971,7 @@ function resetAllScreenSettings() {
     
     console.log('🔄 Todas as configurações de tela foram resetadas!');
 }
+<<<<<<< HEAD
 
 // === SISTEMA DE IA AVANÇADA COM GOOGLE GEMINI ===
 
@@ -8455,3 +8515,5 @@ function initializeShapeDefinitions() {
     
     console.log('🔷 Definições de formas geométricas inicializadas');
 }
+=======
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827

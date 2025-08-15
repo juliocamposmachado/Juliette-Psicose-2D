@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* === SISTEMA COMPLETO DE TELA 100% UNIVERSAL === */
 
 /* Reset completo para remover todas as margens e paddings */
@@ -68,6 +69,24 @@ body {
     height: 100vh; /* Fallback para navegadores antigos */
     height: 100dvh; /* Dynamic viewport height para mobile moderno */
     height: -webkit-fill-available; /* Safari iOS */
+=======
+/* Estilo para o jogo Juliette Psicose 2D */
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    position: relative;
+    /* iOS Safari notch support */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    /* Remove padding mobile para tela cheia */
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
 }
 
 /* Classe para elementos apenas desktop */
@@ -107,6 +126,7 @@ body.pwa-mode .desktop-only {
     }
 }
 
+<<<<<<< HEAD
 /* === GAME CONTAINER - SEMPRE 100% DA TELA === */
 #gameContainer {
     /* Posicionamento fixo para ocupar toda tela */
@@ -133,10 +153,23 @@ body.pwa-mode .desktop-only {
     
     /* Background e layout */
     background: #000;
+=======
+#gameContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+    background: #000;
+    padding: 2px;
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
     display: flex;
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
+<<<<<<< HEAD
     
     /* Z-index para ficar por trás dos controles */
     z-index: 1;
@@ -248,6 +281,58 @@ canvas {
 
 /* === CANVAS JÁ DEFINIDO ACIMA - ESTA SEÇÃO REMOVIDA PARA EVITAR CONFLITOS === */
 
+=======
+}
+
+/* Container mobile fullscreen */
+@media (max-width: 768px) {
+    body {
+        padding: 0; /* Remove padding em mobile */
+        /* Notch support para iOS */
+        padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+    }
+    
+    #gameContainer {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+        /* Garante que use toda a área disponível */
+        max-width: none;
+        max-height: none;
+    }
+}
+
+canvas {
+    background: #222;
+    border: 2px solid #555;
+    border-radius: 5px;
+    image-rendering: pixelated;
+    display: block;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Mudado de fill para contain para evitar distorção */
+    position: relative;
+}
+
+/* Canvas mobile fullscreen */
+@media (max-width: 768px) {
+    canvas {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        object-fit: cover; /* Usa toda área disponível em mobile */
+        /* Força uso de toda viewport disponível */
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+    }
+}
+
+>>>>>>> ce5b39cb910dd86effc9b261c66604a0330e4827
 /* Informações do jogo */
 .game-info {
     position: absolute;
