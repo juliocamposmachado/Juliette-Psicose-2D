@@ -429,7 +429,11 @@ const gameState = {
     hitsReceived: 0, // Contador de tiros recebidos
     maxHitsPhase1: 10, // Tiros para morrer na fase 1
     maxHitsPhase2: 1000, // Tiros para morrer na fase 2
-    phase2StartTime: 300 // 5 minutos = 300 segundos
+    phase2StartTime: 300, // 5 minutos = 300 segundos
+    // === SISTEMA DE PROGRESSÃO DE FORMAS DOS INIMIGOS ===
+    enemiesDefeated: 0, // Contador total de inimigos derrotados
+    currentEnemyShape: 'triangle', // Forma atual dos inimigos: triangle, circle, square, boss
+    bossActive: false // Se há um chefão ativo na tela
 };
 
 // === SISTEMA DE SONS ===
@@ -1874,8 +1878,73 @@ function updatePlayerPhysics() {
     }
 }
 
+// === FUNÇÃO PARA DETERMINAR FORMA BASEADA EM PROGRESSÃO ===
+function getEnemyShapeForProgression() {
+    const defeated = gameState.enemiesDefeated;
+    
+    if (defeated >= 90) {
+        // Após 90 inimigos derrotados = CHEFÃO
+        return 'boss';
+    } else if (defeated >= 60) {
+        // 60-89 inimigos derrotados = QUADRADO
+        return 'square';
+    } else if (defeated >= 30) {
+        // 30-59 inimigos derrotados = CÍRCULO
+        return 'circle';
+    } else {
+        // 0-29 inimigos derrotados = TRIÂNGULO
+        return 'triangle';
+    }
+}
+
+// === ATUALIZAR FORMA ATUAL DOS INIMIGOS ===
+function updateCurrentEnemyShape() {
+    const newShape = getEnemyShapeForProgression();
+    
+    if (newShape !== gameState.currentEnemyShape) {
+        gameState.currentEnemyShape = newShape;
+        
+        // Log da mudança de forma
+        console.log(`🔄 MUDANÇA DE FORMA! ${gameState.enemiesDefeated} inimigos derrotados → Nova forma: ${newShape.toUpperCase()}`);
+        
+        // Som especial para mudança de forma
+        playSound('levelUp', 600, 800);
+        
+        // Efeito visual de transição
+        createShapeTransitionEffect();
+    }
+}
+
+// === CRIAR EFEITO VISUAL DE TRANSIÇÃO DE FORMA ===
+function createShapeTransitionEffect() {
+    const centerX = CANVAS_WIDTH / 2;
+    const centerY = CANVAS_HEIGHT / 2;
+    
+    // Criar partículas de transição
+    for (let i = 0; i < 25; i++) {
+        particles.push({
+            x: centerX + (Math.random() - 0.5) * 300,
+            y: centerY + (Math.random() - 0.5) * 200,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            life: 80,
+            color: gameState.currentEnemyShape === 'boss' ? '#FFD700' : '#00FFFF',
+            size: Math.random() * 6 + 3,
+            type: 'shape_transition'
+        });
+    }
+}
+
 // Criar inimigo
 function createEnemy(type = 'soldier') {
+    // === SISTEMA DE PROGRESSÃO: DETERMINAR FORMA E TIPO BASEADO EM INIMIGOS DERROTADOS ===
+    updateCurrentEnemyShape();
+    
+    // Se chegou no chefão e não há um ativo, criar chefão
+    if (gameState.currentEnemyShape === 'boss' && !gameState.bossActive) {
+        return createBossEnemy();
+    }
+    
     const enemyTypes = {
         soldier: {
             health: 30,
@@ -1892,11 +1961,37 @@ function createEnemy(type = 'soldier') {
             color: '#4444ff',
             size: 30,
             shootChance: 0.01
+        },
+        // === NOVO TIPO: CHEFÃO ===
+        boss: {
+            health: 500,
+            damage: 50,
+            speed: 0.5,
+            color: '#FFD700',
+            size: 80,
+            shootChance: 0.05
         }
     };
     
-    const enemy = enemyTypes[type];
-    enemies.push({
+    // === DETERMINAR TIPO BASEADO NA FORMA DE PROGRESSÃO ===
+    let finalType = type;
+    if (gameState.currentEnemyShape !== 'boss') {
+        // Para formas não-chefão, determinar tipo baseado na forma
+        switch (gameState.currentEnemyShape) {
+            case 'triangle': // 0-29 derrotas: soldados básicos
+                finalType = Math.random() < 0.8 ? 'soldier' : 'robot';
+                break;
+            case 'circle': // 30-59 derrotas: mix balanceado
+                finalType = Math.random() < 0.6 ? 'soldier' : 'robot';
+                break;
+            case 'square': // 60-89 derrotas: mais robôs
+                finalType = Math.random() < 0.3 ? 'soldier' : 'robot';
+                break;
+        }
+    }
+    
+    const enemy = enemyTypes[finalType];
+    const newEnemy = {
         x: CANVAS_WIDTH + 50,
         y: Math.random() * (CANVAS_HEIGHT - 200) + 100,
         vx: -enemy.speed,
@@ -1906,23 +2001,30 @@ function createEnemy(type = 'soldier') {
         damage: enemy.damage,
         color: enemy.color,
         size: enemy.size,
-        type: type,
+        type: finalType,
         shootChance: enemy.shootChance,
         shootCooldown: 0,
         
+        // === PROPRIEDADES DE PROGRESSÃO ===
+        shape: gameState.currentEnemyShape, // Forma visual baseada na progressão
+        progressionLevel: gameState.enemiesDefeated, // Nível quando foi criado
+        
         // === NOVO: SISTEMA DE ÁTOMOS ORBITANTES ===
         atomOrbs: {
-            count: type === 'robot' ? 4 : 3, // Robôs têm mais átomos
+            count: finalType === 'robot' ? 4 : 3, // Robôs têm mais átomos
             orbs: [],
-            rotationSpeed: type === 'robot' ? 0.03 : 0.05, // Robôs giram mais devagar
-            radius: type === 'robot' ? 45 : 35,
+            rotationSpeed: finalType === 'robot' ? 0.03 : 0.05, // Robôs giram mais devagar
+            radius: finalType === 'robot' ? 45 : 35,
             initialized: false
         }
-    });
+    };
+    
+    enemies.push(newEnemy);
     
     // Inicializar átomos orbitantes
-    const newEnemy = enemies[enemies.length - 1];
     initializeEnemyAtoms(newEnemy);
+    
+    console.log(`👾 Inimigo criado: ${finalType} em forma de ${gameState.currentEnemyShape} (${gameState.enemiesDefeated} derrotas)`);
 }
 
 // === NOVA FUNÇÃO: INICIALIZAR ÁTOMOS ORBITANTES DOS INIMIGOS ===
