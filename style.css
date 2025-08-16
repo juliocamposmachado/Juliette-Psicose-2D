@@ -178,9 +178,10 @@ canvas::after {
     left: 0;
     right: 0;
     height: 200px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6));
-    backdrop-filter: blur(5px);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.85));
+    backdrop-filter: blur(8px);
+    border-top: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.5);
     display: none;
     z-index: 1000;
     pointer-events: none;
@@ -215,8 +216,8 @@ canvas::after {
 
 .dpad-button {
     position: absolute;
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.6);
     border-radius: 8px;
     color: white;
     font-weight: bold;
@@ -226,6 +227,7 @@ canvas::after {
     justify-content: center;
     user-select: none;
     touch-action: manipulation;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .dpad-button:active {
@@ -275,8 +277,8 @@ canvas::after {
 }
 
 .action-button {
-    background: rgba(255, 255, 0, 0.3);
-    border: 2px solid rgba(255, 255, 0, 0.6);
+    background: rgba(255, 255, 0, 0.4);
+    border: 2px solid rgba(255, 255, 0, 0.8);
     border-radius: 50%;
     color: white;
     font-weight: bold;
@@ -288,6 +290,8 @@ canvas::after {
     touch-action: manipulation;
     min-width: 60px;
     min-height: 60px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .action-button:active {
@@ -312,14 +316,17 @@ canvas::after {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.4);
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.6);
     border-radius: 8px;
     color: white;
     padding: 10px;
     font-size: 12px;
+    font-weight: bold;
     z-index: 1001;
     display: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
 }
 
 .controls-toggle.mobile {
