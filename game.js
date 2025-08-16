@@ -3631,7 +3631,10 @@ function initMobileControls() {
         mobileControls.classList.add('active');
         controlsToggle.textContent = '📱 OCULTAR';
         
-        console.log('Controles móveis ativados automaticamente');
+        // === NOVO: INICIAR PAINEL DE CONTROLES FECHADO EM MOBILE ===
+        controlsPanelVisible = false;
+        
+        console.log('Controles móveis ativados automaticamente - Painel de instruções iniciado fechado');
     }
     
     // Event listener para botão de toggle
