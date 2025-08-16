@@ -178,13 +178,17 @@ canvas::after {
     left: 0;
     right: 0;
     height: 200px;
-    background: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6));
+    backdrop-filter: blur(5px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: none;
     z-index: 1000;
+    pointer-events: none;
 }
 
 .mobile-controls.active {
     display: block;
+    pointer-events: all;
 }
 
 .controls-left {
@@ -386,6 +390,105 @@ canvas::after {
         width: 40px;
         height: 40px;
         font-size: 10px;
+    }
+}
+
+/* Adicionais para controles móveis */
+.dpad-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.dpad-button.pressed,
+.action-button.pressed {
+    background: rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.action-button.primary.pressed {
+    background: rgba(255, 255, 0, 0.8) !important;
+    box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+}
+
+/* Vibração visual para feedback */
+@keyframes vibrate {
+    0% { transform: translate(0); }
+    10% { transform: translate(-1px, -1px); }
+    20% { transform: translate(1px, -1px); }
+    30% { transform: translate(-1px, 1px); }
+    40% { transform: translate(1px, 1px); }
+    50% { transform: translate(0); }
+}
+
+.action-button.vibrate {
+    animation: vibrate 0.1s linear;
+}
+
+/* Efeitos especiais para botões */
+.action-button::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.action-button:active::before {
+    opacity: 1;
+}
+
+/* Melhor visibilidade em diferentes orientações */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .mobile-controls {
+        height: 140px;
+    }
+    .controls-left {
+        width: 120px;
+        height: 120px;
+        bottom: 10px;
+    }
+    .controls-right {
+        width: 180px;
+        height: 120px;
+        bottom: 10px;
+    }
+    .dpad {
+        width: 120px;
+        height: 120px;
+    }
+    .dpad-up, .dpad-down, .dpad-left, .dpad-right {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+    .action-button.primary {
+        width: 50px;
+        height: 50px;
+        font-size: 12px;
+    }
+    .action-button.secondary {
+        width: 35px;
+        height: 35px;
+        font-size: 9px;
+    }
+    .dpad-center {
+        width: 25px;
+        height: 25px;
     }
 }
 

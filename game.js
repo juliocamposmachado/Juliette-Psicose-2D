@@ -3599,6 +3599,239 @@ window.addEventListener('orientationchange', () => {
     setTimeout(resizeCanvas, 100); // Pequeno delay para orientação mudar completamente
 });
 
+// === SISTEMA DE CONTROLES MÓVEIS ===
+
+// Detectar se é dispositivo móvel
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           (navigator.maxTouchPoints && navigator.maxTouchPoints > 1) ||
+           ('ontouchstart' in window);
+}
+
+// Variáveis globais para controles touch
+let touchControls = {
+    enabled: false,
+    activeButtons: new Set(),
+    touchStates: new Map()
+};
+
+// Inicializar controles móveis
+function initMobileControls() {
+    const mobileControls = document.getElementById('mobileControls');
+    const controlsToggle = document.getElementById('controlsToggle');
+    
+    if (!mobileControls || !controlsToggle) return;
+    
+    // Detectar se é dispositivo móvel
+    if (isMobileDevice()) {
+        controlsToggle.classList.add('mobile');
+        touchControls.enabled = true;
+        
+        // Mostrar controles automaticamente em dispositivos móveis
+        mobileControls.classList.add('active');
+        controlsToggle.textContent = '📱 OCULTAR';
+        
+        console.log('Controles móveis ativados automaticamente');
+    }
+    
+    // Event listener para botão de toggle
+    controlsToggle.addEventListener('click', () => {
+        if (mobileControls.classList.contains('active')) {
+            mobileControls.classList.remove('active');
+            controlsToggle.textContent = '📱 CONTROLES';
+        } else {
+            mobileControls.classList.add('active');
+            controlsToggle.textContent = '📱 OCULTAR';
+            touchControls.enabled = true;
+        }
+    });
+    
+    // Configurar event listeners para todos os botões
+    setupTouchEventListeners();
+}
+
+// Configurar event listeners para controles touch
+function setupTouchEventListeners() {
+    const touchButtons = document.querySelectorAll('.dpad-button, .action-button');
+    
+    touchButtons.forEach(button => {
+        const key = button.getAttribute('data-key');
+        if (!key) return;
+        
+        // Touch start - simular keydown
+        button.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!touchControls.enabled) return;
+            
+            button.classList.add('pressed');
+            touchControls.activeButtons.add(key);
+            
+            // Simular evento keydown
+            simulateKeyEvent('keydown', key);
+            
+            // Vibração tátil se disponível
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+            
+            // Efeito visual de vibração
+            if (button.classList.contains('action-button')) {
+                button.classList.add('vibrate');
+                setTimeout(() => button.classList.remove('vibrate'), 100);
+            }
+        });
+        
+        // Touch end - simular keyup
+        button.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (!touchControls.enabled) return;
+            
+            button.classList.remove('pressed');
+            touchControls.activeButtons.delete(key);
+            
+            // Simular evento keyup
+            simulateKeyEvent('keyup', key);
+        });
+        
+        // Prevenir comportamentos padrão
+        button.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        });
+        
+        button.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+    });
+}
+
+// Simular eventos de teclado para os controles touch
+function simulateKeyEvent(eventType, keyCode) {
+    // Atualizar estado das teclas diretamente
+    if (eventType === 'keydown') {
+        keys[keyCode] = true;
+        
+        // Executar ações específicas baseadas na tecla
+        handleTouchKeyAction(keyCode, true);
+    } else if (eventType === 'keyup') {
+        keys[keyCode] = false;
+        
+        // Executar ações de release
+        handleTouchKeyAction(keyCode, false);
+    }
+}
+
+// Lidar com ações específicas dos controles touch
+function handleTouchKeyAction(keyCode, isPressed) {
+    if (!isPressed) {
+        // Ações de release (keyup)
+        if (keyCode === 'ArrowRight' || keyCode === 'ArrowLeft') {
+            moving = false;
+            backgroundScrolling = false;
+        }
+        if (keyCode === 'Space') {
+            attacking = false;
+        }
+        if (keyCode === 'KeyD') {
+            deactivateShield();
+        }
+        return;
+    }
+    
+    // Ações de press (keydown)
+    switch(keyCode) {
+        case 'ArrowRight':
+            if (!isInSpecialAnim) {
+                moving = true;
+                facingRight = true;
+                backgroundScrolling = true;
+            }
+            break;
+            
+        case 'ArrowLeft':
+            if (!isInSpecialAnim) {
+                moving = true;
+                facingRight = false;
+                backgroundScrolling = true;
+            }
+            break;
+            
+        case 'ArrowUp':
+            if (hasWeapon && onGround && !isInSpecialAnim) {
+                startSpecialAnimation('weapon_up');
+            } else if (!isInSpecialAnim) {
+                jump();
+            }
+            break;
+            
+        case 'ArrowDown':
+            if (posY < CANVAS_HEIGHT - (frameHeight * scale) - 100) posY += playerSpeed;
+            break;
+            
+        case 'Space':
+            if (!isInSpecialAnim) {
+                if (keys['ArrowUp'] && hasWeapon) {
+                    shootUp();
+                    startSpecialAnimation('weapon_shoot_up');
+                } else {
+                    shoot();
+                    attacking = true;
+                }
+            }
+            break;
+            
+        case 'KeyZ':
+            if (!isInSpecialAnim) {
+                jump();
+            }
+            break;
+            
+        case 'KeyA':
+            if (!isInSpecialAnim && chainAttackCooldown === 0) {
+                chainAttack('left_hand');
+            }
+            break;
+            
+        case 'KeyB':
+            if (bombCount > 0 && bombCooldown === 0) {
+                activateBomb();
+            }
+            break;
+            
+        case 'KeyP':
+            gameState.paused = !gameState.paused;
+            break;
+            
+        case 'KeyM':
+            gameAudio.enabled = !gameAudio.enabled;
+            console.log('Sons:', gameAudio.enabled ? 'Ligados' : 'Desligados');
+            break;
+            
+        case 'KeyD':
+            if (shieldEnergy > 20 && shieldCooldown === 0) {
+                activateShield();
+            }
+            break;
+    }
+}
+
+// Prevenir zoom em dispositivos móveis durante o jogo
+function preventMobileZoom() {
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+}
+
 // Inicializar botão de tela cheia e redimensionamento quando DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
     const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -3608,6 +3841,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Inicializar sistema de sons
     initializeSounds();
+    
+    // Inicializar controles móveis
+    initMobileControls();
+    
+    // Prevenir zoom em dispositivos móveis
+    preventMobileZoom();
     
     // Redimensionar canvas inicialmente
     resizeCanvas();
