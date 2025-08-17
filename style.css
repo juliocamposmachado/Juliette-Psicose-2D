@@ -216,10 +216,13 @@ canvas::after {
 }
 
 .weapon-selector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+    justify-items: center;
+    align-items: center;
+    max-width: 180px;
 }
 
 .weapon-button {
@@ -244,59 +247,6 @@ canvas::after {
     transform: scale(0.95);
 }
 
-/* NOVO: Seletor de Tipo de Tiro */
-.shoot-type-selector {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 8px;
-    justify-content: center;
-    margin-top: 10px;
-    overflow-x: auto;
-    padding: 5px;
-}
-
-.shoot-type-button {
-    background: rgba(255, 140, 0, 0.3);
-    border: 2px solid rgba(255, 140, 0, 0.7);
-    border-radius: 6px;
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-    touch-action: manipulation;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    text-align: center;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    flex-shrink: 0;
-    min-width: 32px;
-}
-
-
-.shoot-type-button:active {
-    background: rgba(255, 140, 0, 0.5);
-    transform: scale(0.95);
-}
-
-.shoot-type-button.active {
-    background: rgba(255, 140, 0, 0.8);
-    border-color: rgba(255, 140, 0, 1);
-    box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
-    transform: scale(1.05);
-}
-
-.shoot-type-button.pressed {
-    background: rgba(255, 140, 0, 0.9) !important;
-    border-color: rgba(255, 140, 0, 1) !important;
-    box-shadow: 0 0 20px rgba(255, 140, 0, 0.8);
-    transform: scale(0.95);
-}
 
 .dpad {
     position: relative;
@@ -460,13 +410,6 @@ canvas::after {
         width: 36px;
         height: 36px;
         font-size: 13px;
-        gap: 8px;
-    }
-    .shoot-type-button {
-        width: 30px;
-        height: 30px;
-        font-size: 14px;
-        min-width: 30px;
     }
 }
 
@@ -511,13 +454,6 @@ canvas::after {
         width: 32px;
         height: 32px;
         font-size: 12px;
-        gap: 6px;
-    }
-    .shoot-type-button {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
-        min-width: 28px;
     }
 }
 
@@ -633,7 +569,6 @@ canvas::after {
         width: 30px;
         height: 30px;
         font-size: 11px;
-        gap: 5px;
     }
 }
 
