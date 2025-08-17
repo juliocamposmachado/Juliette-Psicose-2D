@@ -353,27 +353,6 @@ canvas::after {
     font-size: 12px;
 }
 
-/* Botão de toggle */
-.controls-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.6);
-    border-radius: 8px;
-    color: white;
-    padding: 10px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 1001;
-    display: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-}
-
-.controls-toggle.mobile {
-    display: block;
-}
 
 /* Responsividade extra */
 @media (max-width: 768px) {

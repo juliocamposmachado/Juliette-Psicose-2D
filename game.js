@@ -3760,37 +3760,21 @@ let shootTypeSettings = {
 // Inicializar controles móveis
 function initMobileControls() {
     const mobileControls = document.getElementById('mobileControls');
-    const controlsToggle = document.getElementById('controlsToggle');
     
-    if (!mobileControls || !controlsToggle) return;
+    if (!mobileControls) return;
     
     // Detectar se é dispositivo móvel
     if (isMobileDevice()) {
-        controlsToggle.classList.add('mobile');
         touchControls.enabled = true;
         
         // Mostrar controles automaticamente em dispositivos móveis
         mobileControls.classList.add('active');
-        controlsToggle.textContent = '📱 OCULTAR';
         
-        // === NOVO: INICIAR PAINEL DE CONTROLES FECHADO EM MOBILE ===
+        // === INICIAR PAINEL DE CONTROLES FECHADO EM MOBILE ===
         controlsPanelVisible = false;
         
         console.log('Controles móveis ativados automaticamente - Painel de instruções iniciado fechado');
     }
-    
-    // Event listener para botão de toggle
-    controlsToggle.addEventListener('click', () => {
-        if (mobileControls.classList.contains('active')) {
-            mobileControls.classList.remove('active');
-            controlsToggle.textContent = '📱 CONTROLES';
-            touchControls.enabled = false;
-        } else {
-            mobileControls.classList.add('active');
-            controlsToggle.textContent = '📱 OCULTAR';
-            touchControls.enabled = true;
-        }
-    });
     
     // Configurar event listeners para todos os botões
     setupTouchEventListeners();
