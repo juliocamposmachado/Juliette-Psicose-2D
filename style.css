@@ -201,7 +201,7 @@ canvas::after {
     position: absolute;
     right: 20px;
     bottom: 20px;
-    width: 200px;
+    width: 180px;
     height: 160px;
 }
 
@@ -308,11 +308,11 @@ canvas::after {
 }
 
 .action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: flex-end;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
     height: 100%;
 }
 
@@ -340,9 +340,11 @@ canvas::after {
 }
 
 .action-button.primary {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
     font-size: 16px;
+    grid-column: 2 / span 2;
+    grid-row: 1;
 }
 
 .action-button.secondary {
@@ -426,7 +428,7 @@ canvas::after {
     .controls-right {
         right: 10px;
         bottom: 10px;
-        width: 160px;
+        width: 165px;
     }
     .dpad {
         width: 120px;
@@ -440,6 +442,8 @@ canvas::after {
         width: 55px;
         height: 55px;
         font-size: 13px;
+        grid-column: 2 / span 2;
+        grid-row: 1;
     }
     .action-button.secondary {
         width: 40px;
@@ -534,7 +538,7 @@ canvas::after {
         bottom: 10px;
     }
     .controls-right {
-        width: 180px;
+        width: 160px;
         height: 120px;
         bottom: 10px;
     }
@@ -551,6 +555,8 @@ canvas::after {
         width: 50px;
         height: 50px;
         font-size: 12px;
+        grid-column: 2 / span 2;
+        grid-row: 1;
     }
     .action-button.secondary {
         width: 35px;
