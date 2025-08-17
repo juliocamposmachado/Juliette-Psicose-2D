@@ -66,10 +66,10 @@ canvas {
     font-size: 12px;
 }
 
-/* Botão de tela cheia - Posicionado no HUD */
+/* Botão de tela cheia - Posicionado no topo do HUD */
 .fullscreen-btn {
     position: fixed;
-    top: 72px;
+    top: 25px; /* Bem no topo, acima de tudo */
     left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(135deg, #1a1a2e, #16213e);
