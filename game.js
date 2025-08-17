@@ -3826,10 +3826,7 @@ function setupShootTypeButtons() {
             button.classList.add('pressed');
             setTimeout(() => button.classList.remove('pressed'), 150);
             
-            // Vibração tátil
-            if ('vibrate' in navigator) {
-                navigator.vibrate(30);
-            }
+            // Vibração tátil removida - usuário não quer vibração no tiro
         });
         
         // Touch end para limpar estado
@@ -3917,10 +3914,7 @@ function setupTouchEventListeners() {
             // Simular evento keydown
             simulateKeyEvent('keydown', key);
             
-            // Vibração tátil se disponível
-            if ('vibrate' in navigator) {
-                navigator.vibrate(50);
-            }
+            // Vibração tátil removida - usuário não quer vibração nos controles
             
             // Efeito visual de vibração
             if (button.classList.contains('action-button') || button.classList.contains('weapon-button')) {
