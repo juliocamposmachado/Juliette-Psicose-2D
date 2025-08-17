@@ -41,6 +41,12 @@ Um jogo run-and-gun 2D inspirado em Contra, protagonizado pela personagem Juliet
 - **Gemini AI**: Sistema dinâmico que modifica cenário baseado no progresso
 - **Geração Procedural**: Ajustes automáticos de plataformas e temas
 
+### 📱 Sistema de FPS Otimizado
+- **Detecção Automática**: Identifica dispositivos móveis automaticamente
+- **FPS Adaptativo**: 60 FPS para Desktop, 45 FPS para Mobile
+- **Otimização Mobile**: Performance otimizada para smartphones e tablets
+- **Controle Temporal**: Sistema preciso de throttling de frames
+
 ## 🎮 Controles
 
 ### Básicos
@@ -104,11 +110,13 @@ Juliette-Psicose-2D/
 
 ## 🎯 Recursos Técnicos
 
-- **60 FPS**: Loop de jogo otimizado
+- **FPS Adaptativo**: 60 FPS (Desktop) / 45 FPS (Mobile) com detecção automática
+- **Otimização Mobile**: Sistema inteligente de performance para dispositivos móveis
 - **Redimensionamento Automático**: Adapta-se a diferentes resoluções
 - **Sistema de Colisão**: Detecção precisa de colisões
 - **Gerenciamento de Estado**: Sistema robusto de controle de jogo
 - **Pool de Objetos**: Otimização de performance para partículas
+- **Detecção de Dispositivo**: User Agent + Touch Points + Touch Events
 
 ## 🎨 Assets Necessários
 
@@ -132,6 +140,8 @@ Juliette-Psicose-2D/
 - **3 formas** geométricas para inimigos
 - **2 fases** com mecânicas diferentes
 - **Sistema completo** de HUD e controles
+- **Sistema de FPS** adaptativo para Mobile/Desktop
+- **Detecção automática** de tipo de dispositivo
 
 ---
 
