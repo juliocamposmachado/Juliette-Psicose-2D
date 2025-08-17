@@ -259,31 +259,25 @@ canvas::after {
 .shoot-type-button {
     background: rgba(255, 140, 0, 0.3);
     border: 2px solid rgba(255, 140, 0, 0.7);
-    border-radius: 8px;
+    border-radius: 6px;
     color: white;
     font-weight: bold;
-    font-size: 12px;
-    width: 50px;
-    height: 40px;
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     user-select: none;
     touch-action: manipulation;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
     text-align: center;
     transition: all 0.2s ease;
     cursor: pointer;
     flex-shrink: 0;
-    min-width: 50px;
+    min-width: 32px;
 }
 
-.shoot-type-button small {
-    font-size: 8px;
-    margin-top: 2px;
-    line-height: 1;
-}
 
 .shoot-type-button:active {
     background: rgba(255, 140, 0, 0.5);
@@ -469,13 +463,10 @@ canvas::after {
         gap: 8px;
     }
     .shoot-type-button {
-        width: 44px;
-        height: 36px;
-        font-size: 11px;
-        min-width: 44px;
-    }
-    .shoot-type-button small {
-        font-size: 7px;
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+        min-width: 30px;
     }
 }
 
@@ -523,13 +514,10 @@ canvas::after {
         gap: 6px;
     }
     .shoot-type-button {
-        width: 40px;
-        height: 32px;
-        font-size: 10px;
-        min-width: 40px;
-    }
-    .shoot-type-button small {
-        font-size: 6px;
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+        min-width: 28px;
     }
 }
 
