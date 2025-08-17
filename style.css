@@ -311,8 +311,8 @@ canvas::after {
 .action-buttons {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 6px;
     width: 100%;
     height: 100%;
 }
@@ -346,6 +346,23 @@ canvas::after {
     font-size: 20px;
     grid-column: 2 / span 2;
     grid-row: 1;
+}
+
+/* Botão de corrente dupla com visual diferenciado */
+.action-button#doubleChainBtn {
+    background: rgba(255, 100, 0, 0.4);
+    border: 2px solid rgba(255, 100, 0, 0.8);
+    font-size: 14px;
+}
+
+.action-button#doubleChainBtn:active {
+    background: rgba(255, 100, 0, 0.6);
+}
+
+.action-button#doubleChainBtn.pressed {
+    background: rgba(255, 100, 0, 0.8) !important;
+    border-color: rgba(255, 120, 20, 1) !important;
+    box-shadow: 0 0 15px rgba(255, 100, 0, 0.5);
 }
 
 .action-button.secondary {
@@ -384,6 +401,10 @@ canvas::after {
         width: 35px;
         height: 35px;
         font-size: 14px;
+    }
+    
+    .action-button#doubleChainBtn {
+        font-size: 12px;
     }
     .controls-center {
         width: 200px;
@@ -429,6 +450,10 @@ canvas::after {
         width: 32px;
         height: 32px;
         font-size: 13px;
+    }
+    
+    .action-button#doubleChainBtn {
+        font-size: 11px;
     }
     .controls-center {
         width: 180px;
@@ -543,6 +568,10 @@ canvas::after {
         width: 28px;
         height: 28px;
         font-size: 12px;
+    }
+    
+    .action-button#doubleChainBtn {
+        font-size: 10px;
     }
     .dpad-center {
         width: 25px;
