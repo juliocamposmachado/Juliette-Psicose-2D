@@ -4039,6 +4039,13 @@ function handleTouchKeyAction(keyCode, isPressed) {
             }
             break;
             
+        case 'KeyS':
+            // Ataque com corrente (ambas as mãos) - MESMO COMPORTAMENTO DO DESKTOP
+            if (!isInSpecialAnim && chainAttackCooldown === 0) {
+                chainAttack('both_hands');
+            }
+            break;
+            
         case 'KeyB':
             if (bombCount > 0 && bombCooldown === 0) {
                 activateBomb();
