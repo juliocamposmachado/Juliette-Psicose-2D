@@ -565,6 +565,10 @@ document.addEventListener('keydown', e => {
     if (e.code === 'Digit7') {
         weaponType = 'nuclear';
     }
+    if (e.code === 'Digit8') {
+        // Arma especial adicional (pode ser expandida no futuro)
+        weaponType = 'nuclear'; // Por enquanto, usa a mesma arma nuclear
+    }
     
     // === CONTROLE DA BOMBA ===
     if (e.code === 'KeyB') {
@@ -620,57 +624,106 @@ function shoot() {
     }
     playSound('shoot', shootFreq, 150);
     
-    // Determinar direção do tiro baseado nas teclas pressionadas
-    let shootDirection = getShootDirection();
+    // === NOVO: DETERMINAR DIREÇÃO BASEADA NO TIPO DE TIRO SELECIONADO ===
+    let shootDirection = getShootDirectionByType();
     
-    // === NOVO: SISTEMA DE ANIMAÇÃO INTELIGENTE BASEADO NO ÂNGULO ===
+    // === SISTEMA DE ANIMAÇÃO INTELIGENTE BASEADO NO ÂNGULO ===
     triggerShootAnimation(shootDirection.angle);
     
-    // === NOVO SISTEMA DE TIROS PROGRESSIVOS ===
-    switch(weaponType) {
-        case 'normal':
-            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
-            break;
+    // === VERIFICAR SE É TIRO MÚLTIPLO ===
+    if (currentShootType === 'multi') {
+        // Tiro múltiplo: disparar em 8 direções
+        const directions = [0, -45, -90, -135, 180, 135, 90, 45];
+        
+        for (const angle of directions) {
+            const multiDirection = { angle: angle, speed: shootDirection.speed };
             
-        case 'spread':
-            // Tiro triplo expandido melhorado
-            const spreadAngle = weapon.spreadAngle || 15;
-            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
-            createDirectionalBullet(playerCenterX, playerCenterY, 
-                { angle: shootDirection.angle + spreadAngle, speed: shootDirection.speed }, weapon);
-            createDirectionalBullet(playerCenterX, playerCenterY, 
-                { angle: shootDirection.angle - spreadAngle, speed: shootDirection.speed }, weapon);
-            break;
-            
-        case 'laser':
-            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'laser');
-            break;
-            
-        case 'machine':
-            // Tiros duplos da metralhadora
-            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
-            createDirectionalBullet(playerCenterX, playerCenterY, 
-                { angle: shootDirection.angle + 5, speed: shootDirection.speed }, weapon);
-            break;
-            
-        case 'plasma':
-            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'plasma');
-            break;
-            
-        case 'storm':
-            // Tempestade de 5 projéteis
-            const stormSpread = weapon.spreadAngle || 40;
-            const stormStep = stormSpread / (weapon.bulletCount - 1);
-            for (let i = 0; i < weapon.bulletCount; i++) {
-                const angle = shootDirection.angle - (stormSpread/2) + (i * stormStep);
-                createDirectionalBullet(playerCenterX, playerCenterY, 
-                    { angle: angle, speed: shootDirection.speed }, weapon, 'storm');
+            switch(weaponType) {
+                case 'normal':
+                    createDirectionalBullet(playerCenterX, playerCenterY, multiDirection, weapon);
+                    break;
+                case 'spread':
+                    createDirectionalBullet(playerCenterX, playerCenterY, multiDirection, weapon);
+                    break;
+                case 'laser':
+                    createDirectionalBullet(playerCenterX, playerCenterY, multiDirection, weapon, 'laser');
+                    break;
+                case 'machine':
+                    createDirectionalBullet(playerCenterX, playerCenterY, multiDirection, weapon);
+                    break;
+                case 'plasma':
+                    createDirectionalBullet(playerCenterX, playerCenterY, multiDirection, weapon, 'plasma');
+                    break;
+                case 'storm':
+                    createDirectionalBullet(playerCenterX, playerCenterY, multiDirection, weapon, 'storm');
+                    break;
+                case 'nuclear':
+                    createDirectionalBullet(playerCenterX, playerCenterY, multiDirection, weapon, 'nuclear');
+                    break;
             }
-            break;
-            
-        case 'nuclear':
-            createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'nuclear');
-            break;
+        }
+        
+        // Para tipo múltiplo, consumir munição multiplicado por 8 (número de direções)
+        if (typeof weapon.ammo === 'number') {
+            const baseShots = weaponType === 'spread' ? 3 : weaponType === 'machine' ? 2 : 1;
+            weapon.currentAmmo = Math.max(0, (weapon.currentAmmo ?? weapon.ammo) - (baseShots * 8));
+        }
+    } else {
+        // === TIROS NORMAIS (NÃO MÚLTIPLOS) ===
+        switch(weaponType) {
+            case 'normal':
+                createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
+                break;
+                
+            case 'spread':
+                // Tiro triplo expandido melhorado
+                const spreadAngle = weapon.spreadAngle || 15;
+                createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
+                createDirectionalBullet(playerCenterX, playerCenterY, 
+                    { angle: shootDirection.angle + spreadAngle, speed: shootDirection.speed }, weapon);
+                createDirectionalBullet(playerCenterX, playerCenterY, 
+                    { angle: shootDirection.angle - spreadAngle, speed: shootDirection.speed }, weapon);
+                break;
+                
+            case 'laser':
+                createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'laser');
+                break;
+                
+            case 'machine':
+                // Tiros duplos da metralhadora
+                createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon);
+                createDirectionalBullet(playerCenterX, playerCenterY, 
+                    { angle: shootDirection.angle + 5, speed: shootDirection.speed }, weapon);
+                break;
+                
+            case 'plasma':
+                createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'plasma');
+                break;
+                
+            case 'storm':
+                // Tempestade de 5 projéteis
+                const stormSpread = weapon.spreadAngle || 40;
+                const stormStep = stormSpread / (weapon.bulletCount - 1);
+                for (let i = 0; i < weapon.bulletCount; i++) {
+                    const angle = shootDirection.angle - (stormSpread/2) + (i * stormStep);
+                    createDirectionalBullet(playerCenterX, playerCenterY, 
+                        { angle: angle, speed: shootDirection.speed }, weapon, 'storm');
+                }
+                break;
+                
+            case 'nuclear':
+                createDirectionalBullet(playerCenterX, playerCenterY, shootDirection, weapon, 'nuclear');
+                break;
+        }
+        
+        // Diminuir munição para tiros normais
+        if (typeof weapon.ammo === 'number') {
+            let shots = 1;
+            if (weaponType === 'spread') shots = weapon.bulletCount;
+            if (weaponType === 'machine') shots = 2;
+            if (weaponType === 'storm') shots = weapon.bulletCount;
+            weapon.currentAmmo = Math.max(0, (weapon.currentAmmo ?? weapon.ammo) - shots);
+        }
     }
     
     // Diminuir munição após disparo(s)
@@ -683,6 +736,65 @@ function shoot() {
     }
 
     shootCooldown = weapon.cooldown;
+}
+
+// === NOVA FUNÇÃO: DETERMINAR DIREÇÃO BASEADA NO TIPO DE TIRO SELECIONADO ===
+function getShootDirectionByType() {
+    const baseSpeed = weapons[weaponType].speed;
+    const typeSettings = shootTypeSettings[currentShootType];
+    
+    // Se não há configuração especial, usar sistema original
+    if (!typeSettings || !typeSettings.forceDirection) {
+        return getShootDirection();
+    }
+    
+    // Se é tipo 'multi', disparar em múltiplas direções
+    if (typeSettings.forceDirection === 'multi') {
+        return getMultiDirectionShoot();
+    }
+    
+    // Se é direção forçada, usar o ângulo fixo
+    const forcedDirection = typeSettings.forceDirection;
+    let finalAngle = forcedDirection.angle;
+    let finalSpeed = baseSpeed * (forcedDirection.speed || 1);
+    
+    // Para tiros direcionais, ajustar baseado na direção do personagem
+    if (currentShootType === 'diagonal-up') {
+        // Diagonal para cima segue a direção do personagem
+        finalAngle = facingRight ? -45 : -135;
+    }
+    
+    return {
+        angle: finalAngle,
+        speed: finalSpeed
+    };
+}
+
+// === NOVA FUNÇÃO: SISTEMA DE TIRO MÚLTIPLO ===
+function getMultiDirectionShoot() {
+    // Para o tipo 'multi', a função principal de tiro será chamada várias vezes
+    // Cada chamada retorna uma direção diferente
+    const baseSpeed = weapons[weaponType].speed;
+    
+    // Definir as direções do tiro múltiplo (em graus)
+    const directions = [
+        0,    // Direita
+        -45,  // Diagonal cima-direita
+        -90,  // Cima
+        -135, // Diagonal cima-esquerda
+        180,  // Esquerda
+        135,  // Diagonal baixo-esquerda
+        90,   // Baixo
+        45    // Diagonal baixo-direita
+    ];
+    
+    // Retornar direção aleatória para criar variação
+    const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+    
+    return {
+        angle: randomDirection,
+        speed: baseSpeed
+    };
 }
 
 // Função para determinar direção do tiro baseado nas teclas
@@ -3615,6 +3727,36 @@ let touchControls = {
     touchStates: new Map()
 };
 
+// === NOVO SISTEMA DE CONTROLE DE TIPO DE TIRO ===
+let currentShootType = 'normal'; // Tipo de tiro ativo: 'normal', 'up', 'diagonal-up', 'down', 'multi'
+let shootTypeSettings = {
+    normal: { 
+        name: 'Normal', 
+        forceDirection: null,
+        description: 'Tiro na direção do movimento'
+    },
+    up: { 
+        name: 'Para Cima', 
+        forceDirection: { angle: -90, speed: 1 },
+        description: 'Tiro sempre para cima'
+    },
+    'diagonal-up': { 
+        name: 'Diagonal Cima', 
+        forceDirection: { angle: -45, speed: 1 },
+        description: 'Tiro diagonal para cima'
+    },
+    down: { 
+        name: 'Para Baixo', 
+        forceDirection: { angle: 90, speed: 1 },
+        description: 'Tiro sempre para baixo'
+    },
+    multi: { 
+        name: 'Múltiplo', 
+        forceDirection: 'multi',
+        description: 'Tiro em múltiplas direções'
+    }
+};
+
 // Inicializar controles móveis
 function initMobileControls() {
     const mobileControls = document.getElementById('mobileControls');
@@ -3653,9 +3795,76 @@ function initMobileControls() {
     setupTouchEventListeners();
 }
 
+// === NOVA FUNÇÃO: CONFIGURAR BOTÕES DE TIPO DE TIRO ===
+function setupShootTypeButtons() {
+    const shootTypeButtons = document.querySelectorAll('.shoot-type-button');
+    
+    shootTypeButtons.forEach(button => {
+        const shootType = button.getAttribute('data-shoot-type');
+        if (!shootType) return;
+        
+        button.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!touchControls.enabled) return;
+            
+            // Alterar tipo de tiro ativo
+            changeShootType(shootType);
+            
+            // Feedback visual
+            button.classList.add('pressed');
+            setTimeout(() => button.classList.remove('pressed'), 150);
+            
+            // Vibração tátil
+            if ('vibrate' in navigator) {
+                navigator.vibrate(30);
+            }
+        });
+        
+        // Também para mouse/desktop
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            changeShootType(shootType);
+        });
+    });
+}
+
+// === NOVA FUNÇÃO: ALTERAR TIPO DE TIRO ===
+function changeShootType(newType) {
+    if (!shootTypeSettings[newType]) return;
+    
+    const previousType = currentShootType;
+    currentShootType = newType;
+    
+    // Atualizar indicadores visuais
+    updateShootTypeIndicators();
+    
+    // Som de confirmação
+    playSound('powerup', 600, 100);
+    
+    console.log(`🎯 Tipo de tiro alterado: ${previousType} → ${newType} (${shootTypeSettings[newType].description})`);
+}
+
+// === NOVA FUNÇÃO: ATUALIZAR INDICADORES VISUAIS ===
+function updateShootTypeIndicators() {
+    const shootTypeButtons = document.querySelectorAll('.shoot-type-button');
+    
+    shootTypeButtons.forEach(button => {
+        const buttonType = button.getAttribute('data-shoot-type');
+        
+        if (buttonType === currentShootType) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
+}
+
 // Configurar event listeners para controles touch
 function setupTouchEventListeners() {
-    const touchButtons = document.querySelectorAll('.dpad-button, .action-button');
+    const touchButtons = document.querySelectorAll('.dpad-button, .action-button, .weapon-button');
+    
+    // === NOVO: CONFIGURAR BOTÕES DE TIPO DE TIRO ===
+    setupShootTypeButtons();
     
     touchButtons.forEach(button => {
         const key = button.getAttribute('data-key');
@@ -3678,7 +3887,7 @@ function setupTouchEventListeners() {
             }
             
             // Efeito visual de vibração
-            if (button.classList.contains('action-button')) {
+            if (button.classList.contains('action-button') || button.classList.contains('weapon-button')) {
                 button.classList.add('vibrate');
                 setTimeout(() => button.classList.remove('vibrate'), 100);
             }
@@ -3813,6 +4022,32 @@ function handleTouchKeyAction(keyCode, isPressed) {
             if (shieldEnergy > 20 && shieldCooldown === 0) {
                 activateShield();
             }
+            break;
+            
+        // === SELEÇÃO DE ARMAS ===
+        case 'Digit1':
+            weaponType = 'normal';
+            break;
+        case 'Digit2':
+            weaponType = 'spread';
+            break;
+        case 'Digit3':
+            weaponType = 'laser';
+            break;
+        case 'Digit4':
+            weaponType = 'machine';
+            break;
+        case 'Digit5':
+            weaponType = 'plasma';
+            break;
+        case 'Digit6':
+            weaponType = 'storm';
+            break;
+        case 'Digit7':
+            weaponType = 'nuclear';
+            break;
+        case 'Digit8':
+            weaponType = 'nuclear'; // Por enquanto, usa a mesma arma nuclear
             break;
     }
 }

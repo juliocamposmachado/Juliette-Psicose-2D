@@ -205,6 +205,100 @@ canvas::after {
     height: 160px;
 }
 
+.controls-center {
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    width: 220px;
+    display: flex;
+    justify-content: center;
+}
+
+.weapon-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.weapon-button {
+    background: rgba(0, 255, 255, 0.3);
+    border: 2px solid rgba(0, 255, 255, 0.7);
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: manipulation;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.weapon-button:active {
+    background: rgba(0, 255, 255, 0.5);
+    transform: scale(0.95);
+}
+
+/* NOVO: Seletor de Tipo de Tiro */
+.shoot-type-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.shoot-type-button {
+    background: rgba(255, 140, 0, 0.3);
+    border: 2px solid rgba(255, 140, 0, 0.7);
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: manipulation;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.shoot-type-button small {
+    font-size: 8px;
+    margin-top: 2px;
+    line-height: 1;
+}
+
+.shoot-type-button:active {
+    background: rgba(255, 140, 0, 0.5);
+    transform: scale(0.95);
+}
+
+.shoot-type-button.active {
+    background: rgba(255, 140, 0, 0.8);
+    border-color: rgba(255, 140, 0, 1);
+    box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
+    transform: scale(1.05);
+}
+
+.shoot-type-button.pressed {
+    background: rgba(255, 140, 0, 0.9) !important;
+    border-color: rgba(255, 140, 0, 1) !important;
+    box-shadow: 0 0 20px rgba(255, 140, 0, 0.8);
+    transform: scale(0.95);
+}
+
 .dpad {
     position: relative;
     width: 160px;
@@ -360,6 +454,23 @@ canvas::after {
         height: 45px;
         font-size: 11px;
     }
+    .controls-center {
+        width: 200px;
+    }
+    .weapon-button {
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
+        gap: 8px;
+    }
+    .shoot-type-button {
+        width: 38px;
+        height: 38px;
+        font-size: 11px;
+    }
+    .shoot-type-button small {
+        font-size: 7px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -395,6 +506,24 @@ canvas::after {
         height: 40px;
         font-size: 10px;
     }
+    .controls-center {
+        width: 180px;
+        bottom: 10px;
+    }
+    .weapon-button {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+        gap: 6px;
+    }
+    .shoot-type-button {
+        width: 34px;
+        height: 34px;
+        font-size: 10px;
+    }
+    .shoot-type-button small {
+        font-size: 6px;
+    }
 }
 
 /* Adicionais para controles móveis */
@@ -421,6 +550,13 @@ canvas::after {
 .action-button.primary.pressed {
     background: rgba(255, 255, 0, 0.8) !important;
     box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+}
+
+.weapon-button.pressed {
+    background: rgba(0, 255, 255, 0.7) !important;
+    border-color: rgba(0, 255, 255, 1) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    transform: scale(0.95);
 }
 
 /* Vibração visual para feedback */
@@ -493,6 +629,16 @@ canvas::after {
     .dpad-center {
         width: 25px;
         height: 25px;
+    }
+    .controls-center {
+        width: 170px;
+        bottom: 10px;
+    }
+    .weapon-button {
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
+        gap: 5px;
     }
 }
 
