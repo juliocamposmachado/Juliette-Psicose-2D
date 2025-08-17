@@ -3605,7 +3605,7 @@ function toggleFullscreen() {
             document.documentElement.msRequestFullscreen();
         }
         isFullscreen = true;
-        fullscreenBtn.textContent = '📺 SAIR TELA CHEIA';
+        fullscreenBtn.textContent = '📺 ESC';
         fullscreenBtn.classList.add('fullscreen-active');
     } else {
         // Sair da tela cheia
@@ -3617,7 +3617,7 @@ function toggleFullscreen() {
             document.msExitFullscreen();
         }
         isFullscreen = false;
-        fullscreenBtn.textContent = '📺 TELA CHEIA';
+        fullscreenBtn.textContent = '📺 F11';
         fullscreenBtn.classList.remove('fullscreen-active');
     }
 }
@@ -3628,11 +3628,11 @@ document.addEventListener('fullscreenchange', () => {
     
     if (document.fullscreenElement) {
         isFullscreen = true;
-        fullscreenBtn.textContent = '📺 SAIR TELA CHEIA';
+        fullscreenBtn.textContent = '📺 ESC';
         fullscreenBtn.classList.add('fullscreen-active');
     } else {
         isFullscreen = false;
-        fullscreenBtn.textContent = '📺 TELA CHEIA';
+        fullscreenBtn.textContent = '📺 F11';
         fullscreenBtn.classList.remove('fullscreen-active');
     }
 });

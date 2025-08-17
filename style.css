@@ -66,23 +66,25 @@ canvas {
     font-size: 12px;
 }
 
-/* Botão de tela cheia */
+/* Botão de tela cheia - Posicionado no HUD */
 .fullscreen-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+    position: fixed;
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%);
     background: linear-gradient(135deg, #1a1a2e, #16213e);
     color: #fff;
     border: 2px solid #555;
-    border-radius: 8px;
-    padding: 8px 12px;
+    border-radius: 6px;
+    padding: 4px 8px;
     font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-size: 9px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    z-index: 1001;
+    line-height: 1;
 }
 
 .fullscreen-btn:hover {
@@ -156,10 +158,9 @@ canvas::after {
         border-radius: 3px;
     }
     .fullscreen-btn {
-        font-size: 10px;
-        padding: 6px 8px;
-        top: 5px;
-        right: 5px;
+        font-size: 8px;
+        padding: 3px 6px;
+        top: 72px;
     }
     .game-info {
         font-size: 12px;
