@@ -379,38 +379,38 @@ const weapons = {
     normal: { 
         damage: 20, speed: 8, cooldown: 10, color: '#ffff00',
         description: 'Tiro Normal',
-        bulletSize: 4, bulletCount: 1, ammo: 300
+        bulletSize: 4, bulletCount: 1, ammo: 1000
     },
     spread: { 
         damage: 18, speed: 9, cooldown: 8, color: '#ffff00',
         description: 'Tiro Triplo Expandido', 
-        bulletSize: 5, bulletCount: 3, spreadAngle: 25, ammo: 200
+        bulletSize: 5, bulletCount: 3, spreadAngle: 25, ammo: 1000
     },
     laser: { 
         damage: 35, speed: 14, cooldown: 12, color: '#ffff00',
         description: 'Laser Penetrante',
-        bulletSize: 8, bulletCount: 1, piercing: true, ammo: 150
+        bulletSize: 8, bulletCount: 1, piercing: true, ammo: 1000
     },
     machine: { 
         damage: 15, speed: 12, cooldown: 3, color: '#ffff00',
         description: 'Metralhadora Rápida',
-        bulletSize: 3, bulletCount: 2, ammo: 500
+        bulletSize: 3, bulletCount: 2, ammo: 1000
     },
     // === NOVAS ARMAS PROGRESSIVAS ===
     plasma: {
         damage: 45, speed: 16, cooldown: 15, color: '#ffff00',
         description: 'Plasma Devastador',
-        bulletSize: 10, bulletCount: 1, explosive: true, ammo: 120
+        bulletSize: 10, bulletCount: 1, explosive: true, ammo: 1000
     },
     storm: {
         damage: 25, speed: 11, cooldown: 6, color: '#ffff00', 
         description: 'Tempestade de Projéteis',
-        bulletSize: 4, bulletCount: 5, spreadAngle: 40, ammo: 180
+        bulletSize: 4, bulletCount: 5, spreadAngle: 40, ammo: 1000
     },
     nuclear: {
         damage: 80, speed: 10, cooldown: 25, color: '#ffff00',
         description: 'Núcleo Atômico',
-        bulletSize: 15, bulletCount: 1, explosive: true, piercing: true, ammo: 60
+        bulletSize: 15, bulletCount: 1, explosive: true, piercing: true, ammo: 1000
     }
 };
 
@@ -3348,8 +3348,27 @@ function applyScreenUpdateFromGemini(text) {
     }
 }
 
+// === SISTEMA DE FPS OTIMIZADO PARA MOBILE ===
+let lastFrameTime = 0;
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                 (navigator.maxTouchPoints && navigator.maxTouchPoints > 1) || 
+                 ('ontouchstart' in window);
+
+// FPS dinâmico: 60 FPS para desktop, 45 FPS para mobile
+const targetFPS = isMobile ? 45 : 60;
+const targetFrameTime = 1000 / targetFPS;
+
+console.log(`🎮 Dispositivo: ${isMobile ? 'Mobile' : 'Desktop'} | FPS Alvo: ${targetFPS}`);
+
 // Função principal do loop do jogo
-function gameLoop() {
+function gameLoop(currentTime) {
+    // === CONTROLE DE FPS OTIMIZADO ===
+    if (currentTime - lastFrameTime < targetFrameTime) {
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+    lastFrameTime = currentTime;
+    
     if (gameState.gameOver) {
         // Desenha tela de game over
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
