@@ -199,9 +199,9 @@ canvas::after {
 
 .controls-right {
     position: absolute;
-    right: 20px;
+    right: 10px;
     bottom: 20px;
-    width: 180px;
+    width: 175px;
     height: 160px;
 }
 
@@ -426,9 +426,9 @@ canvas::after {
         height: 120px;
     }
     .controls-right {
-        right: 10px;
+        right: 5px;
         bottom: 10px;
-        width: 165px;
+        width: 170px;
     }
     .dpad {
         width: 120px;
@@ -538,9 +538,10 @@ canvas::after {
         bottom: 10px;
     }
     .controls-right {
-        width: 160px;
+        width: 165px;
         height: 120px;
         bottom: 10px;
+        right: 5px;
     }
     .dpad {
         width: 120px;
