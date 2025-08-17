@@ -511,9 +511,6 @@ document.addEventListener('keydown', e => {
         restartGame();
     }
     
-    if (e.code === 'KeyP') {
-        gameState.paused = !gameState.paused;
-    }
     
     if (e.code === 'F11') {
         e.preventDefault();
@@ -3353,21 +3350,19 @@ function applyScreenUpdateFromGemini(text) {
 
 // Função principal do loop do jogo
 function gameLoop() {
-    if (gameState.paused || gameState.gameOver) {
-        // Desenha tela de game over ou pause
-        if (gameState.gameOver) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 48px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
-            ctx.font = '24px Arial';
-            ctx.fillText(`Final Score: ${gameState.score}`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 50);
-            ctx.fillText(`Fase Alcançada: ${gameState.currentPhase}`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 80);
-            ctx.fillText(`Tempo Jogado: ${Math.floor(gameState.timeInGame / 60)}m ${gameState.timeInGame % 60}s`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 110);
-            ctx.fillText('Press R to Restart', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 140);
-        }
+    if (gameState.gameOver) {
+        // Desenha tela de game over
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+        ctx.font = '24px Arial';
+        ctx.fillText(`Final Score: ${gameState.score}`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 50);
+        ctx.fillText(`Fase Alcançada: ${gameState.currentPhase}`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 80);
+        ctx.fillText(`Tempo Jogado: ${Math.floor(gameState.timeInGame / 60)}m ${gameState.timeInGame % 60}s`, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 110);
+        ctx.fillText('Press R to Restart', CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 140);
         requestAnimationFrame(gameLoop);
         return;
     }
@@ -4031,9 +4026,6 @@ function handleTouchKeyAction(keyCode, isPressed) {
             }
             break;
             
-        case 'KeyP':
-            gameState.paused = !gameState.paused;
-            break;
             
         case 'KeyM':
             gameAudio.enabled = !gameAudio.enabled;
