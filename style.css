@@ -247,10 +247,13 @@ canvas::after {
 /* NOVO: Seletor de Tipo de Tiro */
 .shoot-type-selector {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 8px;
     justify-content: center;
     margin-top: 10px;
+    overflow-x: auto;
+    padding: 5px;
 }
 
 .shoot-type-button {
@@ -260,8 +263,8 @@ canvas::after {
     color: white;
     font-weight: bold;
     font-size: 12px;
-    width: 42px;
-    height: 42px;
+    width: 50px;
+    height: 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -272,6 +275,8 @@ canvas::after {
     text-align: center;
     transition: all 0.2s ease;
     cursor: pointer;
+    flex-shrink: 0;
+    min-width: 50px;
 }
 
 .shoot-type-button small {
@@ -464,9 +469,10 @@ canvas::after {
         gap: 8px;
     }
     .shoot-type-button {
-        width: 38px;
-        height: 38px;
+        width: 44px;
+        height: 36px;
         font-size: 11px;
+        min-width: 44px;
     }
     .shoot-type-button small {
         font-size: 7px;
@@ -517,9 +523,10 @@ canvas::after {
         gap: 6px;
     }
     .shoot-type-button {
-        width: 34px;
-        height: 34px;
+        width: 40px;
+        height: 32px;
         font-size: 10px;
+        min-width: 40px;
     }
     .shoot-type-button small {
         font-size: 6px;

@@ -3405,7 +3405,7 @@ function gameLoop() {
     updateLavaDisc(); // NOVO: Atualizar disco de lava
     
     // === ATUALIZAR SISTEMA GEMINI ===
-    updateGeminiSystems(); // NOVO: Atualizar sistema de IA Gemini
+    // updateGeminiSystems(); // NOVO: Atualizar sistema de IA Gemini (função não implementada)
     
     // === ATUALIZAR SISTEMA DE BOMBA ===
     if (bombCooldown > 0) {
@@ -3784,6 +3784,7 @@ function initMobileControls() {
         if (mobileControls.classList.contains('active')) {
             mobileControls.classList.remove('active');
             controlsToggle.textContent = '📱 CONTROLES';
+            touchControls.enabled = false;
         } else {
             mobileControls.classList.add('active');
             controlsToggle.textContent = '📱 OCULTAR';
@@ -3793,19 +3794,32 @@ function initMobileControls() {
     
     // Configurar event listeners para todos os botões
     setupTouchEventListeners();
+    
+    // === INICIALIZAR INDICADORES VISUAIS ===
+    updateShootTypeIndicators();
 }
 
 // === NOVA FUNÇÃO: CONFIGURAR BOTÕES DE TIPO DE TIRO ===
 function setupShootTypeButtons() {
     const shootTypeButtons = document.querySelectorAll('.shoot-type-button');
     
+    console.log(`Configurando ${shootTypeButtons.length} botões de tipo de tiro`);
+    
     shootTypeButtons.forEach(button => {
         const shootType = button.getAttribute('data-shoot-type');
-        if (!shootType) return;
+        if (!shootType) {
+            console.warn('Botão sem data-shoot-type:', button);
+            return;
+        }
         
+        console.log(`Configurando botão: ${shootType}`);
+        
+        // Touch events para mobile
         button.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (!touchControls.enabled) return;
+            e.stopPropagation();
+            
+            console.log(`Touch start no botão: ${shootType}`);
             
             // Alterar tipo de tiro ativo
             changeShootType(shootType);
@@ -3820,17 +3834,38 @@ function setupShootTypeButtons() {
             }
         });
         
-        // Também para mouse/desktop
+        // Touch end para limpar estado
+        button.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        // Mouse events para desktop
         button.addEventListener('click', (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            
+            console.log(`Click no botão: ${shootType}`);
             changeShootType(shootType);
+        });
+        
+        // Prevenir comportamentos padrão
+        button.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        });
+        
+        button.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
         });
     });
 }
 
 // === NOVA FUNÇÃO: ALTERAR TIPO DE TIRO ===
 function changeShootType(newType) {
-    if (!shootTypeSettings[newType]) return;
+    if (!shootTypeSettings[newType]) {
+        console.error(`Tipo de tiro inválido: ${newType}`);
+        return;
+    }
     
     const previousType = currentShootType;
     currentShootType = newType;
@@ -3848,11 +3883,14 @@ function changeShootType(newType) {
 function updateShootTypeIndicators() {
     const shootTypeButtons = document.querySelectorAll('.shoot-type-button');
     
+    console.log(`Atualizando ${shootTypeButtons.length} indicadores para tipo: ${currentShootType}`);
+    
     shootTypeButtons.forEach(button => {
         const buttonType = button.getAttribute('data-shoot-type');
         
         if (buttonType === currentShootType) {
             button.classList.add('active');
+            console.log(`Ativando botão: ${buttonType}`);
         } else {
             button.classList.remove('active');
         }
