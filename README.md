@@ -148,3 +148,6 @@ Juliette-Psicose-2D/
 **Desenvolvido com ❤️ por Julio Campos Machado**
 
 *Um tributo aos clássicos jogos run-and-gun dos anos 90, com tecnologia moderna!*
+
+<img width="1365" height="767" alt="image" src="https://github.com/user-attachments/assets/d463e768-ca0c-4bee-a86f-24bd83e2d642" />
+
