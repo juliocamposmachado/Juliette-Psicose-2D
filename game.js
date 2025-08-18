@@ -8,6 +8,7 @@ let CANVAS_HEIGHT = 600; // Valor inicial, será atualizado
 const frameWidth = 48;
 const frameHeight = 64;
 const scale = 1.5; // Personagem menor, mais próximo do Contra original
+const shootingScale = 1.8; // Escala específica para sprites de tiro (refinada)
 
 // Sistema de jogo inspirado no Contra
 const gameState = {
@@ -1608,6 +1609,24 @@ function updateSpecialAnimations() {
 function drawPlayer() {
     const anim = animations[currentAnim];
     
+    // Determinar qual escala usar
+    let currentScale = scale; // Escala padrão
+    
+    // Se é sprite de tiro, usar escala específica de tiro
+    if (anim.type === 'sprite' && (currentAnim.includes('shoot') || currentAnim.includes('weapon_shoot'))) {
+        currentScale = shootingScale;
+    }
+    
+    // === CALCULAR OFFSET PARA MANTER POSIÇÃO CONSISTENTE ===
+    // Quando a escala muda, ajustar a posição para que a personagem 
+    // permaneça no mesmo lugar (ancorada no centro do corpo)
+    const scaleDifference = scale - currentScale;
+    const offsetX = (frameWidth * (currentScale - scale)) / 2; // Inverter diferença para compensar recuo
+    const offsetY = (frameHeight * scaleDifference) / 2; // Ancorar no centro vertical do corpo
+    
+    const adjustedPosX = posX + offsetX;
+    const adjustedPosY = posY + offsetY;
+    
     // Verificar se é animação especial (sprite individual)
     if (anim.type === 'sprite') {
         const spriteImage = playerImages[anim.image];
@@ -1619,14 +1638,14 @@ function drawPlayer() {
                 ctx.scale(-1, 1);
                 ctx.drawImage(
                     spriteImage,
-                    -(posX + frameWidth * scale), posY,
-                    frameWidth * scale, frameHeight * scale
+                    -(adjustedPosX + frameWidth * currentScale), adjustedPosY,
+                    frameWidth * currentScale, frameHeight * currentScale
                 );
             } else {
                 ctx.drawImage(
                     spriteImage,
-                    posX, posY,
-                    frameWidth * scale, frameHeight * scale
+                    adjustedPosX, adjustedPosY,
+                    frameWidth * currentScale, frameHeight * currentScale
                 );
             }
             
@@ -1645,15 +1664,15 @@ function drawPlayer() {
                 ctx.drawImage(
                     playerImages.spritesheet,
                     sx, sy, frameWidth, frameHeight,
-                    -(posX + frameWidth * scale), posY,
-                    frameWidth * scale, frameHeight * scale
+                    -(adjustedPosX + frameWidth * currentScale), adjustedPosY,
+                    frameWidth * currentScale, frameHeight * currentScale
                 );
             } else {
                 ctx.drawImage(
                     playerImages.spritesheet,
                     sx, sy, frameWidth, frameHeight,
-                    posX, posY,
-                    frameWidth * scale, frameHeight * scale
+                    adjustedPosX, adjustedPosY,
+                    frameWidth * currentScale, frameHeight * currentScale
                 );
             }
             
