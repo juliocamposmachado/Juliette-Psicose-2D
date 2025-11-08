@@ -14,6 +14,7 @@ def check_assets():
         "assets/juliette_transparent_spritesheet.png": {"desc": "Spritesheet antigo (4 frames)", "size": (192, 128), "required": False},
         "assets/fundo 2d.png": {"desc": "Fundo secundário", "size": None, "required": True},
         "assets/cena01.jpg": {"desc": "Cenário principal", "size": None, "required": True}
+        "assets/cena01.gif": {"desc": "Cenário principal", "size": None, "required": True}
     }
     
     all_good = True
