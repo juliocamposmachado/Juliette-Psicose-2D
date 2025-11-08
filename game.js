@@ -159,7 +159,7 @@ playerImages.arma_disparando_90_graus.src = 'assets/03 arma para cima disparando
 
 // Imagens de fundo
 const backgroundImg = new Image();
-backgroundImg.src = 'assets/fundo 2d melhor.png';
+backgroundImg.src = 'assets/cena01.gif';
 
 const backgroundImgA = new Image();
 backgroundImgA.src = 'assets/fundo 2d a.png';
