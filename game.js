@@ -301,7 +301,7 @@ let bombCooldown = 0; // Cooldown entre usar bombas
 let bombMaxCooldown = 300; // 5 segundos de cooldown
 
 // === NOVO SISTEMA DE DISCO DE LAVA FLUTUANTE ===
-let lavaDiscActive = false; // Estado do disco de lava
+let lavaDiscActive = true; // Estado do disco de lava
 let lavaDisc = {
     x: 0,
     y: 0,
@@ -355,7 +355,7 @@ let maxJumpHeight = 150;
 // Sistema de plataformas (como no Contra)
 const platforms = [
     // Plataformas principais (chão)
-    { x: 0, y: groundLevel + (frameHeight * scale), width: CANVAS_WIDTH * 3, height: 50, type: 'ground' },
+    { x: 0, y: groundLevel + (frameHeight * scale), width: CANVAS_WIDTH * 3, height: 10, type: 'ground' },
     
     // Plataformas elevadas (degraus)
     { x: 200, y: groundLevel - 80, width: 150, height: 20, type: 'platform' },
