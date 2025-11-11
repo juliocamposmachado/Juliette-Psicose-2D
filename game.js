@@ -355,7 +355,7 @@ let maxJumpHeight = 150;
 // Sistema de plataformas (como no Contra)
 const platforms = [
     // Plataformas principais (chão)
-    { x: 0, y: groundLevel + (frameHeight * scale), width: CANVAS_WIDTH * 3, height: 10, type: 'ground' },
+    { x: 0, y: groundLevel + (frameHeight * scale), width: CANVAS_WIDTH * 13, height: 100, type: 'ground' },
     
     // Plataformas elevadas (degraus)
     { x: 200, y: groundLevel - 80, width: 150, height: 20, type: 'platform' },
