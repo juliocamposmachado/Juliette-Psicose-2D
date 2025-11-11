@@ -2,8 +2,8 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 // Configurações da tela adaptável
-let CANVAS_WIDTH = 800;  // Valor inicial, será atualizado
-let CANVAS_HEIGHT = 600; // Valor inicial, será atualizado
+let CANVAS_WIDTH = 1364;  // Valor inicial, será atualizado
+let CANVAS_HEIGHT = 766; // Valor inicial, será atualizado
 
 const frameWidth = 48;
 const frameHeight = 64;
