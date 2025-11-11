@@ -277,7 +277,7 @@ let playerSpeed = 4;
 let playerHealth = 100;
 let canShoot = true;
 let shootCooldown = 0;
-let weaponType = 'none'; // none, normal, spread, laser, machine, plasma, storm, nuclear
+let weaponType = 'storm'; // none, normal, spread, laser, machine, plasma, storm, nuclear
 let invulnerable = false;
 let invulnerableTime = 0;
 
