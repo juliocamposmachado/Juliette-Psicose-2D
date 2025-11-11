@@ -3138,7 +3138,7 @@ function drawControlsPanel() {
     ctx.fillText('🎮 CONTROLES ESPECIAIS DA JULIETTE:', 10, panelY + 15);
     
     // Calcular larguras das colunas baseado na largura da tela
-    const numCols = CANVAS_WIDTH > 1400 ? 4 : (CANVAS_WIDTH > 1000 ? 3 : 2);
+    const numCols = CANVAS_WIDTH > 1361 ? 4 : (CANVAS_WIDTH > 646 ? 3 : 2);
     const colWidth = Math.floor((CANVAS_WIDTH - 40) / numCols); // Margem de 20px cada lado
     const fontSize = CANVAS_WIDTH > 1200 ? '12px' : '11px';
     const lineHeight = CANVAS_WIDTH > 1200 ? 16 : 14;
