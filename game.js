@@ -295,8 +295,8 @@ let initialShieldDuration = 3600; // 60 segundos * 60 frames = 3600 frames
 let initialShieldTimer = 3600; // Cronômetro regressivo
 
 // === SISTEMA DE BOMBA ===
-let bombCount = 3; // Quantidade inicial de bombas
-let maxBombs = 5; // Máximo de bombas que o jogador pode ter
+let bombCount = 30; // Quantidade inicial de bombas
+let maxBombs = 500; // Máximo de bombas que o jogador pode ter
 let bombCooldown = 0; // Cooldown entre usar bombas
 let bombMaxCooldown = 300; // 5 segundos de cooldown
 
