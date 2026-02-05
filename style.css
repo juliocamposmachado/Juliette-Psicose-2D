@@ -2,7 +2,7 @@
 body {
     margin: 0;
     padding: 0;
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -11,6 +11,9 @@ body {
     font-family: 'Courier New', monospace;
     overflow: hidden;
     position: relative;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 #gameContainer {
@@ -20,7 +23,7 @@ body {
     max-width: 100vw;
     max-height: 100vh;
     border-radius: 8px;
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
     background: #000;
     padding: 2px;
     display: flex;
@@ -30,51 +33,57 @@ body {
 }
 
 canvas {
-    background: #222;
-    border: 2px solid #555;
+    background: #000;
+    border: 3px solid #FFD700;
     border-radius: 5px;
     image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
     display: block;
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.2);
     width: 100%;
     height: 100%;
     object-fit: fill;
     position: relative;
 }
 
-/* Informações do jogo */
+/* Game title */
 .game-info {
     position: absolute;
     top: -40px;
     left: 0;
     right: 0;
     text-align: center;
-    color: #fff;
-    font-size: 18px;
+    color: #FFD700;
+    font-size: 20px;
     font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 215, 0, 0.5);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
 }
 
-/* Controles */
+/* Controls info */
 .controls {
     position: absolute;
     bottom: -60px;
     left: 0;
     right: 0;
     text-align: center;
-    color: #ccc;
-    font-size: 12px;
+    color: #AAA;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    line-height: 1.4;
 }
 
-/* Botão de tela cheia - Posicionado no topo do HUD */
+/* Fullscreen button */
 .fullscreen-btn {
     position: fixed;
-    top: 25px; /* Bem no topo, acima de tudo */
+    top: 25px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    color: #fff;
-    border: 2px solid #555;
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+    color: #FFD700;
+    border: 2px solid #FFD700;
     border-radius: 6px;
     padding: 4px 8px;
     font-family: 'Courier New', monospace;
@@ -82,15 +91,16 @@ canvas {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
     z-index: 1001;
     line-height: 1;
 }
 
 .fullscreen-btn:hover {
-    background: linear-gradient(135deg, #2a2a4e, #26315e);
-    border-color: #777;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
+    border-color: #FFF;
+    color: #FFF;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
     transform: translateY(-1px);
 }
 
@@ -100,11 +110,12 @@ canvas {
 }
 
 .fullscreen-btn.fullscreen-active {
-    background: linear-gradient(135deg, #4a4a6e, #46517e);
-    border-color: #999;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    border-color: #FFF;
 }
 
-/* Efeito de scan lines */
+/* Arcade scan lines effect */
 canvas::after {
     content: '';
     position: absolute;
@@ -117,8 +128,8 @@ canvas::after {
         0deg,
         transparent,
         transparent 2px,
-        rgba(0, 0, 0, 0.1) 2px,
-        rgba(0, 0, 0, 0.1) 4px
+        rgba(255, 215, 0, 0.05) 2px,
+        rgba(255, 215, 0, 0.05) 4px
     );
 }
 
@@ -133,10 +144,10 @@ canvas::after {
         height: 100%;
     }
     canvas {
-        border: 1px solid #555;
+        border: 2px solid #FFD700;
     }
     .game-info {
-        font-size: 14px;
+        font-size: 16px;
         top: -30px;
     }
     .controls {
@@ -154,13 +165,13 @@ canvas::after {
         border-radius: 3px;
     }
     canvas {
-        border: 1px solid #333;
+        border: 1px solid #FFD700;
         border-radius: 3px;
     }
     .fullscreen-btn {
         font-size: 8px;
         padding: 3px 6px;
-        top: 10px; /* Bem no topo, acima das barras de energia/escudo */
+        top: 10px;
     }
     .game-info {
         font-size: 12px;
@@ -172,7 +183,7 @@ canvas::after {
     }
 }
 
-/* Controles Touch */
+/* Mobile fighting game controls */
 .mobile-controls {
     position: fixed;
     bottom: 0;
@@ -190,75 +201,75 @@ canvas::after {
     pointer-events: all;
 }
 
+/* Fighting game specific control layout */
 .controls-left {
     position: absolute;
     left: 20px;
     bottom: 20px;
-    width: 160px;
-    height: 160px;
+    width: 140px;
+    height: 140px;
 }
 
 .controls-right {
     position: absolute;
     right: 10px;
     bottom: 20px;
-    width: 175px;
-    height: 160px;
+    width: 160px;
+    height: 140px;
 }
 
 .controls-center {
     position: absolute;
     left: 50%;
-    bottom: 20px;
+    bottom: 10px;
     transform: translateX(-50%);
-    width: 220px;
+    width: 200px;
     display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* System buttons for fighting game */
+.system-buttons {
+    display: flex;
+    gap: 15px;
     justify-content: center;
 }
 
-.weapon-selector {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 8px;
-    justify-items: center;
-    align-items: center;
-    max-width: 180px;
-}
-
-.weapon-button {
-    background: rgba(0, 255, 255, 0.3);
-    border: 2px solid rgba(0, 255, 255, 0.7);
+.system-button {
+    background: rgba(255, 215, 0, 0.3);
+    border: 2px solid rgba(255, 215, 0, 0.7);
     border-radius: 8px;
     color: white;
     font-weight: bold;
-    font-size: 14px;
-    width: 40px;
-    height: 40px;
+    font-size: 12px;
+    width: 50px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
     touch-action: manipulation;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
+    font-family: 'Courier New', monospace;
 }
 
-.weapon-button:active {
-    background: rgba(0, 255, 255, 0.5);
+.system-button:active {
+    background: rgba(255, 215, 0, 0.5);
     transform: scale(0.95);
 }
 
-
+/* D-pad for movement */
 .dpad {
     position: relative;
-    width: 160px;
-    height: 160px;
+    width: 140px;
+    height: 140px;
 }
 
 .dpad-button {
     position: absolute;
-    background: rgba(255, 255, 255, 0.25);
-    border: 2px solid rgba(255, 255, 255, 0.6);
+    background: rgba(255, 215, 0, 0.25);
+    border: 2px solid rgba(255, 215, 0, 0.6);
     border-radius: 8px;
     color: white;
     font-weight: bold;
@@ -268,11 +279,11 @@ canvas::after {
     justify-content: center;
     user-select: none;
     touch-action: manipulation;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
 }
 
 .dpad-button:active {
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 215, 0, 0.4);
     transform: scale(0.95);
 }
 
@@ -308,73 +319,84 @@ canvas::after {
     height: 50px;
 }
 
+/* Action buttons for fighting moves */
 .action-buttons {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 10px;
     width: 100%;
     height: 100%;
 }
 
 .action-button {
-    background: rgba(255, 255, 0, 0.4);
-    border: 2px solid rgba(255, 255, 0, 0.8);
+    background: rgba(255, 68, 68, 0.4);
+    border: 2px solid rgba(255, 68, 68, 0.8);
     border-radius: 50%;
     color: white;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
     touch-action: manipulation;
-    min-width: 45px;
-    min-height: 45px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    min-width: 60px;
+    min-height: 60px;
+    box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    font-family: 'Courier New', monospace;
 }
 
 .action-button:active {
-    background: rgba(255, 255, 0, 0.6);
+    background: rgba(255, 68, 68, 0.6);
     transform: scale(0.95);
 }
 
-.action-button.primary {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
+/* Specific button styles for fighting moves */
+.action-button.punch {
+    background: rgba(255, 68, 68, 0.4);
+    border: 2px solid rgba(255, 68, 68, 0.8);
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.action-button.kick {
+    background: rgba(68, 68, 255, 0.4);
+    border: 2px solid rgba(68, 68, 255, 0.8);
+    grid-row: 1;
     grid-column: 2;
-    grid-row: 1;
 }
 
-/* Botão de corrente dupla com visual diferenciado */
-.action-button#doubleChainBtn {
-    background: rgba(255, 100, 0, 0.4);
-    border: 2px solid rgba(255, 100, 0, 0.8);
-    font-size: 14px;
-    grid-column: 3;
-    grid-row: 1;
-    width: 48px;
-    height: 48px;
+.action-button.block {
+    background: rgba(68, 255, 68, 0.4);
+    border: 2px solid rgba(68, 255, 68, 0.8);
+    grid-row: 2;
+    grid-column: 1;
 }
 
-.action-button#doubleChainBtn:active {
-    background: rgba(255, 100, 0, 0.6);
+.action-button.special {
+    background: rgba(255, 215, 0, 0.4);
+    border: 2px solid rgba(255, 215, 0, 0.8);
+    grid-row: 2;
+    grid-column: 2;
 }
 
-.action-button#doubleChainBtn.pressed {
-    background: rgba(255, 100, 0, 0.8) !important;
-    border-color: rgba(255, 120, 20, 1) !important;
-    box-shadow: 0 0 15px rgba(255, 100, 0, 0.5);
+.action-button.punch:active {
+    background: rgba(255, 68, 68, 0.6);
 }
 
-.action-button.secondary {
-    width: 38px;
-    height: 38px;
-    font-size: 16px;
+.action-button.kick:active {
+    background: rgba(68, 68, 255, 0.6);
 }
 
+.action-button.block:active {
+    background: rgba(68, 255, 68, 0.6);
+}
+
+.action-button.special:active {
+    background: rgba(255, 215, 0, 0.6);
+}
 
 /* Responsividade extra */
 @media (max-width: 768px) {
@@ -382,12 +404,12 @@ canvas::after {
         height: 180px;
     }
     .controls-left {
-        width: 140px;
-        height: 140px;
+        width: 120px;
+        height: 120px;
     }
     .dpad {
-        width: 140px;
-        height: 140px;
+        width: 120px;
+        height: 120px;
     }
     .dpad-button {
         font-size: 16px;
@@ -396,27 +418,10 @@ canvas::after {
         width: 45px;
         height: 45px;
     }
-    .action-button.primary {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
-    }
-    .action-button.secondary {
-        width: 35px;
-        height: 35px;
+    .action-button {
+        min-width: 50px;
+        min-height: 50px;
         font-size: 14px;
-    }
-    
-    .action-button#doubleChainBtn {
-        font-size: 12px;
-    }
-    .controls-center {
-        width: 200px;
-    }
-    .weapon-button {
-        width: 36px;
-        height: 36px;
-        font-size: 13px;
     }
 }
 
@@ -431,9 +436,10 @@ canvas::after {
         height: 120px;
     }
     .controls-right {
-        right: 5px;
+        right: 10px;
         bottom: 10px;
-        width: 170px;
+        width: 140px;
+        height: 120px;
     }
     .dpad {
         width: 120px;
@@ -443,34 +449,9 @@ canvas::after {
         width: 40px;
         height: 40px;
     }
-    .action-button.primary {
-        width: 42px;
-        height: 42px;
-        font-size: 16px;
-        grid-column: 2;
-        grid-row: 1;
-    }
-    
-    .action-button#doubleChainBtn {
-        width: 42px;
-        height: 42px;
-        font-size: 11px;
-        grid-column: 3;
-        grid-row: 1;
-    }
-    .action-button.secondary {
-        width: 32px;
-        height: 32px;
-        font-size: 13px;
-    }
-    
-    .controls-center {
-        width: 180px;
-        bottom: 10px;
-    }
-    .weapon-button {
-        width: 32px;
-        height: 32px;
+    .action-button {
+        min-width: 45px;
+        min-height: 45px;
         font-size: 12px;
     }
 }
@@ -483,32 +464,27 @@ canvas::after {
     transform: translate(-50%, -50%);
     width: 30px;
     height: 30px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.2);
     border-radius: 50%;
     pointer-events: none;
 }
 
 .dpad-button.pressed,
 .action-button.pressed {
-    background: rgba(255, 255, 255, 0.5) !important;
-    border-color: rgba(255, 255, 255, 0.8) !important;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    background: rgba(255, 215, 0, 0.5) !important;
+    border-color: rgba(255, 215, 0, 0.8) !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
-.action-button.primary.pressed {
-    background: rgba(255, 255, 0, 0.8) !important;
-    box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
-}
-
-.weapon-button.pressed {
-    background: rgba(0, 255, 255, 0.7) !important;
-    border-color: rgba(0, 255, 255, 1) !important;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+.system-button.pressed {
+    background: rgba(255, 215, 0, 0.7) !important;
+    border-color: rgba(255, 215, 0, 1) !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
     transform: scale(0.95);
 }
 
-/* Vibração visual para feedback */
+/* Visual feedback for button presses */
 @keyframes vibrate {
     0% { transform: translate(0); }
     10% { transform: translate(-1px, -1px); }
@@ -522,7 +498,7 @@ canvas::after {
     animation: vibrate 0.1s linear;
 }
 
-/* Efeitos especiais para botões */
+/* Button glow effects */
 .action-button::before {
     content: '';
     position: absolute;
@@ -530,7 +506,7 @@ canvas::after {
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
     border-radius: 50%;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -541,7 +517,7 @@ canvas::after {
     opacity: 1;
 }
 
-/* Melhor visibilidade em diferentes orientações */
+/* Landscape orientation adjustments */
 @media screen and (orientation: landscape) and (max-height: 500px) {
     .mobile-controls {
         height: 140px;
@@ -552,7 +528,7 @@ canvas::after {
         bottom: 10px;
     }
     .controls-right {
-        width: 165px;
+        width: 140px;
         height: 120px;
         bottom: 10px;
         right: 5px;
@@ -566,58 +542,34 @@ canvas::after {
         height: 35px;
         font-size: 14px;
     }
-    .action-button.primary {
-        width: 38px;
-        height: 38px;
-        font-size: 15px;
-        grid-column: 2;
-        grid-row: 1;
-    }
-    
-    .action-button#doubleChainBtn {
-        width: 38px;
-        height: 38px;
-        font-size: 10px;
-        grid-column: 3;
-        grid-row: 1;
-    }
-    .action-button.secondary {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
+    .action-button {
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 11px;
     }
     
     .dpad-center {
         width: 25px;
         height: 25px;
     }
-    .controls-center {
-        width: 170px;
-        bottom: 10px;
-    }
-    .weapon-button {
-        width: 30px;
-        height: 30px;
-        font-size: 11px;
-    }
 }
 
-/* Ajustes para telas grandes */
+/* Large screen adjustments */
 @media (min-width: 1200px) {
     #gameContainer {
         padding: 3px;
     }
     canvas {
-        border: 3px solid #666;
+        border: 4px solid #FFD700;
     }
 }
 
 @media (min-aspect-ratio: 21/9) {
     .game-info {
-        font-size: 20px;
+        font-size: 22px;
         top: -45px;
     }
     .controls {
-        font-size: 14px;
+        font-size: 12px;
     }
 }
